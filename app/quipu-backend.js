@@ -191,10 +191,30 @@
       });
 
       const { persistence } = await rpc('init');
+      const EXPORT_TOOL = {
+        name: 'quipu_export_db',
+        description: 'Serialize the in-page quipu store to a .db file in the VFS '
+          + '(FILES panel) so the user can download it — the same bytes open in '
+          + 'the quipu CLI and quipu-server, whose Knowledge Graph Explorer '
+          + 'visualizes the graph. Optional: path (default /quipu-export/creel.db).',
+        inputSchema: {
+          type: 'object',
+          properties: { path: { type: 'string', description: 'VFS path for the .db file' } },
+          required: [],
+        },
+      };
       await CreelQuipu.bindProvider({
         serverInfo: { name: `quipu-wasm (${persistence})`, version: '0' },
-        listTools: () => rpc('tools'),
-        callTool: (name, args) => rpc('call', { name, args }),
+        listTools: async () => [...await rpc('tools'), EXPORT_TOOL],
+        callTool: async (name, args) => {
+          if (name === EXPORT_TOOL.name) {
+            const bytes = await rpc('export');
+            const path = normPath((args && args.path) || '/quipu-export/creel.db');
+            const res = await vfsWriteBinary(path, new Uint8Array(bytes));
+            return { ok: true, path, bytes: res.bytes, hint: 'download it from the FILES panel; open with quipu-server for the graph explorer' };
+          }
+          return rpc('call', { name, args });
+        },
       });
       CreelQuipu.exportDb = () => rpc('export');
       CreelQuipu.importDb = (bytes) => rpc('import', { bytes });

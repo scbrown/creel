@@ -403,6 +403,8 @@
   };
 
   window.CreelGitHub = CreelGitHub;
+  /* Shared with local-backend.js (content hashing + text sniffing). */
+  CreelGitHub.util = { gitBlobSha, asText, walkVfs, nodeBytes };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => CreelGitHub.registerDefaults());
