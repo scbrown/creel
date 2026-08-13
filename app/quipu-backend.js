@@ -31,7 +31,7 @@
   /* Shell build tag, surfaced by quipu_wasm_status so a live session can
    * prove which deploy it is actually running (stale-SW debugging). Bump
    * alongside sw.js CACHE_VERSION. */
-  window.CREEL_BUILD = 'creel-v10 (2026-08-13, root pane + self-model + ui hands)';
+  window.CREEL_BUILD = 'creel-v11 (2026-08-13, queue leasing + durable storage)';
 
   /* Registry for in-page MCP servers ("the inpage transport"). Each handler
    * implements handle(jsonRpcBody) -> response|null. onepagent.html routes
@@ -106,6 +106,7 @@
                     bound: !!this.provider,
                     build: window.CREEL_BUILD || 'unknown',
                     server: this.provider?.serverInfo?.name,
+                    storage: this.storageInfo || undefined,
                     bootError: this.lastBootError || undefined,
                     hint: this.provider
                       ? 'quipu tools are live in-page; call them directly'
@@ -317,6 +318,24 @@
       CreelQuipu.importDb = (bytes) => rpc('import', { bytes });
       CreelQuipu.entityHistory = (iri) => rpc('entity_history', { iri });
       CreelQuipu.lastBootError = null;
+      // OPFS is evictable under storage pressure — ask the browser to make
+      // this origin durable (once), and keep quota facts for the status tool.
+      try {
+        let persisted = await navigator.storage?.persisted?.();
+        if (!persisted && !localStorage.getItem('creel_persist_asked')) {
+          localStorage.setItem('creel_persist_asked', '1');
+          persisted = await navigator.storage.persist();
+        }
+        const est = await navigator.storage?.estimate?.();
+        CreelQuipu.storageInfo = {
+          persisted: !!persisted,
+          usageMB: est ? Math.round(est.usage / 1e6) : undefined,
+          quotaMB: est ? Math.round(est.quota / 1e6) : undefined,
+        };
+        if (!persisted) {
+          CreelQuipu.storageInfo.hint = 'storage is evictable — quipu_export_db or github_push anything worth keeping';
+        }
+      } catch { /* storage API unavailable */ }
       console.log(`creel: quipu-wasm bound (${persistence}, ${scope})`);
       return true;
     })();

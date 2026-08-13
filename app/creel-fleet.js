@@ -29,6 +29,10 @@
 
   const agentMatch = location.hash.match(/creel-agent=([a-z0-9]+)/);
   const MY_TASK_ID = agentMatch ? agentMatch[1] : null;
+  const workerMatch = location.hash.match(/creel-worker=([a-z0-9]+)/);
+  const MY_WORKER_ID = workerMatch ? workerMatch[1] : null;
+  let currentLeaseTaskId = null;       // the lease task this worker holds now
+  let releaseCurrentTaskLock = null;   // resolves to drop the task's Web Lock
 
   // ── IndexedDB task store ─────────────────────────────────────────
   function idb() {
@@ -64,20 +68,69 @@
   }
 
   async function statusReport() {
+    await requeueStale();
     const tasks = await allTasks();
     const alive = await aliveLocks();
+    const taskLocks = await heldTaskLocks();
     return tasks
+      .filter((t) => !isMeta(t))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-      .map((t) => ({
-        ...t,
-        alive: alive.has(t.id),
-        status: (t.status === 'running' && !alive.has(t.id)) ? 'dead' : t.status,
-      }));
+      .map((t) => {
+        if (t.kind === 'lease') {
+          return { ...t, alive: taskLocks.has(t.id) };
+        }
+        return {
+          ...t,
+          alive: alive.has(t.id),
+          status: (t.status === 'running' && !alive.has(t.id)) ? 'dead' : t.status,
+        };
+      });
   }
 
-  function spawnWindow(id) {
-    const w = window.open(`onepagent.html#creel-agent=${id}`, '_blank');
+  function spawnWindow(id, kind = 'agent') {
+    const w = window.open(`onepagent.html#creel-${kind}=${id}`, '_blank');
     return !!w;
+  }
+
+  // ── work-queue leasing (creel-glv) ───────────────────────────────
+  // Lease tasks live in the same IDB store with kind:'lease'. A worker
+  // claims one by taking the Web Lock 'creel-task-<id>' (ifAvailable) and
+  // holds it while working — so a dead worker's task lock vanishes and the
+  // task is requeued by whoever looks next. Draining is a meta record
+  // workers consult before claiming.
+  const TASK_LOCK = 'creel-task-';
+  const DRAIN_ID = 'meta:drain';
+  const isMeta = (t) => t.id.startsWith('meta:');
+
+  async function heldTaskLocks() {
+    if (!navigator.locks || !navigator.locks.query) return new Set();
+    const { held = [] } = await navigator.locks.query();
+    return new Set(held.filter((l) => l.name.startsWith(TASK_LOCK))
+      .map((l) => l.name.slice(TASK_LOCK.length)));
+  }
+
+  /** Reset lease tasks whose worker died (running, but nobody holds the
+   *  lock) back to queued. Returns the requeued ids. */
+  async function requeueStale() {
+    const tasks = await allTasks();
+    const locks = await heldTaskLocks();
+    const requeued = [];
+    for (const t of tasks) {
+      if (t.kind === 'lease' && t.status === 'running' && !locks.has(t.id)) {
+        t.status = 'queued';
+        t.requeues = (t.requeues || 0) + 1;
+        t.claimedBy = null;
+        await putTask(t);
+        requeued.push(t.id);
+      }
+    }
+    if (requeued.length) notify();
+    return requeued;
+  }
+
+  async function isDraining() {
+    const m = await getTask(DRAIN_ID);
+    return !!m?.drain;
   }
 
   function wrapTask(t) {
@@ -166,6 +219,36 @@
       },
     },
     {
+      name: 'fleet_enqueue',
+      description: 'Add tasks to the shared work queue WITHOUT spawning tabs. Worker tabs (fleet_spawn_workers) lease tasks one at a time; a worker dying mid-task auto-requeues it. Use this + workers for N-tasks-M-agents bursts; use fleet_spawn for one dedicated tab per task.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          tasks: { type: 'array', items: { type: 'string' }, description: 'task descriptions to enqueue' },
+          label_prefix: { type: 'string', description: 'labels become <prefix>-1, <prefix>-2, … (default "task")' },
+        },
+        required: ['tasks'],
+      },
+    },
+    {
+      name: 'fleet_spawn_workers',
+      description: 'Spawn N worker tabs that repeatedly lease tasks from the queue (fleet_enqueue) until it is empty or draining. Same popup-blocker caveat as fleet_spawn.',
+      inputSchema: {
+        type: 'object',
+        properties: { count: { type: 'integer', description: 'worker tabs to open (default 2, max 8)' } },
+        required: [],
+      },
+    },
+    {
+      name: 'fleet_drain',
+      description: 'Toggle queue draining: while draining, workers finish their current task and stop claiming. fleet_drain {on:false} resumes claiming.',
+      inputSchema: {
+        type: 'object',
+        properties: { on: { type: 'boolean', description: 'default true' } },
+        required: [],
+      },
+    },
+    {
       name: 'fleet_send',
       description: 'Send a message across the fleet. With `to` (a task id, label, or "dashboard"), the message is delivered INTO that agent tab\'s conversation so its LLM sees it immediately. Without `to`, it broadcasts to every tab\'s inbox (read with fleet_inbox) — use broadcasts for status, directed sends for coordination.',
       inputSchema: {
@@ -229,21 +312,67 @@
 
     async fleet_status() {
       const report = await statusReport();
-      return report.map(({ id, label, status, alive, result, createdAt, doneAt }) => ({
-        id, label, status, alive, result, createdAt, doneAt,
+      return report.map(({ id, label, kind, status, alive, result, createdAt, doneAt, claimedBy, requeues }) => ({
+        id, label, kind: kind || 'agent', status, alive, result, createdAt, doneAt, claimedBy, requeues,
       }));
     },
 
     async fleet_report(args) {
-      if (!MY_TASK_ID) throw new Error('fleet_report is only for spawned agent tabs');
-      const t = await getTask(MY_TASK_ID);
-      if (!t) throw new Error(`unknown task ${MY_TASK_ID}`);
+      const taskId = MY_TASK_ID || currentLeaseTaskId;
+      if (!taskId) throw new Error('fleet_report is only for spawned agent/worker tabs (no task claimed)');
+      const t = await getTask(taskId);
+      if (!t) throw new Error(`unknown task ${taskId}`);
       t.status = String(args.result || '').startsWith('FAILED:') ? 'failed' : 'done';
       t.result = args.result;
       t.doneAt = Date.now();
       await putTask(t);
       notify();
+      // Lease workers: release the task lock and pull the next one.
+      if (!MY_TASK_ID && currentLeaseTaskId === taskId) {
+        currentLeaseTaskId = null;
+        if (releaseCurrentTaskLock) { releaseCurrentTaskLock(); releaseCurrentTaskLock = null; }
+        setTimeout(claimNext, 1500);
+      }
       return { ok: true, reported: t.status };
+    },
+
+    async fleet_enqueue(args) {
+      const prefix = args.label_prefix || 'task';
+      const ids = [];
+      let i = 0;
+      for (const task of args.tasks || []) {
+        i++;
+        const id = genId();
+        await putTask({
+          id, kind: 'lease', label: `${prefix}-${i}`, task,
+          status: 'queued', createdAt: Date.now(), result: null, requeues: 0,
+        });
+        ids.push(id);
+      }
+      notify();   // idle workers hear this and claim
+      return { enqueued: ids.length, ids };
+    },
+
+    async fleet_spawn_workers(args) {
+      const count = Math.max(1, Math.min(8, args.count || 2));
+      const spawned = [];
+      const blocked = [];
+      for (let i = 0; i < count; i++) {
+        const wid = genId();
+        (spawnWindow(wid, 'worker') ? spawned : blocked).push(wid);
+      }
+      return {
+        spawned: spawned.length,
+        blocked: blocked.length,
+        hint: blocked.length ? 'popup blocked — allow popups for this site, or spawn workers from the 🧺 fleet dashboard' : undefined,
+      };
+    },
+
+    async fleet_drain(args) {
+      const on = args.on !== false;
+      await putTask({ id: DRAIN_ID, kind: 'meta', status: 'meta', drain: on, createdAt: 0 });
+      notify();
+      return { draining: on };
     },
 
     async fleet_send(args) {
@@ -348,6 +477,16 @@
   };
 
   window.CreelFleet = CreelFleet;
+  /* Introspection for tests and debugging — never load-bearing. */
+  CreelFleet.debug = async () => ({
+    workerId: MY_WORKER_ID,
+    taskId: MY_TASK_ID,
+    currentLeaseTaskId,
+    draining: await isDraining(),
+    tasks: (await allTasks()).map((t) => `${t.kind || 'agent'}/${t.label || t.id}:${t.status}${t.claimedBy ? '@' + t.claimedBy : ''}`),
+    taskLocks: [...await heldTaskLocks()],
+    agentLocks: [...await aliveLocks()],
+  });
 
   // ── agent-tab boot: claim the task, hold the lock, auto-start ────
   async function agentBoot() {
@@ -376,6 +515,97 @@
       if (typeof handleInputChange === 'function') handleInputChange(input);
       handleSend();
     }, 2000);
+  }
+
+  // ── worker-tab boot: lease tasks from the queue until drained ────
+  function injectTask(text) {
+    const input = document.getElementById('userInput');
+    if (!input || typeof handleSend !== 'function') return false;
+    input.value = text;
+    if (typeof handleInputChange === 'function') handleInputChange(input);
+    handleSend();
+    return true;
+  }
+
+  // Non-reentrant: the report-timeout and the fleet-bus update listener can
+  // both trigger a claim — concurrent scans in one tab double-claim tasks
+  // and clobber currentLeaseTaskId/releaseCurrentTaskLock. Coalesce them.
+  let claimInFlight = null;
+  let idleNoticeShown = false;
+  function claimNext() {
+    if (currentLeaseTaskId) return Promise.resolve();
+    if (claimInFlight) return claimInFlight;
+    claimInFlight = doClaimNext().finally(() => { claimInFlight = null; });
+    return claimInFlight;
+  }
+
+  async function doClaimNext() {
+    if (await isDraining()) {
+      document.title = `creel · worker (drained)`;
+      if (!idleNoticeShown) {
+        idleNoticeShown = true;
+        injectTask('The fleet queue is draining — no more tasks will be claimed. '
+          + 'Summarize what you accomplished this session in one message, then stop.');
+      }
+      return;
+    }
+    await requeueStale();
+    const tasks = (await allTasks()).filter((t) => t.kind === 'lease' && t.status === 'queued');
+    tasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    for (const t of tasks) {
+      // Try to take the task's lock; hold it until fleet_report releases it.
+      const got = await new Promise((resolve) => {
+        navigator.locks.request(TASK_LOCK + t.id, { ifAvailable: true }, (lock) => {
+          if (!lock) { resolve(false); return; }
+          resolve(true);
+          return new Promise((release) => { releaseCurrentTaskLock = release; });
+        }).catch(() => resolve(false));
+      });
+      if (!got) continue;
+      const fresh = await getTask(t.id);
+      if (!fresh || fresh.status !== 'queued') {
+        if (releaseCurrentTaskLock) { releaseCurrentTaskLock(); releaseCurrentTaskLock = null; }
+        continue;
+      }
+      fresh.status = 'running';
+      fresh.claimedBy = MY_WORKER_ID;
+      fresh.startedAt = Date.now();
+      await putTask(fresh);
+      currentLeaseTaskId = fresh.id;
+      idleNoticeShown = false;
+      document.title = `creel · worker: ${fresh.label || fresh.id}`;
+      notify();
+      injectTask(wrapTask(fresh) + '\nAfter fleet_report, your tab will automatically '
+        + 'receive the next queued task, if any — treat each task independently.');
+      return;
+    }
+    document.title = 'creel · worker (idle)';
+    if (!idleNoticeShown) {
+      idleNoticeShown = true;
+      injectTask('The fleet queue is currently empty. Say "idle — waiting for work" and stop; '
+        + 'this tab will receive the next enqueued task automatically.');
+    }
+    // Re-check when the queue changes.
+  }
+
+  async function workerBoot() {
+    document.title = 'creel · worker';
+    if (navigator.locks) {
+      navigator.locks.request(LOCK_PREFIX + MY_WORKER_ID, () => new Promise(() => {}));
+    }
+    await putTask({
+      id: MY_WORKER_ID, kind: 'worker', label: `worker-${MY_WORKER_ID.slice(0, 4)}`,
+      status: 'running', createdAt: Date.now(), task: 'queue worker',
+    });
+    notify();
+    BC.addEventListener('message', (e) => {
+      if (e.data?.type === 'abort' && e.data.id === MY_WORKER_ID) window.close();
+      // New work while idle → claim it.
+      if (e.data?.type === 'update' && !currentLeaseTaskId) {
+        setTimeout(() => { if (!currentLeaseTaskId) claimNext(); }, 500 + Math.random() * 1000);
+      }
+    });
+    setTimeout(claimNext, 2500);
   }
 
   // ── dashboard overlay ────────────────────────────────────────────
@@ -415,7 +645,7 @@
         head.appendChild(abort);
       }
       row.appendChild(head);
-      row.appendChild(h('div', 'color:#8892a4;font-size:12px;margin-top:4px;white-space:pre-wrap;', t.task.slice(0, 200)));
+      row.appendChild(h('div', 'color:#8892a4;font-size:12px;margin-top:4px;white-space:pre-wrap;', String(t.task || '').slice(0, 200)));
       if (t.result) row.appendChild(h('div', 'color:#cfd2d6;font-size:12px;margin-top:6px;border-top:1px dashed #2a2a3a;padding-top:6px;white-space:pre-wrap;', t.result.slice(0, 500)));
       list.appendChild(row);
     }
@@ -494,6 +724,7 @@
     CreelFleet.registerDefaults();
     injectButton();
     if (MY_TASK_ID) agentBoot();
+    if (MY_WORKER_ID) workerBoot();
   }
 
   if (document.readyState === 'loading') {
