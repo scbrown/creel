@@ -7,3 +7,9 @@ dist/
 __pycache__/
 *.pyc
 wasm/quipu-provider/target/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
