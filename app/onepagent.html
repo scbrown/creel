@@ -4765,6 +4765,8 @@ let contextTokens = 0;
 let lastUsageInfo = null;
 let lastInputTokens = 0;
 let lastOutputTokens = 0;
+let totalInputTokens = 0;   // creel-sbx: cumulative input tokens for the session (bench token accounting)
+let totalOutputTokens = 0;  // creel-sbx: cumulative output tokens for the session (bench token accounting)
 let lastCacheReadTokens = 0;
 let lastCacheWriteTokens = 0;
 let lastRequestContextSnapshot = null;
@@ -4904,6 +4906,8 @@ function captureConversationState(chatHTML) {
     cwd,
     loopCount,
     totalTokens,
+    totalInputTokens,
+    totalOutputTokens,
     contextTokens,
     todos,
     subAgentRuns,
@@ -4934,6 +4938,8 @@ function applyConversationState(state = {}) {
   cwd = state.cwd || '/';
   loopCount = state.loopCount || 0;
   totalTokens = state.totalTokens || 0;
+  totalInputTokens = state.totalInputTokens || 0;
+  totalOutputTokens = state.totalOutputTokens || 0;
   contextTokens = state.contextTokens || 0;
   todos = Array.isArray(state.todos) ? state.todos : [];
   subAgentRuns = Array.isArray(state.subAgentRuns) ? state.subAgentRuns : [];
@@ -17028,6 +17034,8 @@ async function _runAgentLoop(userText, options = {}) {
       const usageDetails = extractUsageDetails(result.usage, { includeReasoningDetails: keepReasoning });
       lastInputTokens = usageDetails?.input || estimatedRequestTokens;
       lastOutputTokens = usageDetails?.output || estimatedOutputTokens;
+      totalInputTokens += lastInputTokens;
+      totalOutputTokens += lastOutputTokens;
       lastCacheReadTokens = usageDetails?.cacheRead || 0;
       lastCacheWriteTokens = usageDetails?.cacheWrite || 0;
       // Flush pending tool render before finalizing tool cards

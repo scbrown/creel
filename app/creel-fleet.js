@@ -60,6 +60,22 @@
   const genId = () => Math.random().toString(36).slice(2, 10);
   const notify = () => { try { BC.postMessage({ type: 'update' }); } catch { /* closed */ } };
 
+  // creel-sbx: read the harness's token counters (top-level `let` globals in
+  // onepagent.html — classic scripts share the global lexical scope). They are
+  // cumulative for the tab's session; the delta between a task's start and its
+  // fleet_report is that task's token spend. Guarded so a stale harness build
+  // (no counters yet) degrades to zeros instead of throwing.
+  function readTokenCounters() {
+    const num = (v) => (typeof v === 'number' && Number.isFinite(v)) ? v : 0;
+    try {
+      return {
+        total: num(typeof totalTokens === 'number' ? totalTokens : 0),
+        input: num(typeof totalInputTokens === 'number' ? totalInputTokens : 0),
+        output: num(typeof totalOutputTokens === 'number' ? totalOutputTokens : 0),
+      };
+    } catch { return { total: 0, input: 0, output: 0 }; }
+  }
+
   async function aliveLocks() {
     if (!navigator.locks || !navigator.locks.query) return new Set();
     const { held = [] } = await navigator.locks.query();
@@ -220,10 +236,14 @@
     },
     {
       name: 'fleet_report',
-      description: 'FOR SPAWNED AGENTS: report your task result back to the fleet. Call exactly once when your task is complete (prefix "FAILED:" if it could not be completed).',
+      description: 'FOR SPAWNED AGENTS: report your task result back to the fleet. Call exactly once when your task is complete (prefix "FAILED:" if it could not be completed). Token usage for the task is captured automatically from the harness.',
       inputSchema: {
         type: 'object',
-        properties: { result: { type: 'string', description: 'concise result summary' } },
+        properties: {
+          result: { type: 'string', description: 'concise result summary' },
+          inputTokens: { type: 'integer', description: 'optional explicit override; normally auto-captured from the harness counters' },
+          outputTokens: { type: 'integer', description: 'optional explicit override; normally auto-captured from the harness counters' },
+        },
         required: ['result'],
       },
     },
@@ -350,8 +370,9 @@
 
     async fleet_status() {
       const report = await statusReport();
-      return report.map(({ id, label, kind, status, alive, result, createdAt, doneAt, claimedBy, requeues }) => ({
+      return report.map(({ id, label, kind, status, alive, result, createdAt, doneAt, claimedBy, requeues, inputTokens, outputTokens, totalTokens }) => ({
         id, label, kind: kind || 'agent', status, alive, result, createdAt, doneAt, claimedBy, requeues,
+        inputTokens: inputTokens || 0, outputTokens: outputTokens || 0, totalTokens: totalTokens || 0,
       }));
     },
 
@@ -360,6 +381,14 @@
       if (!taskId) throw new Error('fleet_report is only for spawned agent/worker tabs (no task claimed)');
       const t = await getTask(taskId);
       if (!t) throw new Error(`unknown task ${taskId}`);
+      // creel-sbx: attribute this task's token spend (delta since claim/boot).
+      const start = t.tokenStart || { input: 0, output: 0, total: 0 };
+      const end = readTokenCounters();
+      t.inputTokens = (args.inputTokens != null) ? Number(args.inputTokens)
+        : Math.max(0, end.input - (start.input || 0));
+      t.outputTokens = (args.outputTokens != null) ? Number(args.outputTokens)
+        : Math.max(0, end.output - (start.output || 0));
+      t.totalTokens = Math.max(0, end.total - (start.total || 0));
       t.status = String(args.result || '').startsWith('FAILED:') ? 'failed' : 'done';
       t.result = args.result;
       t.doneAt = Date.now();
@@ -445,7 +474,11 @@
       const report = await statusReport();
       const finished = report.filter((t) => ['done', 'failed', 'dead'].includes(t.status));
       return {
-        tasks: finished.map((t) => ({ label: t.label || t.id, status: t.status, task: String(t.task || '').slice(0, 400), result: t.result || null })),
+        tasks: finished.map((t) => ({
+          label: t.label || t.id, status: t.status,
+          task: String(t.task || '').slice(0, 400), result: t.result || null,
+          inputTokens: t.inputTokens || 0, outputTokens: t.outputTokens || 0, totalTokens: t.totalTokens || 0,
+        })),
         done: finished.filter((t) => t.status === 'done').length,
         failed: finished.filter((t) => t.status !== 'done').length,
         pending: report.filter((t) => !['done', 'failed', 'dead'].includes(t.status)).length,
@@ -575,6 +608,7 @@
     }
     t.status = 'running';
     t.startedAt = Date.now();
+    t.tokenStart = readTokenCounters();
     await putTask(t);
     notify();
     BC.addEventListener('message', (e) => {
@@ -647,6 +681,7 @@
       fresh.status = 'running';
       fresh.claimedBy = MY_WORKER_ID;
       fresh.startedAt = Date.now();
+      fresh.tokenStart = readTokenCounters();
       await putTask(fresh);
       currentLeaseTaskId = fresh.id;
       idleNoticeShown = false;

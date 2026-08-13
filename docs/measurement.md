@@ -59,9 +59,11 @@ For each arm, in a creel tab (the operator agent can drive this end to end):
    `quipu_cord`/`quipu_query` the graph; that's the whole point.)
 4. **Grade + record.** For each task: `bench_grade {taskId, answer}` →
    `bench_record {arm, model, taskId, pass, inputTokens, outputTokens}`. Token
-   counts come from the provider's usage on each task's run (creel tracks
-   `prompt_tokens`/`completion_tokens`). The judged task (t11) needs a human or
-   an LLM-judge pass against its rubric.
+   counts are **captured automatically**: `fleet_report` records the delta of
+   the harness's cumulative input/output counters between claim and report, and
+   `fleet_synthesize` returns `inputTokens`/`outputTokens` per task — read them
+   straight off the synthesized payload rather than eyeballing provider usage.
+   The judged task (t11) needs a human or an LLM-judge pass against its rubric.
 5. Repeat for all three arms.
 
 Then **`bench_report`** emits the table below and the headline verdict.
