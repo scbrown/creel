@@ -414,7 +414,7 @@ function ptDomRule() {
 }
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/pyodide/v314.0.0/full/pyodide.js"></script>
+<script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/pyodide/v314.0.0/full/pyodide.js"></script>
 <link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="vendor/github-dark.min.css">
 <script crossorigin="anonymous" src="vendor/highlight.min.js"></script>
 <link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -6277,11 +6277,24 @@ async function ensurePyodide() {
   if (pyodideLoading) { updatePyodideProgress('Python runtime is already loading...', 10, initRun); while (pyodideLoading) await new Promise(r => setTimeout(r, 100)); return pyodideInstance; }
   pyodideLoading = true;
   updatePyodideProgress('Loading Python runtime (Pyodide WASM)...', 5, initRun);
+  // creel: a stalled CDN download used to hang here forever (and the
+  // interrupted tool call then poisoned strict providers' history). Fail
+  // loudly instead: bounded waits, and a clear error when the CDN never
+  // delivered the loader at all.
+  const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) =>
+    setTimeout(() => rej(new Error(`${what} timed out after ${ms / 1000}s — the Pyodide CDN (cdn.jsdelivr.net) may be slow or blocked on this network; retry, or check connectivity`)), ms))]);
   try {
+    if (typeof loadPyodide === 'undefined') {
+      throw new Error('the Pyodide loader never arrived from cdn.jsdelivr.net — that CDN appears blocked or unreachable on this network');
+    }
     updatePyodideProgress('Downloading and initializing Pyodide...', 15, initRun);
-    pyodideInstance = await loadPyodide({ stdout: msg => console.log('[pyodide]', msg), stderr: msg => console.warn('[pyodide]', msg) });
+    pyodideInstance = await withTimeout(
+      loadPyodide({ stdout: msg => console.log('[pyodide]', msg), stderr: msg => console.warn('[pyodide]', msg) }),
+      120000, 'Pyodide runtime download');
     updatePyodideProgress(`Loading packages: ${PYODIDE_PRELOAD_PACKAGES.join(', ')}...`, 35, initRun);
-    await pyodideInstance.loadPackage(PYODIDE_PRELOAD_PACKAGES, msg => updatePyodideProgress(String(msg || 'Loading Pyodide packages...'), 55, initRun));
+    await withTimeout(
+      pyodideInstance.loadPackage(PYODIDE_PRELOAD_PACKAGES, msg => updatePyodideProgress(String(msg || 'Loading Pyodide packages...'), 55, initRun)),
+      120000, 'Pyodide package download');
     const totalPip = PYODIDE_MICROPIP_PRELOAD_PACKAGES.length || 1;
     for (const [idx, pkg] of PYODIDE_MICROPIP_PRELOAD_PACKAGES.entries()) {
       const pct = 70 + Math.round((idx / totalPip) * 20);
@@ -6301,6 +6314,7 @@ async function ensurePyodide() {
     return pyodideInstance;
   } catch (e) {
     pyodideLoading = false;
+    pyodideInstance = null;   // a later attempt starts clean instead of half-loaded
     updatePyodideProgress('Failed to load Pyodide: ' + e.message, 100, initRun);
     throw new Error('Failed to load Pyodide: ' + e.message);
   }
@@ -16099,6 +16113,37 @@ function applyAnthropicMessagesCacheBreakpoint(messages) {
     return { ...m, content: [...content.slice(0, -1), newLast] };
   });
 }
+/* creel: strict OpenAI-compatible providers (DeepSeek among them) reject the
+ * whole request unless every assistant `tool_calls` entry is immediately
+ * followed by a `tool` message per id. Interrupted runs (stopped generations,
+ * page reloads mid-tool, guidance injections) leave orphans that brick the
+ * conversation with a permanent 400. Rebuild the pairing: results are moved
+ * to sit directly after their call, missing results get a synthetic
+ * "[interrupted]" stub, and results whose call vanished become user context. */
+function sanitizeOpenAIToolPairs(messages) {
+  const toolById = new Map();
+  for (const m of messages) {
+    if (m.role === 'tool' && m.tool_call_id && !toolById.has(m.tool_call_id)) toolById.set(m.tool_call_id, m);
+  }
+  const used = new Set();
+  const out = [];
+  for (const m of messages) {
+    if (m.role === 'tool') {
+      if (m.tool_call_id && used.has(m.tool_call_id)) continue;   // re-homed below its call
+      out.push({ role: 'user', content: `[Earlier tool result]\n${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}` });
+      continue;
+    }
+    out.push(m);
+    if (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length) {
+      for (const tc of m.tool_calls) {
+        const r = toolById.get(tc.id);
+        if (r && !used.has(tc.id)) { out.push(r); used.add(tc.id); }
+        else if (!r) out.push({ role: 'tool', tool_call_id: tc.id, content: '[tool call was interrupted before a result was recorded]' });
+      }
+    }
+  }
+  return out;
+}
 function assembleRequestBodyFromParts(parts, options = {}) {
   const requestModel = String(options.model || API_MODEL || '').trim() || API_MODEL;
   if (PROVIDER === 'anthropic_compat') {
@@ -16150,7 +16195,7 @@ function assembleRequestBodyFromParts(parts, options = {}) {
       } else oai.push({ role: 'assistant', content: m.content });
     }
   }
-  return applyThinkingToRequestBody({ model: requestModel, messages: oai, tools: parts.openaiTools }, PROVIDER);
+  return applyThinkingToRequestBody({ model: requestModel, messages: sanitizeOpenAIToolPairs(oai), tools: parts.openaiTools }, PROVIDER);
 }
 function estimateContextPartTokens(parts, body) {
   const breakdown = {
