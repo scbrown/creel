@@ -41,13 +41,11 @@ Then open `http://localhost:8420/onepagent.html`, set a provider
 
 ## DeepSeek
 
-DeepSeek's API sends no CORS headers, so a direct browser call fails. Use
-one of:
+**Works directly**: endpoint `https://api.deepseek.com`, your key in
+Settings, done — DeepSeek serves CORS headers to browser origins (verified
+live 2026-08-13). No proxy, no server.
 
-1. **Worker shim** — deploy `../proxy/deepseek-cors-worker.js` (Cloudflare
-   Worker); set the worker URL as the API Endpoint, keep your key in the
-   browser (BYOK passthrough — the worker holds no secrets).
-2. **OpenRouter** — endpoint `https://openrouter.ai/api/v1` with a DeepSeek
-   model; OpenRouter sends CORS headers, no shim needed.
-3. **Local proxy** — `just proxy` runs the same shim shape locally for
-   development.
+If that ever regresses, `../proxy/` keeps two fallbacks: the Cloudflare
+Worker shim (BYOK passthrough, holds no secrets) and `just proxy` for local
+development. OpenRouter (`https://openrouter.ai/api/v1`) also works as a
+CORS-clean route to DeepSeek models.

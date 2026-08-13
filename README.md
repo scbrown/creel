@@ -98,7 +98,8 @@ MIT-licensed [OnePagent](https://github.com/sligter/OnePagent) single-file
 harness (`just serve`), extended with a quipu transport switch
 (`app/quipu-backend.js`) — knowledge tools reach the agent over MCP from
 bobbin's server today, and bind to in-page quipu-wasm when it lands — plus
-DeepSeek connectivity via a CORS shim ([`proxy/`](proxy/)). VISION.md's
+DeepSeek connectivity direct from the page (CORS shims in
+[`proxy/`](proxy/) kept as fallback). VISION.md's
 fork-vs-greenfield note predates finding OnePagent; vendoring it as the v0
 shell was chosen 2026-08-13.
 
