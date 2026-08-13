@@ -73,6 +73,39 @@ pub fn export_db() -> Result<Vec<u8>, JsValue> {
     })
 }
 
+/// Per-fact history of one entity — mirrors quipu-server's `/entity_history`
+/// handler (which is hand-written there, not a tool), so the vendored
+/// explorer components get the same JSON shape in-page.
+#[wasm_bindgen]
+pub fn entity_history(iri: &str) -> Result<String, JsValue> {
+    STORE.with(|s| {
+        let guard = s.borrow();
+        let store = guard.as_ref().ok_or_else(|| err_js("no store open"))?;
+        let eid = store
+            .lookup(iri)
+            .map_err(err_js)?
+            .ok_or_else(|| err_js(format!("entity not found: {iri}")))?;
+        let entries: Vec<serde_json::Value> = store
+            .entity_history(eid)
+            .map_err(err_js)?
+            .iter()
+            .map(|f| {
+                let pred = store.resolve(f.attribute).unwrap_or_default();
+                serde_json::json!({
+                    "op": if f.op == quipu::Op::Assert { "assert" } else { "retract" },
+                    "predicate": pred,
+                    "value": quipu::value_to_json(store, &f.value),
+                    "valid_from": f.valid_from,
+                    "valid_to": f.valid_to,
+                    "tx": f.tx,
+                })
+            })
+            .collect();
+        Ok(serde_json::json!({ "iri": iri, "history": entries, "count": entries.len() })
+            .to_string())
+    })
+}
+
 /// quipu's MCP tool schemas, verbatim — a JSON array string.
 #[wasm_bindgen]
 pub fn tool_definitions() -> String {

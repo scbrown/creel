@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v5';
+const CACHE_VERSION = 'creel-v6';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -24,9 +24,12 @@ const APP_SHELL = [
   './quipu-backend.js',
   './github-backend.js',
   './local-backend.js',
+  './quipu-explorer.js',
   './quipu-worker.js',
   './wasm/pkg/creel_quipu_provider.js',
   './wasm/pkg/creel_quipu_provider_bg.wasm',
+  './vendor/quipu-ui/quipu-components.js',
+  './vendor/quipu-ui/graph-canvas.js',
   './vendor/marked.min.js',
   './vendor/highlight.min.js',
   './vendor/github.min.css',
@@ -38,6 +41,7 @@ const NETWORK_FIRST = [
   './quipu-backend.js',
   './github-backend.js',
   './local-backend.js',
+  './quipu-explorer.js',
   './quipu-worker.js',
   './wasm/pkg/creel_quipu_provider.js',
 ];

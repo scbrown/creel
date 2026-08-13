@@ -31,6 +31,7 @@ const ops = {
   tools: () => JSON.parse(wasm.tool_definitions()),
   call: ({ name, args }) => JSON.parse(wasm.call_tool(name, JSON.stringify(args || {}))),
   export: () => wasm.export_db(),
+  entity_history: ({ iri }) => JSON.parse(wasm.entity_history(iri)),
   import: ({ bytes }) => { wasm.open_from_bytes(new Uint8Array(bytes)); return { ok: true }; },
 };
 

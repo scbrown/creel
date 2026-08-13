@@ -32,6 +32,14 @@ and BYO-key storage in localStorage.
   `github_status` (diffs the VFS against checked-out blob sha1s),
   `github_checkout`, `github_push` (blobs → tree on base_tree → commit →
   fast-forward/create branch; pushes stack), `github_open_pr`.
+- `quipu-explorer.js` — visual explorer for the in-page store: a floating
+  "◉ graph" button opens a full-screen overlay (Graph / SPARQL / Entity /
+  Timeline / Schema) built from quipu's own UI, vendored at
+  `vendor/quipu-ui/` (GraphCanvas force layout + the `<quipu-*>` web
+  components, from scbrown/quipu@6cf8864). A fetch wrapper translates the
+  components' REST dialect (`inpage://quipu/query|shapes|entity_history|graph`)
+  into wasm tool calls, so the explorer reads the live OPFS store with zero
+  network. Click a graph node for its entity view.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.

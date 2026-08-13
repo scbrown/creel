@@ -8,6 +8,13 @@
 export function call_tool(name: string, args_json: string): string;
 
 /**
+ * Per-fact history of one entity — mirrors quipu-server's `/entity_history`
+ * handler (which is hand-written there, not a tool), so the vendored
+ * explorer components get the same JSON shape in-page.
+ */
+export function entity_history(iri: string): string;
+
+/**
  * Serialize the current store to `.db` bytes (the interchange format —
  * downloadable, attachable to a native store, openable in the CLI).
  */
@@ -45,6 +52,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly call_tool: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly entity_history: (a: number, b: number, c: number) => void;
     readonly export_db: (a: number) => void;
     readonly install_opfs: () => number;
     readonly open: (a: number, b: number, c: number) => void;
@@ -62,8 +70,8 @@ export interface InitOutput {
     readonly rust_sqlite_wasm_realloc: (a: number, b: number) => number;
     readonly sqlite3_os_end: () => number;
     readonly sqlite3_os_init: () => number;
-    readonly __wasm_bindgen_func_elem_2130: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1373: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2136: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1379: (a: number, b: number, c: number, d: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

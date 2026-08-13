@@ -218,6 +218,7 @@
       });
       CreelQuipu.exportDb = () => rpc('export');
       CreelQuipu.importDb = (bytes) => rpc('import', { bytes });
+      CreelQuipu.entityHistory = (iri) => rpc('entity_history', { iri });
       CreelQuipu.lastBootError = null;
       console.log(`creel: quipu-wasm bound (${persistence})`);
       return true;

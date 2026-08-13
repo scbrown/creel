@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const call_tool: (a: number, b: number, c: number, d: number, e: number) => void;
+export const entity_history: (a: number, b: number, c: number) => void;
 export const export_db: (a: number) => void;
 export const install_opfs: () => number;
 export const open: (a: number, b: number, c: number) => void;
@@ -19,8 +20,8 @@ export const rust_sqlite_wasm_localtime: (a: number) => number;
 export const rust_sqlite_wasm_realloc: (a: number, b: number) => number;
 export const sqlite3_os_end: () => number;
 export const sqlite3_os_init: () => number;
-export const __wasm_bindgen_func_elem_2130: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_1373: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_2136: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_1379: (a: number, b: number, c: number, d: number) => void;
 export const __wbindgen_export: (a: number, b: number) => number;
 export const __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
 export const __wbindgen_export3: (a: number) => void;
