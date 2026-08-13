@@ -31,7 +31,7 @@
   /* Shell build tag, surfaced by quipu_wasm_status so a live session can
    * prove which deploy it is actually running (stale-SW debugging). Bump
    * alongside sw.js CACHE_VERSION. */
-  window.CREEL_BUILD = 'creel-v17 (2026-08-13, measurement harness)';
+  window.CREEL_BUILD = 'creel-v18 (2026-08-13, in-browser bash)';
 
   /* Registry for in-page MCP servers ("the inpage transport"). Each handler
    * implements handle(jsonRpcBody) -> response|null. onepagent.html routes

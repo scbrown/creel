@@ -97,6 +97,18 @@ and BYO-key storage in localStorage.
   through a content-script trust boundary. Without the extension the server
   offers only `browser_status` (graceful degradation); the extension refuses
   to act on creel's own origins so an agent can't puppet its harness.
+- `bash-backend.js` — the `bash` MCP server: bash execution entirely in the
+  browser. `bash_exec` runs a dependency-free JS interpreter of a POSIX-ish
+  bash subset against the shared VFS (the same files as Read/Write/Edit and
+  the FILES panel): pipelines, `&&`/`||`/`;`, redirection (`>` `>>` `<`
+  `2>` `2>&1`, `/dev/null`), quoting, variables, `$(...)`/backtick command
+  substitution, `$((...))` arithmetic, globs, and ~35 core utilities (ls,
+  cat, grep, sed incl. `-i`, sort, uniq, cut, tr, find, xargs, test, …).
+  cwd and exported variables persist across calls; deliberately no control
+  flow, functions, background jobs, or network — heavier work belongs to
+  PythonExec or the harness's remote Daytona Bash. The interpreter core is
+  exported for `node:test` (`../test/bash-backend.test.mjs`, `just test`);
+  grep/sed patterns are JavaScript regexes.
 - `measurement-backend.js` — the `bench` MCP server: VISION v2's bet made
   testable. A grounding-sensitive task suite (the synthetic "Kestrel" service
   fleet, whose entities exist only in the seed) run three ways —
