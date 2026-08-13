@@ -162,7 +162,7 @@
   }
 
   // ── grading ──────────────────────────────────────────────────────
-  const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/-/g, ' ').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
   function grade(task, answer) {
     const a = norm(answer);
     switch (task.grade) {
