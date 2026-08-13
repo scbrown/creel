@@ -16,7 +16,10 @@
   window.postMessage({ __creel: HELLO, version: '0.1.0' }, window.location.origin);
 
   window.addEventListener('message', (event) => {
-    if (event.source !== window) return;
+    // Only this window, and only its own origin — the connector runs solely on
+    // creel origins (manifest matches), so this listens to the creel page and
+    // nothing else. An iframe or another origin cannot command the bridge.
+    if (event.source !== window || event.origin !== window.location.origin) return;
     const msg = event.data;
     if (!msg || msg.__creel !== REQ || typeof msg.reqId !== 'string') return;
 

@@ -39,13 +39,22 @@ creel page  ──postMessage──▶  creel-connector.js  ──chrome.runtime
 To point the bridge at another creel origin, add it to `content_scripts.matches`
 and the `CREEL_ORIGINS` list in `background.js`.
 
-## Safety model
+## Two independent axes: listen vs act
 
-- The extension is **opt-in**: without it installed, creel has no cross-origin
-  reach at all. Installing it is the deliberate grant.
-- The background worker **refuses to act on creel's own origins**, so an agent
-  cannot puppet its own harness through the bridge.
-- Only the connector content script (running on a creel origin) is an accepted
-  caller; messages from other senders are rejected.
-- `host_permissions: <all_urls>` is broad by necessity (agents choose the
-  target at runtime). Narrow it to specific origins if your use is bounded.
+- **Listen (accept commands): creel origin ONLY.** The connector is injected
+  solely on creel origins (manifest `matches`), it accepts postMessages only
+  from its own window AND its own origin (`event.origin === location.origin`),
+  and the background worker rejects any sender whose tab isn't a creel origin.
+  A foreign origin, an iframe, or another extension cannot command the bridge.
+- **Act (open/drive pages): any website.** `browser_open_tab` /
+  `browser_navigate` accept any http/https URL (bare hosts get `https://`),
+  and DOM actions run in the target tab via `chrome.scripting`. This is why
+  `host_permissions` is `<all_urls>` — the two axes are independent.
+
+## Other safety
+
+- **Opt-in**: without the extension installed, creel has zero cross-origin
+  reach. Installing it is the deliberate grant.
+- The worker **refuses to act on creel's own origins**, so an agent can't
+  puppet its own harness through the bridge.
+- Only http/https targets are allowed (no `file:`, `chrome:`, etc.).

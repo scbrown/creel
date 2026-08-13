@@ -8,8 +8,9 @@
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
+      "//": "The connector is injected ONLY on creel origins — this is the sole surface that can command the bridge. host_permissions stays broad so the bridge can ACT on any site; the two are independent. Remove the localhost entries for a production-only build.",
       "matches": [
-        "https://scbrown.github.io/*",
+        "https://scbrown.github.io/creel/*",
         "http://localhost/*",
         "http://127.0.0.1/*"
       ],

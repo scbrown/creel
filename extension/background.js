@@ -11,8 +11,31 @@
  * through the side door.
  */
 
-const CREEL_ORIGINS = [/^https:\/\/scbrown\.github\.io\//, /^https?:\/\/(localhost|127\.0\.0\.1)[:/]/];
+// Origins that may COMMAND the bridge (must match the manifest's content-script
+// matches). Distinct from what the bridge may ACT ON — it opens/drives any site.
+const CREEL_ORIGINS = [/^https:\/\/scbrown\.github\.io\/creel\//, /^https?:\/\/(localhost|127\.0\.0\.1)[:/]/];
 const isCreelUrl = (url) => CREEL_ORIGINS.some((re) => re.test(url || ''));
+
+function normalizeUrl(url) {
+  const u = String(url || '').trim();
+  if (!u) throw new Error('missing url');
+  // A bare host like "example.com" → https://; reject non-web schemes.
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : `https://${u}`;
+  const parsed = new URL(withScheme);
+  if (!/^https?:$/.test(parsed.protocol)) throw new Error(`only http/https URLs allowed, got ${parsed.protocol}`);
+  return parsed.href;
+}
+
+function waitForTabLoad(tabId, timeoutMs = 15000) {
+  return new Promise((resolve) => {
+    const done = () => { chrome.tabs.onUpdated.removeListener(onUpdated); resolve(); };
+    const timer = setTimeout(done, timeoutMs);
+    function onUpdated(id, info) {
+      if (id === tabId && info.status === 'complete') { clearTimeout(timer); done(); }
+    }
+    chrome.tabs.onUpdated.addListener(onUpdated);
+  });
+}
 
 async function resolveTab(args) {
   if (args.tabId) {
@@ -42,16 +65,22 @@ const ops = {
   },
 
   async open_tab(args) {
-    if (isCreelUrl(args.url)) throw new Error('refusing to open a creel origin through the bridge');
-    const tab = await chrome.tabs.create({ url: args.url, active: args.focus !== false });
-    return { tabId: tab.id, url: tab.url };
+    const url = normalizeUrl(args.url);
+    if (isCreelUrl(url)) throw new Error('refusing to open a creel origin through the bridge');
+    const tab = await chrome.tabs.create({ url, active: args.focus !== false });
+    if (args.wait !== false) await waitForTabLoad(tab.id);
+    const loaded = await chrome.tabs.get(tab.id).catch(() => tab);
+    return { tabId: tab.id, url: loaded.url || url, title: loaded.title };
   },
 
   async navigate(args) {
     const tab = await resolveTab(args);
-    if (isCreelUrl(args.url)) throw new Error('refusing to navigate to a creel origin through the bridge');
-    await chrome.tabs.update(tab.id, { url: args.url });
-    return { tabId: tab.id, url: args.url };
+    const url = normalizeUrl(args.url);
+    if (isCreelUrl(url)) throw new Error('refusing to navigate to a creel origin through the bridge');
+    await chrome.tabs.update(tab.id, { url });
+    if (args.wait !== false) await waitForTabLoad(tab.id);
+    const loaded = await chrome.tabs.get(tab.id).catch(() => tab);
+    return { tabId: tab.id, url: loaded.url || url, title: loaded.title };
   },
 
   async read(args) {
