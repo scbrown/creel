@@ -64,6 +64,12 @@ and BYO-key storage in localStorage.
   it) — the asymmetry keeps agent pairs from auto-injection ping-pong.
   Messages always land in the inbox as well, so nothing is lost if the
   target is between runs; the dashboard shows a live comms log.
+  **The weft** (burst synthesis, VISION v3): `fleet_synthesize` gathers
+  every finished result into one payload; the dashboard's **Synthesize**
+  button hands them to the operator's own agent to combine across the
+  parallel threads; `fleet_writeback` records the takeaways as quipu
+  episodes tagged to a Burst node, so what a burst learned outlives its
+  tabs and appears in the ◉ graph.
 - `creel-self.js` — the self-model. (a) **Root pane**: exactly one
   dispatcher tab, Web-Lock elected among non-agent tabs, takeover on
   death; every tab wears a role badge (⬢ root pane / 🧵 bobbin /

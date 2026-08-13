@@ -149,7 +149,10 @@
       + ' roles (the root pane dispatches, bobbins like you execute), the tool'
       + ' servers, and the conventions; quipu_query answers anything deeper.'
       + ' Record durable findings as quipu episodes — every tab sees them'
-      + ' instantly.';
+      + ' instantly. At burst end the operator may synthesize all results'
+      + ' (fleet_synthesize) and write the takeaways back to the graph'
+      + ' (fleet_writeback); make your fleet_report result a clean, quotable'
+      + ' summary so it composes well.';
   }
 
   // ── cross-tab comms ──────────────────────────────────────────────
@@ -267,6 +270,35 @@
         type: 'object',
         properties: { clear: { type: 'boolean' } },
         required: [],
+      },
+    },
+    {
+      name: 'fleet_synthesize',
+      description: 'THE WEFT (burst synthesis): collect every finished agent/task result into one structured payload for the operator to synthesize across the parallel threads. Returns {tasks:[{label,status,task,result}], done, failed}. Call this at burst end, then write your combined answer.',
+      inputSchema: { type: 'object', properties: {}, required: [] },
+    },
+    {
+      name: 'fleet_writeback',
+      description: 'Record what a burst learned into the shared quipu graph as episodes tagged with a burst id, so the knowledge outlives the tabs and shows up in the ◉ graph. Pass findings (one episode each); each becomes a quipu episode linked to a Burst node.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          burst: { type: 'string', description: 'a name for this burst (default: burst-<timestamp-ish>)' },
+          findings: {
+            type: 'array',
+            description: 'the durable takeaways to record',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                body: { type: 'string' },
+                entities: { type: 'array', items: { type: 'string' }, description: 'key entity names this finding is about' },
+              },
+              required: ['title', 'body'],
+            },
+          },
+        },
+        required: ['findings'],
       },
     },
     {
@@ -401,6 +433,45 @@
       const msgs = inbox.map(({ from, fromLabel, to, text, ts }) => ({ from: fromLabel || from, to: to || 'broadcast', text, ts }));
       if (args && args.clear) inbox.length = 0;
       return { count: msgs.length, messages: msgs };
+    },
+
+    async fleet_synthesize() {
+      const report = await statusReport();
+      const finished = report.filter((t) => ['done', 'failed', 'dead'].includes(t.status));
+      return {
+        tasks: finished.map((t) => ({ label: t.label || t.id, status: t.status, task: String(t.task || '').slice(0, 400), result: t.result || null })),
+        done: finished.filter((t) => t.status === 'done').length,
+        failed: finished.filter((t) => t.status !== 'done').length,
+        pending: report.filter((t) => !['done', 'failed', 'dead'].includes(t.status)).length,
+      };
+    },
+
+    async fleet_writeback(args) {
+      const findings = Array.isArray(args.findings) ? args.findings : [];
+      if (!findings.length) throw new Error('no findings to write back');
+      if (!window.CreelQuipu) throw new Error('quipu not available in this tab');
+      await window.CreelQuipu.ensureWasm();
+      const call = (name, a) => window.CreelQuipu.provider.callTool(name, a);
+      // Deterministic burst id (Date.now is unavailable in some contexts; use
+      // the fleet's own timestamp source, which is Date.now here in the page).
+      const burst = args.burst || `burst-${Date.now().toString(36)}`;
+      const written = [];
+      for (const f of findings) {
+        const nodes = [
+          { name: burst, type: 'Burst', description: 'a creel agent burst; groups the episodes its parallel threads produced' },
+          ...(f.entities || []).map((e) => ({ name: e, type: 'Entity', description: `referenced by burst ${burst}` })),
+        ];
+        await call('quipu_episode', {
+          name: `${burst}:${f.title}`,
+          episode_body: f.body,
+          source: 'creel-weft',
+          nodes,
+          edges: (f.entities || []).map((e) => ({ source: burst, target: e, relation: 'learned_about' })),
+        });
+        written.push(f.title);
+      }
+      notify();
+      return { burst, episodes: written.length, titles: written, hint: 'visible now in the ◉ graph and to every fleet tab' };
     },
 
     async fleet_abort(args) {
@@ -667,11 +738,22 @@
     if (overlay) { overlay.remove(); overlay = null; return; }
     overlay = h('div', 'position:fixed;top:0;right:0;bottom:0;width:min(430px,95vw);z-index:99998;background:#12121c;border-left:1px solid #2a2a3a;color:#cfd2d6;font:13px system-ui,sans-serif;display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.5);');
     const head = h('div', 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #2a2a3a;');
+    // The weft: hand every finished result to the operator's own agent so it
+    // synthesizes across the parallel threads, in this same conversation.
+    const weft = h('button', 'background:#2e2a12;border:1px solid #4a4422;color:#e0af68;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Synthesize');
+    weft.onclick = async () => {
+      const s = await impl.fleet_synthesize();
+      if (!s.tasks.length) { weft.textContent = 'no results yet'; setTimeout(() => { weft.textContent = 'Synthesize'; }, 1500); return; }
+      const lines = s.tasks.map((t) => `- [${t.label} · ${t.status}] ${t.result || '(no result)'}`).join('\n');
+      injectTask(`Synthesize this creel burst across its parallel threads (${s.done} done, ${s.failed} failed). `
+        + `Give one combined answer, note agreements/conflicts, then (if worth keeping) call fleet_writeback to record the key findings into the quipu graph.\n\n${lines}`);
+      overlay.remove(); overlay = null;
+    };
     const clear = h('button', 'background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Clear done');
     clear.onclick = () => impl.fleet_clear().then(renderDashboard);
     const close = h('button', 'background:#2a1d1d;border:1px solid #3a2a2a;color:#ff8080;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Close');
     close.onclick = () => { overlay.remove(); overlay = null; };
-    head.append(h('span', 'font-weight:600;color:#e0af68;', '🧺 fleet'), h('span', 'flex:1', ''), clear, close);
+    head.append(h('span', 'font-weight:600;color:#e0af68;', '🧺 fleet'), h('span', 'flex:1', ''), weft, clear, close);
     overlay.appendChild(head);
 
     const list = h('div', 'flex:1;overflow:auto;padding:6px 12px;');
