@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v2';
+const CACHE_VERSION = 'creel-v3';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -22,6 +22,7 @@ const APP_SHELL = [
   './icons/icon-512-maskable.png',
   './icons/icon-180.png',
   './quipu-backend.js',
+  './github-backend.js',
   './quipu-worker.js',
   './wasm/pkg/creel_quipu_provider.js',
   './wasm/pkg/creel_quipu_provider_bg.wasm',
@@ -32,6 +33,13 @@ const APP_SHELL = [
 ];
 
 const CDN_PREFETCH = [];
+const NETWORK_FIRST = [
+  './quipu-backend.js',
+  './github-backend.js',
+  './quipu-worker.js',
+  './wasm/pkg/creel_quipu_provider.js',
+];
+const NETWORK_FIRST_URLS = new Set(NETWORK_FIRST.map((p) => new URL(p, self.location.href).href));
 const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
 const CDN_URLS = new Set(CDN_PREFETCH);
 
@@ -77,6 +85,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (NETWORK_FIRST_URLS.has(url.href)) {
+    event.respondWith(networkFirstAsset(req));
+    return;
+  }
+
   if (APP_SHELL_URLS.has(url.href)) {
     event.respondWith(staleWhileRevalidate(req));
     return;
@@ -100,6 +113,18 @@ async function networkFirstHTML(event) {
       || await cache.match('./index.html');
     if (cached) return cached;
     return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+async function networkFirstAsset(req) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const res = await fetch(req);
+    if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
+    return res;
+  } catch (_) {
+    const cached = await cache.match(req);
+    return cached || new Response('Offline', { status: 503 });
   }
 }
 

@@ -9179,8 +9179,8 @@ async function _mcpSsePost(server, body) {
 // ── Unified RPC entry points ──────────────────────────────────────
 async function _mcpCall(server, method, params) {
   const body = { jsonrpc: '2.0', id: _mcpGenRpcId(), method, params: params || {} };
-  // creel: 'inpage' servers dispatch to an in-page provider (quipu-backend.js).
-  const msg = server.type === 'inpage' ? await window.CreelQuipu.handle(body)
+  // creel: 'inpage' servers dispatch to in-page providers (quipu-backend.js registry).
+  const msg = server.type === 'inpage' ? await window.CreelInpage.dispatch(server, body)
     : server.type === 'sse' ? await _mcpSsePost(server, body) : await _mcpStreamableRequest(server, body);
   if (!msg) return null;
   if (msg.error) throw new Error(msg.error.message || 'RPC error');
@@ -9189,7 +9189,7 @@ async function _mcpCall(server, method, params) {
 
 async function _mcpNotify(server, method, params) {
   const body = { jsonrpc: '2.0', method, params: params || {} };
-  if (server.type === 'inpage') await window.CreelQuipu.handle(body);
+  if (server.type === 'inpage') await window.CreelInpage.dispatch(server, body);
   else if (server.type === 'sse') await _mcpSsePost(server, body);
   else await _mcpStreamableRequest(server, body);
 }
@@ -18700,5 +18700,6 @@ try {
 } catch (e) { console.warn('CronScheduler.start failed', e); }
 </script>
 <script src="quipu-backend.js"></script>
+<script src="github-backend.js"></script>
 </body>
 </html>

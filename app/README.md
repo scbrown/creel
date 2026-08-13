@@ -23,6 +23,15 @@ and BYO-key storage in localStorage.
   `http://localhost:3031/mcp` with `bobbin serve --mcp-http`).
   Rebuild: `cd wasm/quipu-provider && cargo build --release && wasm-bindgen
   --target web --out-dir ../../app/wasm/pkg target/wasm32-unknown-unknown/release/creel_quipu_provider.wasm`.
+- `github-backend.js` — a second in-page MCP server (`github`) that checks
+  repositories out into the FILES panel and pushes the agent's edits back,
+  entirely over the CORS-enabled GitHub REST/Git Data API — no git binary,
+  no smart-HTTP proxy. Auth is a fine-grained PAT (Contents read/write on
+  the repos you choose), entered via a browser prompt so it never passes
+  through chat, held in localStorage. Tools: `github_connect`,
+  `github_status` (diffs the VFS against checked-out blob sha1s),
+  `github_checkout`, `github_push` (blobs → tree on base_tree → commit →
+  fast-forward/create branch; pushes stack), `github_open_pr`.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.

@@ -28,6 +28,18 @@
 (function () {
   'use strict';
 
+  /* Registry for in-page MCP servers ("the inpage transport"). Each handler
+   * implements handle(jsonRpcBody) -> response|null. onepagent.html routes
+   * `type: 'inpage'` servers here by their `url` (e.g. 'inpage:github'). */
+  window.CreelInpage = {
+    handlers: {},
+    register(url, handler) { this.handlers[url] = handler; },
+    dispatch(server, body) {
+      const h = this.handlers[server.url] || window.CreelQuipu;
+      return h.handle(body);
+    },
+  };
+
   const STATUS_TOOL = {
     name: 'quipu_wasm_status',
     description:
@@ -109,6 +121,7 @@
 
     /** Register the in-page server + a bobbin template in the harness. */
     registerDefaults() {
+      window.CreelInpage.register('inpage:quipu-wasm', this);
       if (typeof mcpServers === 'undefined') return;
       if (!mcpServers.find((s) => s.id === this.serverId)) {
         mcpServers.push({
