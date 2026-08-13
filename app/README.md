@@ -64,6 +64,19 @@ and BYO-key storage in localStorage.
   it) — the asymmetry keeps agent pairs from auto-injection ping-pong.
   Messages always land in the inbox as well, so nothing is lost if the
   target is between runs; the dashboard shows a live comms log.
+- `creel-self.js` — the self-model. (a) **Root pane**: exactly one
+  dispatcher tab, Web-Lock elected among non-agent tabs, takeover on
+  death; every tab wears a role badge (⬢ root pane / 🧵 bobbin /
+  standby). (b) **The world model lives in quipu**: the root pane seeds a
+  versioned `creel-world-model-v1` episode describing roles, servers,
+  surfaces, and conventions — agents learn their world by querying the
+  graph (`quipu_cord {"name": "creel-world-model-v1"}`), which is how
+  creel documents itself for agents. (c) **Self-configuration**: the `ui`
+  in-page MCP server (ui_describe / ui_set_model / ui_configure_provider /
+  ui_toggle_server / ui_open / ui_click / ui_fill) lets the agent operate
+  creel's own interface from user demands — credential fields are refused
+  by design. (d) **Visible hands**: every click and input flashes a
+  highlight ring — cyan for the human, orange for the agent.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.

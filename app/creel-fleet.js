@@ -90,7 +90,13 @@
       + ' agent\'s conversation (to = task id or label, or "dashboard" for the'
       + ' operator tab); fleet_send({message}) without `to` broadcasts to every'
       + ' inbox instead. Check fleet_inbox for broadcasts and anything received'
-      + ' while you were busy. fleet_status lists the other agents.';
+      + ' while you were busy. fleet_status lists the other agents.'
+      + '\nYour world is described IN the shared quipu graph, not in docs:'
+      + ' start with quipu_cord {"name": "creel-world-model-v1"} to learn the'
+      + ' roles (the root pane dispatches, bobbins like you execute), the tool'
+      + ' servers, and the conventions; quipu_query answers anything deeper.'
+      + ' Record durable findings as quipu episodes — every tab sees them'
+      + ' instantly.';
   }
 
   // ── cross-tab comms ──────────────────────────────────────────────
