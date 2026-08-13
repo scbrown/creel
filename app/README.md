@@ -97,6 +97,14 @@ and BYO-key storage in localStorage.
   through a content-script trust boundary. Without the extension the server
   offers only `browser_status` (graceful degradation); the extension refuses
   to act on creel's own origins so an agent can't puppet its harness.
+- `measurement-backend.js` — the `bench` MCP server: VISION v2's bet made
+  testable. A grounding-sensitive task suite (the synthetic "Kestrel" service
+  fleet, whose entities exist only in the seed) run three ways —
+  ungrounded-cheap / grounded-cheap / frontier — with `bench_seed` (load the
+  graph), `bench_tasks` (enqueue as a burst), `bench_grade` (objective
+  scoring), `bench_record` + `bench_report` (success rate and cost per
+  completed task). Only the LLM calls cost tokens; seed/grade/cost-math are
+  free and verified. Protocol: `../docs/measurement.md`.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.
