@@ -40,6 +40,18 @@ and BYO-key storage in localStorage.
   components' REST dialect (`inpage://quipu/query|shapes|entity_history|graph`)
   into wasm tool calls, so the explorer reads the live OPFS store with zero
   network. Click a graph node for its entity view.
+- `creel-fleet.js` — fleet mode (VISION v1, first cut): agents as browser
+  tabs. `fleet_spawn` opens each agent in its own tab
+  (`#creel-agent=<id>`), which inherits the operator's key/model/MCP
+  servers via same-origin localStorage, injects its task, and runs. The
+  platform does the scheduling: IndexedDB task queue, Web Locks liveness
+  (a dead tab's lock releases → status `dead`), BroadcastChannel fleet
+  bus. Completion is agent-driven via `fleet_report`; `fleet_status` /
+  `fleet_abort` / `fleet_clear` round it out, and the 🧺 fleet button
+  opens a dashboard (live agent list, results, manual spawn — also the
+  user-gesture path when the popup blocker holds agent-initiated spawns;
+  or allow popups for this origin once). Agent tabs get in-memory quipu
+  (the OPFS pool is single-owner).
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.
