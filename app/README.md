@@ -77,6 +77,14 @@ and BYO-key storage in localStorage.
   creel's own interface from user demands — credential fields are refused
   by design. (d) **Visible hands**: every click and input flashes a
   highlight ring — cyan for the human, orange for the agent.
+- `browser-backend.js` — the `browser` MCP server: drive cross-origin web
+  pages (list/open tabs, navigate, read, query, click, fill) via the
+  companion **creel bridge** Chrome extension (`../extension/`, MV3). The
+  static page is CORS-bound and can't reach other origins; the extension's
+  background worker can, and this server relays to it over postMessage
+  through a content-script trust boundary. Without the extension the server
+  offers only `browser_status` (graceful degradation); the extension refuses
+  to act on creel's own origins so an agent can't puppet its harness.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.

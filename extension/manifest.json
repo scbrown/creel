@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "creel bridge",
+  "version": "0.1.0",
+  "description": "Lets creel agents drive cross-origin web pages the static creel page cannot reach on its own.",
+  "permissions": ["tabs", "scripting", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://scbrown.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["creel-connector.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": { "128": "icons/icon-128.png" }
+}
