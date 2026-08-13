@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" width="200" alt="creel logo — a wooden creel frame holds five colored bobbins, each paying out its thread in parallel through the eyelets of a guide bar toward the warp"/>
+</p>
+
 <h1 align="center">creel</h1>
 
 <p align="center">

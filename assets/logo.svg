@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">creel</title>
+  <desc id="desc">A warping creel: a wooden frame holds five bobbins, one in each of the family's thread colors, and each pays out its thread in parallel. The threads converge through the eyelets of a guide bar and run on together toward the warp — the frame doesn't spin and doesn't weave; it holds the threads in tension while the work happens.</desc>
+  <defs>
+    <!-- Frame wood, matching the quipu main cord -->
+    <linearGradient id="wood" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5E3C"/>
+      <stop offset="50%" stop-color="#A0714F"/>
+      <stop offset="100%" stop-color="#8B5E3C"/>
+    </linearGradient>
+    <linearGradient id="woodV" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#A0714F"/>
+      <stop offset="50%" stop-color="#8B5E3C"/>
+      <stop offset="100%" stop-color="#725039"/>
+    </linearGradient>
+    <!-- The family thread palette -->
+    <linearGradient id="str1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E07A5F"/><stop offset="100%" stop-color="#C45B3C"/>
+    </linearGradient>
+    <linearGradient id="str2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3D85C6"/><stop offset="100%" stop-color="#2A6BAD"/>
+    </linearGradient>
+    <linearGradient id="str3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#81B29A"/><stop offset="100%" stop-color="#5E9B7E"/>
+    </linearGradient>
+    <linearGradient id="str4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F2CC8F"/><stop offset="100%" stop-color="#D4A95A"/>
+    </linearGradient>
+    <linearGradient id="str5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9B72AA"/><stop offset="100%" stop-color="#7D5691"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000033"/>
+    </filter>
+  </defs>
+
+  <!-- Background disc, matching quipu / camayoc / shantytown / yupana -->
+  <circle cx="256" cy="256" r="240" fill="#1a1a2e"/>
+  <circle cx="256" cy="256" r="232" fill="none" stroke="#2d2d4a" stroke-width="1.5"/>
+
+  <!-- ===== the frame: one tall rail with feet, five pegs ===== -->
+  <g filter="url(#shadow)">
+    <!-- feet -->
+    <path d="M 86 416 L 162 416" stroke="url(#wood)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 124 402 L 100 416 M 124 402 L 148 416" stroke="#8B5E3C" stroke-width="7" stroke-linecap="round"/>
+    <!-- rail -->
+    <rect x="117" y="98" width="14" height="308" rx="6" fill="url(#woodV)"/>
+    <!-- rail grain -->
+    <path d="M 124 108 V 396" stroke="#725039" stroke-width="1.5" stroke-dasharray="10 14" opacity="0.5"/>
+    <!-- pegs -->
+    <path d="M 131 150 H 158 M 131 204 H 158 M 131 258 H 158 M 131 312 H 158 M 131 366 H 158" stroke="#8B5E3C" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <!-- ===== five bobbins on the pegs, each wound in a family color ===== -->
+  <!-- bobbin: left/right flanges (wood) with wound thread between -->
+  <g filter="url(#shadow)">
+    <!-- row 1: terracotta -->
+    <rect x="158" y="136" width="42" height="28" rx="5" fill="url(#str1)"/>
+    <path d="M 166 138 V 162 M 175 137 V 163 M 184 137 V 163 M 193 138 V 162" stroke="#C45B3C" stroke-width="1.2" opacity="0.6"/>
+    <rect x="153" y="132" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <rect x="198" y="132" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <!-- row 2: blue -->
+    <rect x="158" y="190" width="42" height="28" rx="5" fill="url(#str2)"/>
+    <path d="M 166 192 V 216 M 175 191 V 217 M 184 191 V 217 M 193 192 V 216" stroke="#2A6BAD" stroke-width="1.2" opacity="0.6"/>
+    <rect x="153" y="186" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <rect x="198" y="186" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <!-- row 3: sage -->
+    <rect x="158" y="244" width="42" height="28" rx="5" fill="url(#str3)"/>
+    <path d="M 166 246 V 270 M 175 245 V 271 M 184 245 V 271 M 193 246 V 270" stroke="#5E9B7E" stroke-width="1.2" opacity="0.6"/>
+    <rect x="153" y="240" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <rect x="198" y="240" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <!-- row 4: gold -->
+    <rect x="158" y="298" width="42" height="28" rx="5" fill="url(#str4)"/>
+    <path d="M 166 300 V 324 M 175 299 V 325 M 184 299 V 325 M 193 300 V 324" stroke="#D4A95A" stroke-width="1.2" opacity="0.6"/>
+    <rect x="153" y="294" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <rect x="198" y="294" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <!-- row 5: purple -->
+    <rect x="158" y="352" width="42" height="28" rx="5" fill="url(#str5)"/>
+    <path d="M 166 354 V 378 M 175 353 V 379 M 184 353 V 379 M 193 354 V 378" stroke="#7D5691" stroke-width="1.2" opacity="0.6"/>
+    <rect x="153" y="348" width="7" height="36" rx="3" fill="url(#woodV)"/>
+    <rect x="198" y="348" width="7" height="36" rx="3" fill="url(#woodV)"/>
+  </g>
+
+  <!-- ===== threads paying out in parallel, gathered by the guide ===== -->
+  <!-- each leaves its bobbin, converges gently to an eyelet, runs on toward the warp -->
+  <path d="M 205 150 C 280 150 340 208 402 218 C 424 221 448 222 470 222" stroke="url(#str1)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M 205 204 C 280 204 340 232 402 238 C 424 240 448 241 470 241" stroke="url(#str2)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M 205 258 C 280 258 340 258 402 258 C 424 258 448 259 468 260" stroke="url(#str3)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M 205 312 C 280 312 340 284 402 278 C 424 276 448 278 470 279" stroke="url(#str4)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M 205 366 C 280 366 340 308 402 298 C 424 295 448 297 470 298" stroke="url(#str5)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+
+  <!-- the guide bar with eyelets -->
+  <g filter="url(#shadow)">
+    <rect x="396" y="188" width="12" height="144" rx="5" fill="url(#woodV)"/>
+    <path d="M 402 198 V 322" stroke="#725039" stroke-width="1.2" stroke-dasharray="8 12" opacity="0.5"/>
+  </g>
+  <g fill="none" stroke-width="3">
+    <circle cx="402" cy="218" r="6.5" stroke="#C45B3C"/>
+    <circle cx="402" cy="238" r="6.5" stroke="#2A6BAD"/>
+    <circle cx="402" cy="258" r="6.5" stroke="#5E9B7E"/>
+    <circle cx="402" cy="278" r="6.5" stroke="#D4A95A"/>
+    <circle cx="402" cy="298" r="6.5" stroke="#7D5691"/>
+  </g>
+
+  <!-- tiny dots at the thread tips, family polish -->
+  <circle cx="470" cy="222" r="2.5" fill="#C45B3C"/>
+  <circle cx="470" cy="241" r="2.5" fill="#2A6BAD"/>
+  <circle cx="468" cy="260" r="2.5" fill="#5E9B7E"/>
+  <circle cx="470" cy="279" r="2.5" fill="#D4A95A"/>
+  <circle cx="470" cy="298" r="2.5" fill="#7D5691"/>
+</svg>
