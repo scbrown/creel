@@ -31,7 +31,7 @@
   /* Shell build tag, surfaced by quipu_wasm_status so a live session can
    * prove which deploy it is actually running (stale-SW debugging). Bump
    * alongside sw.js CACHE_VERSION. */
-  window.CREEL_BUILD = 'creel-v4 (2026-08-13, self-healing wasm boot)';
+  window.CREEL_BUILD = 'creel-v9 (2026-08-13, shared fleet brain)';
 
   /* Registry for in-page MCP servers ("the inpage transport"). Each handler
    * implements handle(jsonRpcBody) -> response|null. onepagent.html routes
@@ -161,34 +161,131 @@
 
   window.CreelQuipu = CreelQuipu;
 
-  /* Boot the quipu-wasm worker and bind it as the in-page provider.
-   * Idempotent (concurrent calls share one boot); failures record
-   * lastBootError for quipu_wasm_status and can be retried (`force`) —
-   * a mid-deploy fetch or slow network shouldn't strand the session. */
+  /* ── The fleet's shared brain: one OPFS store, leader-elected ─────
+   *
+   * OPFS sync access handles only exist in DEDICATED workers (a
+   * SharedWorker cannot host the store without losing persistence), so
+   * sharing works the creel way instead: Web Locks elect a leader tab,
+   * whose dedicated worker owns the single OPFS store; every other tab
+   * RPCs to it over BroadcastChannel 'creel-quipu-rpc'. When the leader
+   * tab dies its lock releases, the next queued tab boots the store from
+   * the same OPFS bytes and takes over serving. No locks API → plain
+   * per-tab store, as before. */
+  const STORE_LOCK = 'creel-quipu-store';
+  const RPC_BC = new BroadcastChannel('creel-quipu-rpc');
+  const TAB_ID = Math.random().toString(36).slice(2, 10);
+  let workerRpc = null;   // direct rpc when this tab hosts the worker
+
+  function bootDedicatedWorker() {
+    const w = new Worker('quipu-worker.js', { type: 'module' });
+    let nextId = 1;
+    const pending = new Map();
+    w.onmessage = (e) => {
+      const p = pending.get(e.data.id);
+      if (!p) return;
+      pending.delete(e.data.id);
+      e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
+    };
+    w.onerror = (e) => console.warn('quipu worker error', e.message || e);
+    return (op, args) => new Promise((resolve, reject) => {
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      w.postMessage({ id, op, args });
+    });
+  }
+
+  function serveFleet() {
+    RPC_BC.addEventListener('message', async (e) => {
+      const m = e.data;
+      if (m?.type !== 'req' || !workerRpc) return;
+      try {
+        const result = await workerRpc(m.op, m.args);
+        RPC_BC.postMessage({ type: 'res', reqId: m.reqId, ok: true, result });
+      } catch (err) {
+        RPC_BC.postMessage({ type: 'res', reqId: m.reqId, ok: false, error: err.message || String(err) });
+      }
+    });
+  }
+
+  const clientPending = new Map();
+  RPC_BC.addEventListener('message', (e) => {
+    const m = e.data;
+    if (m?.type !== 'res') return;
+    const p = clientPending.get(m.reqId);
+    if (!p) return;
+    clientPending.delete(m.reqId);
+    m.ok ? p.resolve(m.result) : p.reject(new Error(m.error));
+  });
+  let clientSeq = 0;
+  function fleetRpc(op, args) {
+    return new Promise((resolve, reject) => {
+      const reqId = `${TAB_ID}-${clientSeq++}`;
+      clientPending.set(reqId, { resolve, reject });
+      setTimeout(() => {
+        if (clientPending.has(reqId)) {
+          clientPending.delete(reqId);
+          reject(new Error('fleet store RPC timeout — leader tab may have just died; retry'));
+        }
+      }, 20000);
+      RPC_BC.postMessage({ type: 'req', reqId, op, args });
+    });
+  }
+
+  /** Try to become the store owner right now. Resolves true and holds the
+   *  lock forever if we got it; false if another tab has it. */
+  function tryAcquireStore() {
+    if (!navigator.locks) return Promise.resolve('nolocks');
+    return new Promise((resolve) => {
+      navigator.locks.request(STORE_LOCK, { ifAvailable: true }, (lock) => {
+        if (!lock) { resolve(false); return; }
+        resolve(true);
+        return new Promise(() => {});   // hold while this tab lives
+      }).catch(() => resolve('nolocks'));
+    });
+  }
+
+  /** Queue for takeover: fires if/when the current leader tab dies. */
+  function queueTakeover() {
+    if (!navigator.locks) return;
+    navigator.locks.request(STORE_LOCK, async () => {
+      console.log('creel: quipu store leader died — this tab is taking over');
+      workerRpc = bootDedicatedWorker();
+      await workerRpc('init');
+      serveFleet();
+      return new Promise(() => {});     // hold while this tab lives
+    }).catch(() => {});
+  }
+
+  /* Boot the quipu-wasm store binding. Idempotent (concurrent calls share
+   * one boot); failures record lastBootError for quipu_wasm_status and can
+   * be retried (`force`). */
   let bootPromise = null;
   CreelQuipu.ensureWasm = function ensureWasm(force = false) {
     if (this.provider) return Promise.resolve(true);
     if (bootPromise && !force) return bootPromise;
     bootPromise = (async () => {
-      let worker;
       const probe = await fetch('wasm/pkg/creel_quipu_provider.js', { method: 'HEAD' });
       if (!probe.ok) throw new Error(`wasm bundle missing (HTTP ${probe.status})`);
-      worker = new Worker('quipu-worker.js', { type: 'module' });
 
-      let nextId = 1;
-      const pending = new Map();
-      worker.onmessage = (e) => {
-        const p = pending.get(e.data.id);
-        if (!p) return;
-        pending.delete(e.data.id);
-        e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
-      };
-      worker.onerror = (e) => console.warn('quipu-worker error', e.message || e);
-      const rpc = (op, args) => new Promise((resolve, reject) => {
-        const id = nextId++;
-        pending.set(id, { resolve, reject });
-        worker.postMessage({ id, op, args });
-      });
+      const acquired = await tryAcquireStore();
+      let rpc; let scope;
+      if (acquired === true) {
+        workerRpc = bootDedicatedWorker();
+        serveFleet();
+        rpc = (op, args) => workerRpc(op, args);
+        scope = 'fleet-host';
+      } else if (acquired === false) {
+        // Dynamic: if this tab later wins the takeover lock, workerRpc
+        // appears and calls transparently switch from the bus to the
+        // locally-hosted store.
+        rpc = (op, args) => (workerRpc ? workerRpc(op, args) : fleetRpc(op, args));
+        scope = 'fleet-client';
+        queueTakeover();
+      } else {
+        workerRpc = bootDedicatedWorker();
+        rpc = (op, args) => workerRpc(op, args);
+        scope = 'tab';
+      }
 
       const { persistence } = await rpc('init');
       const EXPORT_TOOL = {
@@ -204,7 +301,7 @@
         },
       };
       await CreelQuipu.bindProvider({
-        serverInfo: { name: `quipu-wasm (${persistence})`, version: '0' },
+        serverInfo: { name: `quipu-wasm (${persistence}, ${scope})`, version: '0' },
         listTools: async () => [...await rpc('tools'), EXPORT_TOOL],
         callTool: async (name, args) => {
           if (name === EXPORT_TOOL.name) {
@@ -220,7 +317,7 @@
       CreelQuipu.importDb = (bytes) => rpc('import', { bytes });
       CreelQuipu.entityHistory = (iri) => rpc('entity_history', { iri });
       CreelQuipu.lastBootError = null;
-      console.log(`creel: quipu-wasm bound (${persistence})`);
+      console.log(`creel: quipu-wasm bound (${persistence}, ${scope})`);
       return true;
     })();
     bootPromise.catch((e) => {

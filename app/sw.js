@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v8';
+const CACHE_VERSION = 'creel-v9';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './quipu-explorer.js',
   './creel-fleet.js',
   './quipu-worker.js',
+  './quipu-store-core.js',
   './wasm/pkg/creel_quipu_provider.js',
   './wasm/pkg/creel_quipu_provider_bg.wasm',
   './vendor/quipu-ui/quipu-components.js',
@@ -45,6 +46,7 @@ const NETWORK_FIRST = [
   './quipu-explorer.js',
   './creel-fleet.js',
   './quipu-worker.js',
+  './quipu-store-core.js',
   './wasm/pkg/creel_quipu_provider.js',
 ];
 const NETWORK_FIRST_URLS = new Set(NETWORK_FIRST.map((p) => new URL(p, self.location.href).href));

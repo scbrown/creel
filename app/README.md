@@ -50,8 +50,13 @@ and BYO-key storage in localStorage.
   `fleet_abort` / `fleet_clear` round it out, and the 🧺 fleet button
   opens a dashboard (live agent list, results, manual spawn — also the
   user-gesture path when the popup blocker holds agent-initiated spawns;
-  or allow popups for this origin once). Agent tabs get in-memory quipu
-  (the OPFS pool is single-owner).
+  or allow popups for this origin once). **The fleet shares one brain**:
+  Web Locks elect a leader tab whose dedicated worker owns the single
+  OPFS quipu store (sync access handles don't exist in SharedWorkers);
+  every other tab RPCs to it over BroadcastChannel — an episode written
+  in any tab is instantly queryable in all of them, and if the leader
+  tab dies the next tab takes the lock and re-opens the same OPFS bytes.
+  `quipu_wasm_status` shows the role (`fleet-host` / `fleet-client`).
   **Cross-tab comms**: `fleet_send({to, message})` delivers into the target
   agent's conversation (as mid-run guidance its LLM sees at the next loop
   step — task id, label, or `"dashboard"` as address); `fleet_send`
