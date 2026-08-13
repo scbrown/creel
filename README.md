@@ -97,7 +97,11 @@ A first cut of v0 lives in [`app/`](app/README.md): a vendored fork of the
 MIT-licensed [OnePagent](https://github.com/sligter/OnePagent) single-file
 harness (`just serve`), extended with a quipu transport switch
 (`app/quipu-backend.js`) — knowledge tools reach the agent over MCP from
-bobbin's server today, and bind to in-page quipu-wasm when it lands — plus
+bobbin's server today, and bind to in-page quipu-wasm when it lands — a
+structural twin (`app/yupana-backend.js`):
+[yupana](https://github.com/scbrown/yupana)'s tree-sitter analysis core
+compiled to wasm (`wasm/yupana-provider/`), serving symbols, references and
+call edges over the files an agent loads in-page — plus
 DeepSeek connectivity direct from the page (CORS shims in
 [`proxy/`](proxy/) kept as fallback). VISION.md's
 fork-vs-greenfield note predates finding OnePagent; vendoring it as the v0

@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v14';
+const CACHE_VERSION = 'creel-v15';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -30,8 +30,11 @@ const APP_SHELL = [
   './browser-backend.js',
   './quipu-worker.js',
   './quipu-store-core.js',
+  './yupana-backend.js',
   './wasm/pkg/creel_quipu_provider.js',
   './wasm/pkg/creel_quipu_provider_bg.wasm',
+  './wasm/yupana-pkg/creel_yupana_provider.js',
+  './wasm/yupana-pkg/creel_yupana_provider_bg.wasm',
   './vendor/quipu-ui/quipu-components.js',
   './vendor/quipu-ui/graph-canvas.js',
   './vendor/marked.min.js',
@@ -51,7 +54,8 @@ const NETWORK_FIRST = [
   './browser-backend.js',
   './quipu-worker.js',
   './quipu-store-core.js',
-  './wasm/pkg/creel_quipu_provider.js',
+  './yupana-backend.js',
+  './wasm/yupana-pkg/creel_yupana_provider.js',
 ];
 const NETWORK_FIRST_URLS = new Set(NETWORK_FIRST.map((p) => new URL(p, self.location.href).href));
 const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));

@@ -1,0 +1,17 @@
+# Browser-only crate.
+#
+# The CFLAGS are yupana's documented wasm recipe (its docs/book "Browser /
+# WASM Builds" page): tree-sitter's C runtime and the grammar scanners
+# compile against wasi-libc's headers with tree-sitter's own __wasi__ guard
+# defined, and yupana's build.rs links the in-memory half of libc.a
+# (override the lib dir with YUPANA_WASI_LIBC_DIR). Needs the wasi-libc
+# package installed (Debian/Ubuntu: `apt-get install wasi-libc`).
+[build]
+target = "wasm32-unknown-unknown"
+
+[env]
+CFLAGS_wasm32_unknown_unknown = "-isystem /usr/include/wasm32-wasi -D__wasi__"
+
+# libgit2 can't traverse authenticating proxies; the git CLI can.
+[net]
+git-fetch-with-cli = true

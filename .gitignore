@@ -13,3 +13,4 @@ wasm/quipu-provider/target/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+wasm/yupana-provider/target/

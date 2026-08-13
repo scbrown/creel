@@ -11,6 +11,7 @@ proxy port="8421":
 # Syntax-check the creel-authored JS and the shell
 check:
     node --check app/quipu-backend.js
+    node --check app/yupana-backend.js
     node --check app/sw.js
     node --check proxy/deepseek-cors-worker.js
     python3 -m py_compile proxy/local-proxy.py

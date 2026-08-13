@@ -1,0 +1,47 @@
+# creel's in-page yupana provider (the structural half of in-page grounding,
+# next to wasm/quipu-provider's knowledge half).
+#
+# Exposes yupana's analysis core — tree-sitter extraction over an in-memory
+# project — as an MCP tool surface via wasm-bindgen: tool_definitions() and a
+# call_tool() dispatch, the same provider contract quipu-backend.js documents.
+#
+# Unlike quipu, yupana's native tool schemas live behind its `mcp` feature
+# (rmcp/tokio — native-only), so the schemas here are authored in this crate's
+# lib.rs, adjacent to the dispatch they describe. Response shapes mirror
+# yupana's src/mcp/tools.rs DTOs field-for-field where a tool exists on both
+# sides; keep them aligned when yupana's surface moves.
+#
+# Rebuild (needs the wasi-libc package + a wasm-bindgen CLI matching the
+# pinned wasm-bindgen version below):
+#   cargo build --release
+#   wasm-bindgen target/wasm32-unknown-unknown/release/creel_yupana_provider.wasm \
+#     --target web --out-dir ../../app/wasm/yupana-pkg
+[package]
+name = "creel-yupana-provider"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Tracks the yupana wasm-support branch until it merges; flip to
+# branch = "main" then (Cargo.lock pins the exact commit either way;
+# `cargo update -p yupana` to bump). langs-extra so browser agents get
+# TypeScript/Python/Go/Java/C++ next to Rust — the languages they
+# actually write.
+yupana = { git = "https://github.com/scbrown/yupana", branch = "claude/yupana-wasm-support-6lg1t1", default-features = false, features = ["langs-extra"] }
+# Pinned exactly: the wasm-bindgen CLI that post-processes the cdylib must
+# match the crate version, and the CLI is installed out-of-band.
+wasm-bindgen = "=0.2.127"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# Size matters here (this ships to GitHub Pages); mirror quipu-provider.
+opt-level = "z"
+lto = true
+strip = true
