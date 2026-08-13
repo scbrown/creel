@@ -28,6 +28,11 @@
 (function () {
   'use strict';
 
+  /* Shell build tag, surfaced by quipu_wasm_status so a live session can
+   * prove which deploy it is actually running (stale-SW debugging). Bump
+   * alongside sw.js CACHE_VERSION. */
+  window.CREEL_BUILD = 'creel-v4 (2026-08-13, self-healing wasm boot)';
+
   /* Registry for in-page MCP servers ("the inpage transport"). Each handler
    * implements handle(jsonRpcBody) -> response|null. onepagent.html routes
    * `type: 'inpage'` servers here by their `url` (e.g. 'inpage:github'). */
@@ -88,20 +93,30 @@
           }
           case 'tools/call': {
             const { name, arguments: args } = body.params || {};
+            // Self-heal: a transient boot failure (mid-deploy fetch, slow
+            // network) shouldn't strand the session — retry the bind on use.
+            if (!this.provider && typeof this.ensureWasm === 'function') {
+              await this.ensureWasm(true).catch(() => {});
+            }
+            if (name === STATUS_TOOL.name) {
+              return reply({
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    bound: !!this.provider,
+                    build: window.CREEL_BUILD || 'unknown',
+                    server: this.provider?.serverInfo?.name,
+                    bootError: this.lastBootError || undefined,
+                    hint: this.provider
+                      ? 'quipu tools are live in-page; call them directly'
+                      : 'quipu-wasm not loaded (see bootError); the bobbin MCP '
+                        + 'server (streamable_http) is the network alternative',
+                  }),
+                }],
+              });
+            }
             if (!this.provider) {
-              if (name === STATUS_TOOL.name) {
-                return reply({
-                  content: [{
-                    type: 'text',
-                    text: JSON.stringify({
-                      bound: false,
-                      hint: 'quipu-wasm not loaded; use the bobbin MCP server '
-                        + '(streamable_http) for knowledge tools',
-                    }),
-                  }],
-                });
-              }
-              return fail(`quipu-wasm provider not bound; cannot call ${name}`);
+              return fail(`quipu-wasm provider not bound (${this.lastBootError || 'boot not attempted'}); cannot call ${name}`);
             }
             const result = await this.provider.callTool(name, args || {});
             return reply({
@@ -146,33 +161,35 @@
 
   window.CreelQuipu = CreelQuipu;
 
-  /* Boot the quipu-wasm worker and bind it as the in-page provider. If the
-   * wasm bundle isn't deployed (404) or the browser can't run it, we stay
-   * unbound and quipu_wasm_status keeps reporting so — never a hard failure. */
-  async function bootWasmProvider() {
-    let worker;
-    try {
+  /* Boot the quipu-wasm worker and bind it as the in-page provider.
+   * Idempotent (concurrent calls share one boot); failures record
+   * lastBootError for quipu_wasm_status and can be retried (`force`) —
+   * a mid-deploy fetch or slow network shouldn't strand the session. */
+  let bootPromise = null;
+  CreelQuipu.ensureWasm = function ensureWasm(force = false) {
+    if (this.provider) return Promise.resolve(true);
+    if (bootPromise && !force) return bootPromise;
+    bootPromise = (async () => {
+      let worker;
       const probe = await fetch('wasm/pkg/creel_quipu_provider.js', { method: 'HEAD' });
-      if (!probe.ok) return;
+      if (!probe.ok) throw new Error(`wasm bundle missing (HTTP ${probe.status})`);
       worker = new Worker('quipu-worker.js', { type: 'module' });
-    } catch (e) { return; }
 
-    let nextId = 1;
-    const pending = new Map();
-    worker.onmessage = (e) => {
-      const p = pending.get(e.data.id);
-      if (!p) return;
-      pending.delete(e.data.id);
-      e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
-    };
-    worker.onerror = (e) => console.warn('quipu-worker error', e.message || e);
-    const rpc = (op, args) => new Promise((resolve, reject) => {
-      const id = nextId++;
-      pending.set(id, { resolve, reject });
-      worker.postMessage({ id, op, args });
-    });
+      let nextId = 1;
+      const pending = new Map();
+      worker.onmessage = (e) => {
+        const p = pending.get(e.data.id);
+        if (!p) return;
+        pending.delete(e.data.id);
+        e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
+      };
+      worker.onerror = (e) => console.warn('quipu-worker error', e.message || e);
+      const rpc = (op, args) => new Promise((resolve, reject) => {
+        const id = nextId++;
+        pending.set(id, { resolve, reject });
+        worker.postMessage({ id, op, args });
+      });
 
-    try {
       const { persistence } = await rpc('init');
       await CreelQuipu.bindProvider({
         serverInfo: { name: `quipu-wasm (${persistence})`, version: '0' },
@@ -181,15 +198,20 @@
       });
       CreelQuipu.exportDb = () => rpc('export');
       CreelQuipu.importDb = (bytes) => rpc('import', { bytes });
+      CreelQuipu.lastBootError = null;
       console.log(`creel: quipu-wasm bound (${persistence})`);
-    } catch (e) {
+      return true;
+    })();
+    bootPromise.catch((e) => {
+      CreelQuipu.lastBootError = e && e.message ? e.message : String(e);
       console.warn('creel: quipu-wasm init failed, staying unbound', e);
-    }
-  }
+    });
+    return bootPromise;
+  };
 
   function start() {
     CreelQuipu.registerDefaults();
-    bootWasmProvider();
+    CreelQuipu.ensureWasm().catch(() => {});
   }
 
   if (document.readyState === 'loading') {
