@@ -160,7 +160,11 @@ threads; a frontier model is a per-thread choice, not an architecture change.
   for v1's execution tool.
 - Whether the quipu snapshot is fetched whole (fine at modest graph sizes) or
   windowed by the burst's topic via one server-side search first.
-- Fork-vs-greenfield was considered and settled: greenfield. bolt.diy's value
-  is its server-shaped scaffolding and UI, which creel deletes; specific proven
-  pieces (WebContainer wiring, streamed-artifact parsing) can be lifted with
-  attribution under MIT when needed.
+- Fork-vs-greenfield: originally settled as greenfield, when the only fork
+  candidate was bolt.diy — whose value is server-shaped scaffolding creel
+  deletes. That note predated finding [OnePagent](https://github.com/sligter/OnePagent),
+  a fully client-side single-file harness with no server anywhere in its
+  architecture. Re-settled 2026-08-13 (Stiwi): the v0 shell is a vendored
+  OnePagent fork (`app/`), extended with the quipu transport switch. The
+  greenfield reasoning still governs anything server-shaped: creel takes no
+  component that requires an operated process.
