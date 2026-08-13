@@ -13,3 +13,7 @@ wasm/quipu-provider/target/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Beads runtime state (per-machine, created by bd)
+.beads.gate.lock
+.beads/.auto-import-issues.jsonl
