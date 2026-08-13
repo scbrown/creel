@@ -93,6 +93,15 @@ Vision stage — see [docs/VISION.md](docs/VISION.md) for the full architecture,
 constraints, and phasing (v0: one tab, many loops → v1: the multi-tab creel →
 v2: grounded cheap agents → v3: burst ergonomics).
 
+A first cut of v0 lives in [`app/`](app/README.md): a vendored fork of the
+MIT-licensed [OnePagent](https://github.com/sligter/OnePagent) single-file
+harness (`just serve`), extended with a quipu transport switch
+(`app/quipu-backend.js`) — knowledge tools reach the agent over MCP from
+bobbin's server today, and bind to in-page quipu-wasm when it lands — plus
+DeepSeek connectivity via a CORS shim ([`proxy/`](proxy/)). VISION.md's
+fork-vs-greenfield note predates finding OnePagent; vendoring it as the v0
+shell was chosen 2026-08-13.
+
 ## License
 
 [MIT](LICENSE)

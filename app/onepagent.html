@@ -19,7 +19,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='a' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff6b35' stop-opacity='0.18'/><stop offset='1' stop-color='%23ff3399' stop-opacity='0.06'/></linearGradient><linearGradient id='b' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040'/><stop offset='1' stop-color='%23ff3399'/></linearGradient><linearGradient id='c' x1='7' y1='10' x2='16' y2='17' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040' stop-opacity='0.9'/><stop offset='1' stop-color='%23aa66ff' stop-opacity='0.9'/></linearGradient><radialGradient id='d' cx='40%25' cy='35%25'><stop stop-color='%23ffb070'/><stop offset='1' stop-color='%23cc1f77'/></radialGradient></defs><path d='M5 3H15L19 7V20A1 1 0 0 1 18 21H5A1 1 0 0 1 4 20V4A1 1 0 0 1 5 3Z' fill='url(%23a)' stroke='url(%23b)' stroke-width='1.1' stroke-linejoin='round'/><path d='M15 3V7H19' stroke='url(%23b)' stroke-width='1.1' fill='none' stroke-linejoin='round'/><circle cx='11.5' cy='13' r='2.6' fill='url(%23d)'/><circle cx='7' cy='10' r='0.9' fill='%23ff6b35'/><circle cx='16' cy='11' r='0.9' fill='%2300d4ff'/><circle cx='8' cy='17' r='0.9' fill='%23aa66ff'/><circle cx='15' cy='17' r='0.9' fill='%2300ff88'/><path d='M7 10L11.5 13L16 11M8 17L11.5 13L15 17' stroke='url(%23c)' stroke-width='0.9' stroke-linecap='round' fill='none' opacity='0.85'/></svg>">
-<script crossorigin="anonymous" src="https://cdn.bootcdn.net/ajax/libs/marked/11.1.1/marked.min.js"></script>
+<script crossorigin="anonymous" src="vendor/marked.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    Inlined from pretext-chat.js — Pretext text-layout engine + Markdown renderer
@@ -415,8 +415,8 @@ function ptDomRule() {
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/pyodide/v314.0.0/full/pyodide.js"></script>
-<link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-<script crossorigin="anonymous" src="https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="vendor/github-dark.min.css">
+<script crossorigin="anonymous" src="vendor/highlight.min.js"></script>
 <link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1129,7 +1129,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
   var t = localStorage.getItem('ba_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', t);
   var hl = document.getElementById('hljsTheme');
-  if (hl && t === 'light') hl.href = 'https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+  if (hl && t === 'light') hl.href = 'vendor/github.min.css';
 })();
 function toggleTheme() {
   var cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1137,7 +1137,7 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   try { localStorage.setItem('ba_theme', next); } catch {}
   var hl = document.getElementById('hljsTheme');
-  if (hl) hl.href = 'https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/styles/github' + (next === 'light' ? '' : '-dark') + '.min.css';
+  if (hl) hl.href = 'vendor/github' + (next === 'light' ? '' : '-dark') + '.min.css';
   updateThemeLabel(next);
 }
 function updateThemeLabel(theme) {
@@ -9179,7 +9179,9 @@ async function _mcpSsePost(server, body) {
 // ── Unified RPC entry points ──────────────────────────────────────
 async function _mcpCall(server, method, params) {
   const body = { jsonrpc: '2.0', id: _mcpGenRpcId(), method, params: params || {} };
-  const msg = server.type === 'sse' ? await _mcpSsePost(server, body) : await _mcpStreamableRequest(server, body);
+  // creel: 'inpage' servers dispatch to an in-page provider (quipu-backend.js).
+  const msg = server.type === 'inpage' ? await window.CreelQuipu.handle(body)
+    : server.type === 'sse' ? await _mcpSsePost(server, body) : await _mcpStreamableRequest(server, body);
   if (!msg) return null;
   if (msg.error) throw new Error(msg.error.message || 'RPC error');
   return msg.result;
@@ -9187,7 +9189,8 @@ async function _mcpCall(server, method, params) {
 
 async function _mcpNotify(server, method, params) {
   const body = { jsonrpc: '2.0', method, params: params || {} };
-  if (server.type === 'sse') await _mcpSsePost(server, body);
+  if (server.type === 'inpage') await window.CreelQuipu.handle(body);
+  else if (server.type === 'sse') await _mcpSsePost(server, body);
   else await _mcpStreamableRequest(server, body);
 }
 
@@ -9257,6 +9260,7 @@ function _mcpGenServerId() { return 'mcp_' + Date.now().toString(36) + Math.rand
 
 function _mcpNormalizeType(t) {
   const v = String(t || '').toLowerCase();
+  if (v === 'inpage') return 'inpage';
   if (v === 'sse') return 'sse';
   if (v === 'streamable_http' || v === 'streamable-http' || v === 'http' || v === 'streamableHttp'.toLowerCase() || v === '') return 'streamable_http';
   return null;
@@ -18695,5 +18699,6 @@ try {
   }
 } catch (e) { console.warn('CronScheduler.start failed', e); }
 </script>
+<script src="quipu-backend.js"></script>
 </body>
 </html>

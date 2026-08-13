@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'creel-v1';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -21,11 +21,14 @@ const APP_SHELL = [
   './icons/icon-192-maskable.png',
   './icons/icon-512-maskable.png',
   './icons/icon-180.png',
+  './quipu-backend.js',
+  './vendor/marked.min.js',
+  './vendor/highlight.min.js',
+  './vendor/github.min.css',
+  './vendor/github-dark.min.css',
 ];
 
-const CDN_PREFETCH = [
-  'https://cdn.bootcdn.net/ajax/libs/marked/11.1.1/marked.min.js',
-];
+const CDN_PREFETCH = [];
 const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
 const CDN_URLS = new Set(CDN_PREFETCH);
 
