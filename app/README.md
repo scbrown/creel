@@ -52,6 +52,13 @@ and BYO-key storage in localStorage.
   user-gesture path when the popup blocker holds agent-initiated spawns;
   or allow popups for this origin once). Agent tabs get in-memory quipu
   (the OPFS pool is single-owner).
+  **Cross-tab comms**: `fleet_send({to, message})` delivers into the target
+  agent's conversation (as mid-run guidance its LLM sees at the next loop
+  step — task id, label, or `"dashboard"` as address); `fleet_send`
+  without `to` broadcasts to every tab's inbox only (`fleet_inbox` reads
+  it) — the asymmetry keeps agent pairs from auto-injection ping-pong.
+  Messages always land in the inbox as well, so nothing is lost if the
+  target is between runs; the dashboard shows a live comms log.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.

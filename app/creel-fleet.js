@@ -85,7 +85,49 @@
       + `${t.label ? `, label: ${t.label}` : ''}). Work autonomously. When the task is`
       + ' complete, call the fleet_report tool with a concise result summary in the'
       + ' `result` argument. If you cannot complete it, call fleet_report with a'
-      + ' result starting "FAILED:" explaining why.';
+      + ' result starting "FAILED:" explaining why.'
+      + '\nFleet comms: fleet_send({to, message}) delivers a message INTO another'
+      + ' agent\'s conversation (to = task id or label, or "dashboard" for the'
+      + ' operator tab); fleet_send({message}) without `to` broadcasts to every'
+      + ' inbox instead. Check fleet_inbox for broadcasts and anything received'
+      + ' while you were busy. fleet_status lists the other agents.';
+  }
+
+  // ── cross-tab comms ──────────────────────────────────────────────
+  const inbox = [];
+  const commsLog = [];
+  const myLabelPromise = MY_TASK_ID ? getTask(MY_TASK_ID).then((t) => t?.label || MY_TASK_ID) : null;
+
+  function logComms(m) {
+    commsLog.push(m);
+    if (commsLog.length > 50) commsLog.shift();
+    if (overlay) renderDashboard();
+  }
+
+  /** Deliver a directed message into this tab's conversation as guidance —
+   *  the harness treats a send during a run as a non-interrupting guide, so
+   *  the LLM actually sees it without polling. Preserves any half-typed
+   *  operator input. */
+  function injectMessage(m) {
+    const input = document.getElementById('userInput');
+    if (!input || typeof handleSend !== 'function') { inbox.push(m); return; }
+    const stash = input.value;
+    input.value = `[fleet message from ${m.fromLabel || m.from}] ${m.text}`;
+    if (typeof handleInputChange === 'function') handleInputChange(input);
+    handleSend();
+    input.value = stash;
+    if (typeof handleInputChange === 'function') handleInputChange(input);
+  }
+
+  async function onFleetMsg(m) {
+    logComms(m);
+    const myLabel = myLabelPromise ? await myLabelPromise : null;
+    const me = MY_TASK_ID ? [MY_TASK_ID, myLabel] : ['dashboard'];
+    if (!m.to) { inbox.push(m); return; }              // broadcast → inbox only
+    if (!me.includes(m.to)) return;                    // not addressed to us
+    if (m.to === 'dashboard') { inbox.push(m); return; } // never hijack the operator's chat
+    inbox.push(m);
+    injectMessage(m);
   }
 
   // ── in-page MCP server: 'fleet' ──────────────────────────────────
@@ -115,6 +157,27 @@
         type: 'object',
         properties: { result: { type: 'string', description: 'concise result summary' } },
         required: ['result'],
+      },
+    },
+    {
+      name: 'fleet_send',
+      description: 'Send a message across the fleet. With `to` (a task id, label, or "dashboard"), the message is delivered INTO that agent tab\'s conversation so its LLM sees it immediately. Without `to`, it broadcasts to every tab\'s inbox (read with fleet_inbox) — use broadcasts for status, directed sends for coordination.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: 'target task id, label, or "dashboard" (omit to broadcast)' },
+          message: { type: 'string' },
+        },
+        required: ['message'],
+      },
+    },
+    {
+      name: 'fleet_inbox',
+      description: 'Read this tab\'s fleet messages (broadcasts, and directed messages received). Pass clear:true to drain after reading.',
+      inputSchema: {
+        type: 'object',
+        properties: { clear: { type: 'boolean' } },
+        required: [],
       },
     },
     {
@@ -175,6 +238,34 @@
       await putTask(t);
       notify();
       return { ok: true, reported: t.status };
+    },
+
+    async fleet_send(args) {
+      const myLabel = myLabelPromise ? await myLabelPromise : null;
+      const m = {
+        type: 'msg',
+        from: MY_TASK_ID || 'dashboard',
+        fromLabel: MY_TASK_ID ? (myLabel || MY_TASK_ID) : 'dashboard',
+        to: args.to || null,
+        text: args.message,
+        ts: Date.now(),
+      };
+      if (args.to && args.to !== 'dashboard') {
+        // Resolve label → confirm the target exists (id or label).
+        const tasks = await allTasks();
+        const target = tasks.find((t) => t.id === args.to || t.label === args.to);
+        if (!target) throw new Error(`no fleet agent matches ${JSON.stringify(args.to)} — see fleet_status`);
+        m.to = target.id === args.to ? target.id : target.label;
+      }
+      logComms(m);
+      BC.postMessage(m);
+      return { sent: true, to: m.to || 'broadcast' };
+    },
+
+    async fleet_inbox(args) {
+      const msgs = inbox.map(({ from, fromLabel, to, text, ts }) => ({ from: fromLabel || from, to: to || 'broadcast', text, ts }));
+      if (args && args.clear) inbox.length = 0;
+      return { count: msgs.length, messages: msgs };
     },
 
     async fleet_abort(args) {
@@ -322,6 +413,18 @@
       if (t.result) row.appendChild(h('div', 'color:#cfd2d6;font-size:12px;margin-top:6px;border-top:1px dashed #2a2a3a;padding-top:6px;white-space:pre-wrap;', t.result.slice(0, 500)));
       list.appendChild(row);
     }
+
+    const comms = overlay.querySelector('#creelFleetComms');
+    if (comms) {
+      comms.textContent = '';
+      comms.appendChild(h('div', 'color:#e0af68;font-weight:600;margin-bottom:4px;', 'comms'));
+      if (!commsLog.length) comms.appendChild(h('div', 'color:#8892a4;', 'no fleet messages yet'));
+      for (const m of commsLog.slice(-15).reverse()) {
+        comms.appendChild(h('div', 'color:#8892a4;margin:2px 0;',
+          `${new Date(m.ts).toLocaleTimeString()} · ${m.fromLabel || m.from} → ${m.to || 'all'}: `,
+          h('span', 'color:#cfd2d6;', m.text.slice(0, 120))));
+      }
+    }
   }
 
   function openDashboard() {
@@ -338,6 +441,10 @@
     const list = h('div', 'flex:1;overflow:auto;padding:6px 12px;');
     list.id = 'creelFleetList';
     overlay.appendChild(list);
+
+    const comms = h('div', 'max-height:30%;overflow:auto;border-top:1px solid #2a2a3a;padding:6px 12px;font-size:11px;');
+    comms.id = 'creelFleetComms';
+    overlay.appendChild(comms);
 
     const form = h('div', 'border-top:1px solid #2a2a3a;padding:10px 12px;display:flex;flex-direction:column;gap:6px;');
     const label = document.createElement('input');
@@ -374,6 +481,7 @@
 
   BC.addEventListener('message', (e) => {
     if (e.data?.type === 'update' && overlay) renderDashboard();
+    if (e.data?.type === 'msg') onFleetMsg(e.data);
   });
 
   function start() {
