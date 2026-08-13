@@ -31,7 +31,13 @@ and BYO-key storage in localStorage.
   through chat, held in localStorage. Tools: `github_connect`,
   `github_status` (diffs the VFS against checked-out blob sha1s),
   `github_checkout`, `github_push` (blobs → tree on base_tree → commit →
-  fast-forward/create branch; pushes stack), `github_open_pr`.
+  fast-forward/create branch; pushes stack), `github_open_pr`,
+  `github_branches`, and `github_merge`. **Per-agent workspaces**: the
+  checkout state lives in per-tab `sessionStorage` (the token stays shared
+  in localStorage), so fleet agents editing the same repo keep independent
+  diff baselines — no clobbering. At burst end `github_merge` integrates
+  each agent's branch into a base via GitHub's server-side three-way merge,
+  reporting any conflicting branch explicitly (nothing is force-merged).
 - `quipu-explorer.js` — visual explorer for the in-page store: a floating
   "◉ graph" button opens a full-screen overlay (Graph / SPARQL / Entity /
   Timeline / Schema) built from quipu's own UI, vendored at

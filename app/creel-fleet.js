@@ -152,7 +152,13 @@
       + ' instantly. At burst end the operator may synthesize all results'
       + ' (fleet_synthesize) and write the takeaways back to the graph'
       + ' (fleet_writeback); make your fleet_report result a clean, quotable'
-      + ' summary so it composes well.';
+      + ' summary so it composes well.'
+      + '\nIf your task edits a repository, your workspace (the FILES panel and'
+      + ' its github checkout) is private to THIS tab — edit freely without'
+      + ` clobbering peers. Push to your own branch named creel/${t.label || t.id}`
+      + ' (github_push branch:"creel/' + (t.label || t.id) + '"), and report'
+      + ' that branch name in your fleet_report so the operator can github_merge'
+      + ' every agent branch at burst end.';
   }
 
   // ── cross-tab comms ──────────────────────────────────────────────

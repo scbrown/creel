@@ -29,12 +29,16 @@
 
   function token() { return localStorage.getItem(TOKEN_KEY) || ''; }
 
+  // The token is shared (localStorage) so every spawned agent inherits it,
+  // but the CHECKOUT is per-tab (sessionStorage) — this is the per-agent work
+  // dir: two agents editing the same repo in different tabs keep independent
+  // diff baselines instead of clobbering one shared checkout state.
   function loadState() {
-    try { return JSON.parse(localStorage.getItem(STATE_KEY)) || null; } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem(STATE_KEY)) || null; } catch { return null; }
   }
   function saveState(s) {
-    if (s) localStorage.setItem(STATE_KEY, JSON.stringify(s));
-    else localStorage.removeItem(STATE_KEY);
+    if (s) sessionStorage.setItem(STATE_KEY, JSON.stringify(s));
+    else sessionStorage.removeItem(STATE_KEY);
   }
 
   async function gh(path, opts = {}) {
@@ -192,6 +196,24 @@
         required: ['title', 'head'],
       },
     },
+    {
+      name: 'github_branches',
+      description: 'List the checked-out repository\'s branches (name + head sha) — e.g. to discover the branches a burst\'s agents pushed before merging them.',
+      inputSchema: { type: 'object', properties: {}, required: [] },
+    },
+    {
+      name: 'github_merge',
+      description: 'THE BURST MERGE: merge one or more head branches into a base branch on the server (real three-way git merge with conflict detection). Each head is merged in turn; a conflicting head is reported, never silently dropped. Use at burst end to integrate the branch-per-agent work. Creates the base branch from the checkout commit if it does not exist.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          base: { type: 'string', description: 'integration branch to merge into (created from the checkout commit if absent)' },
+          heads: { type: 'array', items: { type: 'string' }, description: 'branches to merge in, in order (e.g. the agents\' branches)' },
+          message: { type: 'string', description: 'merge commit message prefix (optional)' },
+        },
+        required: ['base', 'heads'],
+      },
+    },
   ];
 
   const impl = {
@@ -334,6 +356,64 @@
       return {
         pushed: true, branch: args.branch, commit: newCommit.sha,
         changed: changed.map((c) => c.rel), added: added.map((a) => a.rel), removed,
+      };
+    },
+
+    async github_branches() {
+      const state = loadState();
+      if (!state) throw new Error('nothing checked out — run github_checkout first');
+      const branches = await gh(`/repos/${state.repo}/branches?per_page=100`);
+      return { repo: state.repo, branches: branches.map((b) => ({ name: b.name, sha: b.commit.sha })) };
+    },
+
+    async github_merge(args) {
+      const state = loadState();
+      if (!state) throw new Error('nothing checked out — run github_checkout first');
+      const heads = Array.isArray(args.heads) ? args.heads : [];
+      if (!heads.length) throw new Error('no head branches to merge');
+
+      // Ensure the integration base exists; create it from the checkout commit.
+      const baseRef = `/repos/${state.repo}/git/refs/heads/${args.base}`;
+      let created = false;
+      try {
+        await gh(baseRef);
+      } catch (e) {
+        if (e.status === 404) {
+          await gh(`/repos/${state.repo}/git/refs`, {
+            method: 'POST',
+            body: JSON.stringify({ ref: `refs/heads/${args.base}`, sha: state.commitSha }),
+          });
+          created = true;
+        } else throw e;
+      }
+
+      const results = [];
+      for (const head of heads) {
+        try {
+          const merged = await gh(`/repos/${state.repo}/merges`, {
+            method: 'POST',
+            body: JSON.stringify({
+              base: args.base,
+              head,
+              commit_message: `${args.message ? args.message + ' — ' : ''}creel burst merge: ${head} into ${args.base}`,
+            }),
+          });
+          // 201 → a merge commit; the tool layer returns null for 204 (nothing to do).
+          results.push({ head, merged: true, upToDate: merged === null, sha: merged?.sha });
+        } catch (e) {
+          if (e.status === 409) results.push({ head, merged: false, conflict: true, message: e.message });
+          else if (e.status === 404) results.push({ head, merged: false, missing: true, message: e.message });
+          else results.push({ head, merged: false, error: e.message });
+        }
+      }
+      const conflicts = results.filter((r) => r.conflict).map((r) => r.head);
+      return {
+        base: args.base, baseCreated: created, results,
+        merged: results.filter((r) => r.merged).length,
+        conflicts,
+        hint: conflicts.length
+          ? `conflicts on: ${conflicts.join(', ')} — resolve on the branch (or open a PR) before re-merging; nothing was force-merged`
+          : 'all heads integrated cleanly',
       };
     },
 
