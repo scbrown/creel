@@ -414,7 +414,10 @@ function ptDomRule() {
 }
 })();
 </script>
-<script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/pyodide/v314.0.0/full/pyodide.js"></script>
+<!-- Pyodide loader is injected dynamically by ensurePyodide() with CDN-host fallback
+     (PYODIDE_CDN_HOSTS below) — no static tag, so a slow/blocked primary CDN
+     (cdn.jsdelivr.net is throttled or blocked on some networks, notably mainland
+     China) can no longer stall the Python runtime load. -->
 <link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="vendor/github-dark.min.css">
 <script crossorigin="anonymous" src="vendor/highlight.min.js"></script>
 <link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -6275,6 +6278,56 @@ function updatePyodideProgress(text, pct, run) {
   scrollBottom(false, run);
 }
 
+// creel-sbx: Pyodide is served from several CDNs because the primary jsdelivr
+// endpoint is slow or blocked on some networks (notably mainland China — the
+// small loader <script> often arrives while the ~10-15MB wasm download stalls,
+// which used to time out after 120s and fail every Python tool call).
+// Each host entry is an indexURL for a directory that contains a valid Pyodide
+// distribution; the loader lives at indexURL + 'pyodide.js'. The loader is
+// fetched with a bounded 30s timeout per host, in order, and the runtime wasm
+// is then pinned to whichever host delivered the loader.
+// v314.0.3 is the latest release (checked via data.jsdelivr.com/v1/packages/npm/pyodide/resolved).
+const PYODIDE_VERSION = '314.0.3';
+const PYODIDE_CDN_HOSTS = [
+  { name: 'npmmirror (China-friendly)', indexURL: `https://registry.npmmirror.com/pyodide/${PYODIDE_VERSION}/files/` },
+  { name: 'jsDelivr',                   indexURL: `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/` },
+  { name: 'jsDelivr fastly mirror',     indexURL: `https://fastly.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/` },
+  { name: 'jsDelivr gcore mirror',      indexURL: `https://gcore.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/` },
+];
+function loadPyodideScriptFrom(indexURL) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = indexURL + 'pyodide.js';
+    // No crossorigin attribute: classic scripts execute without CORS, so this
+    // works even on hosts that don't send Access-Control-Allow-Origin (some
+    // mirrors, e.g. npmmirror, serve the file but omit the header).
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error('failed to load Pyodide loader from ' + indexURL));
+    document.head.appendChild(el);
+  });
+}
+async function ensurePyodideLoaders(withTimeout, initRun) {
+  // Returns an ORDERED list of indexURLs that delivered the small loader JS,
+  // so the caller can fall through them for the heavy runtime download: a
+  // host can serve the loader fine yet throttle or CORS-block the ~10-15MB
+  // wasm, so "first loader that loads" is not enough on its own.
+  if (typeof loadPyodide !== 'undefined') return [`https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`];
+  const ok = [];
+  let lastErr = null;
+  for (const h of PYODIDE_CDN_HOSTS) {
+    updatePyodideProgress(`Loading Python runtime from ${h.name}...`, 5, initRun);
+    try {
+      await withTimeout(loadPyodideScriptFrom(h.indexURL), 30000, `Pyodide loader download (${h.name})`);
+      if (typeof loadPyodide !== 'undefined') ok.push(h.indexURL);
+    } catch (e) {
+      lastErr = e;
+      console.warn('[pyodide] loader fallback:', h.name, e?.message || e);
+    }
+  }
+  if (!ok.length && lastErr) console.warn('[pyodide] all CDN hosts failed:', lastErr?.message || lastErr);
+  return ok;
+}
+
 async function ensurePyodide() {
   // Capture the run that triggered this load up front; all progress updates route
   // to it so the bar stays in the initiating conversation across the long awaits.
@@ -6285,18 +6338,33 @@ async function ensurePyodide() {
   updatePyodideProgress('Loading Python runtime (Pyodide WASM)...', 5, initRun);
   // creel: a stalled CDN download used to hang here forever (and the
   // interrupted tool call then poisoned strict providers' history). Fail
-  // loudly instead: bounded waits, and a clear error when the CDN never
-  // delivered the loader at all.
+  // loudly instead: bounded waits, host fallback, and a clear error when no
+  // CDN host delivers the loader at all.
   const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) =>
-    setTimeout(() => rej(new Error(`${what} timed out after ${ms / 1000}s — the Pyodide CDN (cdn.jsdelivr.net) may be slow or blocked on this network; retry, or check connectivity`)), ms))]);
+    setTimeout(() => rej(new Error(`${what} timed out after ${ms / 1000}s — the Pyodide CDN may be slow or blocked on this network; retry, or check connectivity`)), ms))]);
   try {
-    if (typeof loadPyodide === 'undefined') {
-      throw new Error('the Pyodide loader never arrived from cdn.jsdelivr.net — that CDN appears blocked or unreachable on this network');
+    // Collect hosts that delivered the loader, then try them in order for the
+    // ~10-15MB runtime download (wasm + lock file), so a host that throttles
+    // the big files after serving the tiny loader doesn't sink the whole load.
+    const hosts = await ensurePyodideLoaders(withTimeout, initRun);
+    if (!hosts.length) {
+      throw new Error('the Pyodide loader could not be fetched from any CDN host (tried: ' + PYODIDE_CDN_HOSTS.map(h => h.name).join(', ') + ')');
     }
-    updatePyodideProgress('Downloading and initializing Pyodide...', 15, initRun);
-    pyodideInstance = await withTimeout(
-      loadPyodide({ stdout: msg => console.log('[pyodide]', msg), stderr: msg => console.warn('[pyodide]', msg) }),
-      120000, 'Pyodide runtime download');
+    let lastRuntimeErr = null;
+    for (const indexURL of hosts) {
+      try {
+        updatePyodideProgress('Downloading and initializing Pyodide...', 15, initRun);
+        pyodideInstance = await withTimeout(
+          loadPyodide({ indexURL, stdout: msg => console.log('[pyodide]', msg), stderr: msg => console.warn('[pyodide]', msg) }),
+          120000, 'Pyodide runtime download');
+        break;
+      } catch (e) {
+        lastRuntimeErr = e;
+        pyodideInstance = null;   // discard the half-loaded runtime, try next host
+        console.warn('[pyodide] runtime download failed from', indexURL, e?.message || e);
+      }
+    }
+    if (!pyodideInstance) throw lastRuntimeErr || new Error('Pyodide runtime download failed from all CDN hosts');
     updatePyodideProgress(`Loading packages: ${PYODIDE_PRELOAD_PACKAGES.join(', ')}...`, 35, initRun);
     await withTimeout(
       pyodideInstance.loadPackage(PYODIDE_PRELOAD_PACKAGES, msg => updatePyodideProgress(String(msg || 'Loading Pyodide packages...'), 55, initRun)),

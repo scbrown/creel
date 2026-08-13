@@ -13,3 +13,6 @@ wasm/quipu-provider/target/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# quipu graph export (deliberate artifact, committed to git)
+!quipu-export/quipu.db
