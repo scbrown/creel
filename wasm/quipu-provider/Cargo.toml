@@ -1,0 +1,36 @@
+# creel's in-page quipu provider (the wasm half of the transport switch).
+#
+# Exposes quipu's MCP tool surface — tool_definitions() and a dispatch over
+# the tool_* fns — to the browser via wasm-bindgen, so the harness's `inpage`
+# MCP server serves the same schemas any other transport does.
+#
+# Deps mirror quipu's own wasm/harness crate (which proved Store on wasm32);
+# quipu is pinned by rev so builds are reproducible — bump deliberately.
+[package]
+name = "creel-quipu-provider"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Tracks quipu main (Cargo.lock pins the exact commit; `cargo update -p quipu`
+# to bump). A raw-sha `rev =` pin would be tighter but the git transport here
+# only serves branch refs.
+quipu = { git = "https://github.com/scbrown/quipu", branch = "main", default-features = false }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+serde_json = "1"
+sqlite-wasm-rs = { version = "0.5.2", default-features = false }
+sqlite-wasm-vfs = "0.2"
+
+[profile.release]
+# Size matters here (this ships to GitHub Pages); the harness's speed-first
+# rationale doesn't apply.
+opt-level = "z"
+lto = true
+strip = true

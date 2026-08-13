@@ -133,9 +133,55 @@
 
   window.CreelQuipu = CreelQuipu;
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => CreelQuipu.registerDefaults());
-  } else {
+  /* Boot the quipu-wasm worker and bind it as the in-page provider. If the
+   * wasm bundle isn't deployed (404) or the browser can't run it, we stay
+   * unbound and quipu_wasm_status keeps reporting so — never a hard failure. */
+  async function bootWasmProvider() {
+    let worker;
+    try {
+      const probe = await fetch('wasm/pkg/creel_quipu_provider.js', { method: 'HEAD' });
+      if (!probe.ok) return;
+      worker = new Worker('quipu-worker.js', { type: 'module' });
+    } catch (e) { return; }
+
+    let nextId = 1;
+    const pending = new Map();
+    worker.onmessage = (e) => {
+      const p = pending.get(e.data.id);
+      if (!p) return;
+      pending.delete(e.data.id);
+      e.data.ok ? p.resolve(e.data.result) : p.reject(new Error(e.data.error));
+    };
+    worker.onerror = (e) => console.warn('quipu-worker error', e.message || e);
+    const rpc = (op, args) => new Promise((resolve, reject) => {
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      worker.postMessage({ id, op, args });
+    });
+
+    try {
+      const { persistence } = await rpc('init');
+      await CreelQuipu.bindProvider({
+        serverInfo: { name: `quipu-wasm (${persistence})`, version: '0' },
+        listTools: () => rpc('tools'),
+        callTool: (name, args) => rpc('call', { name, args }),
+      });
+      CreelQuipu.exportDb = () => rpc('export');
+      CreelQuipu.importDb = (bytes) => rpc('import', { bytes });
+      console.log(`creel: quipu-wasm bound (${persistence})`);
+    } catch (e) {
+      console.warn('creel: quipu-wasm init failed, staying unbound', e);
+    }
+  }
+
+  function start() {
     CreelQuipu.registerDefaults();
+    bootWasmProvider();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
   }
 })();

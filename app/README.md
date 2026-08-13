@@ -11,11 +11,18 @@ and BYO-key storage in localStorage.
 ## creel modifications
 
 - `quipu-backend.js` — the quipu transport switch. Adds an `inpage` MCP
-  server type dispatching to an in-page provider. Until quipu-wasm is bound
-  via `CreelQuipu.bindProvider(...)`, the in-page server exposes only
-  `quipu_wasm_status`; knowledge tools come from bobbin's MCP server
-  (`bobbin serve --mcp-http`, `http://localhost:3031/mcp`, add it under
-  TOOLS → + MCP as `streamable_http`).
+  server type dispatching to an in-page provider, and boots
+  `quipu-worker.js`, a dedicated worker hosting **quipu compiled to wasm32**
+  (`wasm/pkg/`, built from `../wasm/quipu-provider/`). All 37 quipu tools —
+  schemas straight from quipu's `tool_definitions()` — run in the page with
+  zero network; the store lives on OPFS (falls back to memory where OPFS is
+  unavailable), and `CreelQuipu.exportDb()`/`importDb()` move `.db` bytes in
+  and out. If the wasm bundle is missing the server degrades to a
+  `quipu_wasm_status` reporter. Bobbin's MCP server remains the network
+  alternative (TOOLS → + MCP → `streamable_http`,
+  `http://localhost:3031/mcp` with `bobbin serve --mcp-http`).
+  Rebuild: `cd wasm/quipu-provider && cargo build --release && wasm-bindgen
+  --target web --out-dir ../../app/wasm/pkg target/wasm32-unknown-unknown/release/creel_quipu_provider.wasm`.
 - `vendor/` — marked + highlight.js vendored (from npm) instead of CDN, so
   the shell is fully static/offline. Pyodide still lazy-loads from jsdelivr
   on first Python execution.
