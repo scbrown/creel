@@ -63,6 +63,13 @@ and BYO-key storage in localStorage.
   the cap stay queued until a slot frees, `fleet_spawn` reports the cap
   in its result, `fleet_device` reports it on demand, and the dashboard
   shows a live `📱 mobile · 2/3 tabs` chip that flips amber at the cap.
+  **The main tab sees every fleet event**: each task transition
+  (claimed / done / failed / requeued / aborted) is appended to a shared
+  work log (`meta:digest`), and the main tab's agent automatically
+  receives a batched 🧺 FLEET DIGEST message in its conversation — plus
+  `fleet_digest` returns the full log and `fleet_status` rows carry the
+  task text and heartbeat age, so no burst work is invisible to the
+  operator's agent.
   **The fleet shares one brain**:
   Web Locks elect a leader tab whose dedicated worker owns the single
   OPFS quipu store (sync access handles don't exist in SharedWorkers);
