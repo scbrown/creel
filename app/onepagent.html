@@ -17089,7 +17089,8 @@ async function _runAgentLoop(userText, options = {}) {
           : await parseOpenAIStream(reader, onText, onReasoning, onToolStart, onToolDelta, { keepReasoning, includeReasoningUsage: keepReasoning });
       } catch (e) {
         if (isAbortError(e)) throw e;
-        result = { content: fullText ? [{ type: 'text', text: fullText }] : [], stop_reason: 'interrupted', usage_total: 0, stream_error: e?.message || String(e || 'Network error') };
+        const bgHint = window.CreelReconnect?.wasRecentlyHidden() ? ' (tab was in background — resend to retry)' : '';
+        result = { content: fullText ? [{ type: 'text', text: fullText }] : [], stop_reason: 'interrupted', usage_total: 0, stream_error: (e?.message || String(e || 'Network error')) + bgHint };
       }
       if (run) activateConversationRun(run);
       if (result.stream_error) {
@@ -18846,5 +18847,6 @@ try {
 <script src="creel-self.js"></script>
 <script src="browser-backend.js"></script>
 <script src="measurement-backend.js"></script>
+<script src="reconnect.js"></script>
 </body>
 </html>

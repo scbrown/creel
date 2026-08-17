@@ -117,6 +117,7 @@
   const TASK_LOCK = 'creel-task-';
   const DRAIN_ID = 'meta:drain';
   const isMeta = (t) => t.id.startsWith('meta:');
+  const STALE_HEARTBEAT_MS = 5 * 60 * 1000; // 5 min without heartbeat → stale
 
   async function heldTaskLocks() {
     if (!navigator.locks || !navigator.locks.query) return new Set();
@@ -126,16 +127,23 @@
   }
 
   /** Reset lease tasks whose worker died (running, but nobody holds the
-   *  lock) back to queued. Returns the requeued ids. */
+   *  lock) OR whose worker is frozen (lock held but no heartbeat for
+   *  STALE_HEARTBEAT_MS) back to queued. Returns the requeued ids. */
   async function requeueStale() {
     const tasks = await allTasks();
     const locks = await heldTaskLocks();
+    const now = Date.now();
     const requeued = [];
     for (const t of tasks) {
-      if (t.kind === 'lease' && t.status === 'running' && !locks.has(t.id)) {
+      if (t.kind !== 'lease' || t.status !== 'running') continue;
+      const lockDead = !locks.has(t.id);
+      const heartbeatStale = t.lastHeartbeat && (now - t.lastHeartbeat > STALE_HEARTBEAT_MS);
+      if (lockDead || heartbeatStale) {
         t.status = 'queued';
         t.requeues = (t.requeues || 0) + 1;
+        t.requeueReason = lockDead ? 'lock-released' : 'heartbeat-stale';
         t.claimedBy = null;
+        t.lastHeartbeat = null;
         await putTask(t);
         requeued.push(t.id);
       }
@@ -397,7 +405,9 @@
       t.status = String(args.result || '').startsWith('FAILED:') ? 'failed' : 'done';
       t.result = args.result;
       t.doneAt = Date.now();
+      t.lastHeartbeat = null;
       await putTask(t);
+      stopHeartbeat();
       notify();
       // Lease workers: release the task lock and pull the next one.
       if (!MY_TASK_ID && currentLeaseTaskId === taskId) {
@@ -603,6 +613,26 @@
     agentLocks: [...await aliveLocks()],
   });
 
+  // ── heartbeat: frozen-tab detection (creel-vkh) ──────────────────
+  // Worker/agent tabs update lastHeartbeat every 30s. The dashboard's
+  // requeueStale() requeues any running lease without a heartbeat for
+  // STALE_HEARTBEAT_MS, even if the Web Lock is still held (frozen tab).
+  let heartbeatInterval = null;
+  function startHeartbeat(taskId) {
+    stopHeartbeat();
+    heartbeatInterval = setInterval(async () => {
+      try {
+        const t = await getTask(taskId);
+        if (!t || t.status !== 'running') { stopHeartbeat(); return; }
+        t.lastHeartbeat = Date.now();
+        await putTask(t);
+      } catch {}
+    }, 30000);
+  }
+  function stopHeartbeat() {
+    if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+  }
+
   // ── agent-tab boot: claim the task, hold the lock, auto-start ────
   async function agentBoot() {
     const t = await getTask(MY_TASK_ID);
@@ -613,9 +643,11 @@
     }
     t.status = 'running';
     t.startedAt = Date.now();
+    t.lastHeartbeat = Date.now();
     t.tokenStart = readTokenCounters();
     await putTask(t);
     notify();
+    startHeartbeat(MY_TASK_ID);
     BC.addEventListener('message', (e) => {
       if (e.data?.type === 'abort' && e.data.id === MY_TASK_ID) window.close();
     });
@@ -686,8 +718,10 @@
       fresh.status = 'running';
       fresh.claimedBy = MY_WORKER_ID;
       fresh.startedAt = Date.now();
+      fresh.lastHeartbeat = Date.now();
       fresh.tokenStart = readTokenCounters();
       await putTask(fresh);
+      startHeartbeat(fresh.id);
       currentLeaseTaskId = fresh.id;
       idleNoticeShown = false;
       document.title = `creel · worker: ${fresh.label || fresh.id}`;
@@ -869,6 +903,13 @@
     isolateContext();
     if (MY_TASK_ID) agentBoot();
     if (MY_WORKER_ID) workerBoot();
+    // Dashboard tabs: periodically requeue stale leases (frozen-tab detection).
+    if (!MY_TASK_ID && !MY_WORKER_ID) {
+      setInterval(async () => {
+        const requeued = await requeueStale();
+        if (requeued.length && overlay) renderDashboard();
+      }, 60000);
+    }
   }
 
   if (document.readyState === 'loading') {
