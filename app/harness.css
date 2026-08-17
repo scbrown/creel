@@ -708,3 +708,88 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
   .mp-card { padding: 8px; gap: 8px; }
   .mp-install { padding: 6px 10px; }
 }
+
+/* ── Progressive disclosure of the left panel (creel-ban) ──────────
+ * The chip row is the panel's own table of contents: what creel can do that
+ * this operator has not asked to see. Deliberately quiet — it is a way back
+ * to a feature, not an advertisement for one. */
+.panel-more {
+  border-top: 1px solid var(--border);
+  padding: 6px 10px 8px;
+  flex: none;
+}
+.panel-more-btn {
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.panel-more-btn:hover { color: var(--text-secondary); border-color: var(--text-dim); }
+.panel-more-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.panel-more-chip {
+  background: var(--bg-root);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.panel-more-chip:hover { color: var(--text-primary); border-color: var(--text-dim); }
+/* An "on" chip is a section currently in the panel — the chip stays visible so
+   the same control that revealed it can put it away again. */
+.panel-more-chip.on {
+  color: var(--text-primary);
+  border-color: var(--accent, var(--text-dim));
+  background: var(--bg-elevated, var(--bg-root));
+}
+.panel-more-chip.on::before { content: '\2713\00a0'; }
+
+/* ── Settings groups (creel-ban) ───────────────────────────────────
+ * Settings was one scroll holding every knob the harness has, so finding the
+ * one you wanted meant reading all of them. Each group is now a <details>:
+ * closed by default, opened by click, and remembered per group. Native
+ * <summary> is deliberate — it is a real disclosure widget with a real
+ * accessible role and keyboard behaviour, which a div pretending to be one
+ * would have to reimplement and would get subtly wrong for ui_click. */
+.settings-group {
+  border-top: 1px solid var(--border);
+  margin: 10px 0 0;
+  padding-top: 8px;
+}
+.settings-group-title {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 2px 0;
+  user-select: none;
+}
+.settings-group-title::-webkit-details-marker { display: none; }
+.settings-group-title::after {
+  content: '\25B8';
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 10px;
+  transition: transform .15s ease;
+}
+.settings-group[open] > .settings-group-title::after { transform: rotate(90deg); }
+.settings-group-title.danger { color: var(--accent-red); }
+.settings-group > *:not(summary) { margin-top: 6px; }

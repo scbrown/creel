@@ -120,6 +120,114 @@ function toggleSection(titleEl) {
     } catch {}
   }
 }
+/* ── Progressive disclosure of the left panel (creel-ban) ─────────
+ *
+ * The panel used to stack eleven sections, so every operator saw the union of
+ * every feature creel has whether they used it or not. Four are always there;
+ * the rest are hidden until asked for, and stay once asked for.
+ *
+ * Hidden means the `hidden` attribute, which takes a section out of the
+ * accessibility tree as well as the layout — so ui_snapshot describes the
+ * panel an operator is actually looking at, and an agent is not offered
+ * controls the human cannot see either. Nothing is removed: every section is
+ * one click away in the chip list, and revealing one is the same operation for
+ * an agent (ui_click on its chip) as for the operator.
+ */
+const PANEL_SHOWN_KEY = 'creel_panel_shown';
+
+function _panelShown() {
+  try { return new Set(JSON.parse(localStorage.getItem(PANEL_SHOWN_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function _savePanelShown(set) {
+  try { localStorage.setItem(PANEL_SHOWN_KEY, JSON.stringify([...set])); } catch {}
+}
+
+/** A section's human label — the same text the chip carries, so an agent that
+ *  read the chip can find the section it revealed. */
+function _sectionLabel(el) {
+  const title = el.querySelector('.section-title');
+  if (!title) return el.dataset.section || '';
+  const named = title.querySelector('[data-i18n^="section."]');
+  return (named ? named.textContent : title.textContent).trim().split('\n')[0];
+}
+
+function renderPanelMore() {
+  const box = document.getElementById('panelMoreChips');
+  if (!box) return;
+  const shown = _panelShown();
+  box.textContent = '';
+  for (const el of document.querySelectorAll('.panel-section[data-tier="more"]')) {
+    const key = el.dataset.section;
+    const on = shown.has(key);
+    el.hidden = !on;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'panel-more-chip' + (on ? ' on' : '');
+    chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+    chip.textContent = _sectionLabel(el);
+    chip.onclick = () => {
+      const now = _panelShown();
+      if (now.has(key)) now.delete(key); else now.add(key);
+      _savePanelShown(now);
+      renderPanelMore();
+    };
+    box.appendChild(chip);
+  }
+  const toggle = document.getElementById('panelMoreToggle');
+  if (toggle) {
+    const n = [...document.querySelectorAll('.panel-section[data-tier="more"]')]
+      .filter((el) => el.hidden).length;
+    toggle.textContent = n ? `${t('panel.more', 'More sections')} (${n})`
+                           : t('panel.more', 'More sections');
+  }
+}
+
+function togglePanelMore() {
+  const box = document.getElementById('panelMoreChips');
+  const toggle = document.getElementById('panelMoreToggle');
+  if (!box || !toggle) return;
+  const open = box.hidden;
+  box.hidden = !open;
+  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) renderPanelMore();
+}
+
+/* Settings groups remember themselves, keyed by the header's i18n id rather
+ * than by position — inserting a group must not silently reopen a different
+ * one. */
+const SETTINGS_OPEN_KEY = 'creel_settings_open';
+
+function _settingsGroupKey(details) {
+  const named = details.querySelector('summary [data-i18n]');
+  return named ? named.getAttribute('data-i18n') : (details.querySelector('summary')?.textContent || '').trim();
+}
+
+function initSettingsGroups() {
+  let open = [];
+  try { open = JSON.parse(localStorage.getItem(SETTINGS_OPEN_KEY) || '[]'); } catch { /* unreadable */ }
+  const set = new Set(open);
+  for (const d of document.querySelectorAll('details.settings-group')) {
+    const key = _settingsGroupKey(d);
+    d.open = set.has(key);
+    if (d.dataset.wired) continue;
+    d.dataset.wired = '1';
+    d.addEventListener('toggle', () => {
+      const now = new Set((() => {
+        try { return JSON.parse(localStorage.getItem(SETTINGS_OPEN_KEY) || '[]'); } catch { return []; }
+      })());
+      if (d.open) now.add(key); else now.delete(key);
+      try { localStorage.setItem(SETTINGS_OPEN_KEY, JSON.stringify([...now])); } catch { /* full */ }
+    });
+  }
+}
+
+(function initPanelDisclosure() {
+  const apply = () => { renderPanelMore(); initSettingsGroups(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+
 (function restoreSectionState() {
   try {
     const collapsed = JSON.parse(localStorage.getItem('ba_sections_col') || '{}');

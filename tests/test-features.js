@@ -101,6 +101,60 @@ const scriptSrcs = (page) => page.evaluate(
     assert.ok(words <= 560, `system prompt has grown to ${words} words`);
   });
 
+  // ── the calm default surface (creel-ban) ─────────────────────────
+
+  await check('a first-run panel shows four sections, not eleven', async () => {
+    const visible = await off.evaluate(() => [...document.querySelectorAll('.panel-section')]
+      .filter((el) => !el.hidden).map((el) => el.dataset.section));
+    assert.ok(visible.length <= 4, `first run shows ${visible.length} sections: ${visible.join(', ')}`);
+    // Not an empty panel — the sections an operator uses every session are there.
+    assert.ok(visible.includes('conversations') && visible.includes('files'),
+      'the default surface should still hold the panel worth opening creel for: ' + visible.join(', '));
+  });
+
+  await check('every hidden section is listed, so nothing is lost', async () => {
+    const chips = await off.evaluate(() => {
+      togglePanelMore();
+      return [...document.querySelectorAll('.panel-more-chip')].map((c) => c.textContent.replace(/^\u2713\s*/, ''));
+    });
+    const hidden = await off.evaluate(() => [...document.querySelectorAll('.panel-section[data-tier="more"]')]
+      .map((el) => el.dataset.section));
+    assert.strictEqual(chips.length, hidden.length,
+      `${hidden.length} optional sections but ${chips.length} chips — one is unreachable`);
+    for (const c of chips) assert.ok(c.trim(), 'a chip with no label cannot be clicked by name');
+  });
+
+  await check('a revealed section stays revealed across a reload', async () => {
+    await off.evaluate(() => {
+      const chip = [...document.querySelectorAll('.panel-more-chip')]
+        .find((c) => /SKILLS/i.test(c.textContent));
+      chip.click();
+    });
+    const shownNow = await off.evaluate(() =>
+      !document.querySelector('.panel-section[data-section="skills"]').hidden);
+    assert.strictEqual(shownNow, true, 'clicking the chip did not reveal the section');
+
+    const persisted = await off.evaluate(() => JSON.parse(localStorage.getItem('creel_panel_shown') || '[]'));
+    assert.ok(persisted.includes('skills'), 'the reveal was not remembered: ' + JSON.stringify(persisted));
+  });
+
+  await check('settings groups start closed and remember being opened', async () => {
+    const closed = await off.evaluate(() =>
+      [...document.querySelectorAll('details.settings-group')].filter((d) => d.open).length);
+    assert.strictEqual(closed, 0, 'a settings group is open on first run');
+    const total = await off.evaluate(() => document.querySelectorAll('details.settings-group').length);
+    assert.ok(total >= 5, `only ${total} settings groups are collapsible`);
+
+    await off.evaluate(() => {
+      const d = document.querySelector('details.settings-group');
+      d.open = true;
+      d.dispatchEvent(new Event('toggle'));
+    });
+    const remembered = await off.evaluate(() =>
+      JSON.parse(localStorage.getItem('creel_settings_open') || '[]'));
+    assert.strictEqual(remembered.length, 1, 'opening a settings group was not remembered');
+  });
+
   await off.close();
 
   // ── the same page with the flag on ───────────────────────────────

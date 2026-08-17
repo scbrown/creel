@@ -97,6 +97,23 @@ function uiCall(page) {
     assert.strictEqual(r.role, 'button');
   });
 
+  await check('a hidden section is genuinely absent, not merely styled away', async () => {
+    // The left panel now starts with four sections and reveals the rest on
+    // request (creel-ban). A hidden one must be hidden from the agent too:
+    // if ui_text could still reach into it, the panel an agent describes and
+    // the panel the operator sees would be different panels.
+    await assert.rejects(() => ui('ui_text', { label: 'System prompt' }), /no element matches/);
+  });
+
+  await check('...and one click on its chip brings it back', async () => {
+    // The reveal is an ordinary control with an accessible name, so the agent
+    // does exactly what the operator does — no privileged path.
+    await ui('ui_click', { role: 'button', name: 'More sections' });
+    await ui('ui_click', { role: 'button', name: 'SYSTEM PROMPT' });
+    const byLabel = await ui('ui_text', { label: 'System prompt' });
+    assert.strictEqual(byLabel.role, 'textbox');
+  });
+
   await check('locate by placeholder and by label', async () => {
     const byPlaceholder = await ui('ui_text', { placeholder: 'Type message' });
     assert.strictEqual(byPlaceholder.name, 'Message to the agent');

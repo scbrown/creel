@@ -610,7 +610,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     </div>
 
     <!-- Context -->
-    <div class="panel-section" data-section="system-prompt">
+    <div class="panel-section" data-section="system-prompt" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-text"></use></svg></span> <span data-i18n="section.systemPrompt">SYSTEM PROMPT</span>
         <span class="sp-actions" onclick="event.stopPropagation()">
           <button class="skill-install-btn" id="spEditBtn" onclick="toggleSysPromptEdit()"><svg class="ui-icon" aria-hidden="true"><use href="#i-pencil"></use></svg> <span data-i18n="action.edit">Edit</span></button>
@@ -624,7 +624,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     </div>
 
     <!-- Skills -->
-    <div class="panel-section" data-section="skills">
+    <div class="panel-section" data-section="skills" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.skills">SKILLS</span><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
         <div class="skills-list" id="skillsList"></div>
@@ -638,7 +638,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     </div>
 
     <!-- Swarms (custom roles for the Agent Swarm runtime) -->
-    <div class="panel-section" data-section="swarm-roles">
+    <div class="panel-section" data-section="swarm-roles" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.swarmRoles">SWARMS</span><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
         <div class="skills-list" id="swarmRolesList"></div>
@@ -715,7 +715,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       </div>
     </div>
     <!-- Web Search -->
-    <div class="panel-section" data-section="web-search">
+    <div class="panel-section" data-section="web-search" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)">
         <span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-globe"></use></svg></span> <span data-i18n="section.webSearch">WEB SEARCH</span></span>
         <span class="ws-status" id="wsStatus" onclick="event.stopPropagation()" data-i18n="ws.noKey">no key</span>
@@ -741,27 +741,35 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       </div>
     </div>
     <!-- Todos -->
-    <div class="panel-section" data-section="todos">
+    <div class="panel-section" data-section="todos" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg></span> <span data-i18n="section.todos">TODOS</span></span><span id="todoCounts" style="flex:none;font-size:10px;color:var(--text-dim);margin-right:6px"></span><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
         <div id="todosArea"></div>
       </div>
     </div>
     <!-- Sub-agents -->
-    <div class="panel-section" data-section="sub-agents">
+    <div class="panel-section" data-section="sub-agents" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.subAgents">SUB-AGENTS</span></span><span id="subAgentCounts" style="flex:none;font-size:10px;color:var(--text-dim);margin-right:6px"></span><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
         <div id="subAgentsArea"></div>
       </div>
     </div>
     <!-- Hooks -->
-    <div class="panel-section" data-section="hooks">
+    <div class="panel-section" data-section="hooks" data-tier="more" hidden>
       <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.hooks">HOOKS</span></span><button class="skill-install-btn" style="flex:none;margin:0;padding:2px 8px" onclick="event.stopPropagation();openHookModal()" data-i18n="action.addHook">+ Add</button><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
         <div id="hooksArea"></div>
       </div>
     </div>
     <!-- Context -->
+    <!-- Sections the operator has not asked for are hidden, not deleted;
+         panelMoreChips lists them and one click brings any of them back. -->
+    <div class="panel-more" id="panelMore">
+      <button type="button" class="panel-more-btn" id="panelMoreToggle" aria-expanded="false"
+              onclick="togglePanelMore()" data-i18n="panel.more">More sections</button>
+      <div class="panel-more-chips" id="panelMoreChips" hidden></div>
+    </div>
+
     <div class="panel-section" data-section="memory" style="flex:1">
       <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg></span> <span data-i18n="section.memory">CONTEXT</span><span class="section-arrow">&#x25BC;</span></div>
       <div class="section-body">
@@ -1020,8 +1028,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <input type="password" id="setTavilyKey" placeholder="tvly-...">
       <div id="setStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where code-execution tools run)</span></label>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where code-execution tools run)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setSandboxEnabled" onchange="onSandboxProviderChange()" style="width:auto;margin:0"> <span data-i18n="settings.sandboxEnable">ENABLE_SANDBOX — Enable sandbox environment for running code</span></label>
       <label data-i18n="settings.sandboxPlatform">SANDBOX_PLATFORM</label>
       <select id="setSandboxPlatform" aria-label="Sandbox platform" onchange="onSandboxProviderChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:10px">
@@ -1063,17 +1071,20 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         </div>
       </div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px" data-i18n="settings.diagnosticsHeader">Diagnostics</label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title">Diagnostics</summary>
       <button type="button" class="modal-btn secondary" onclick="runFsDiagnostics()" style="width:100%;padding:8px 10px;font-size:11px;margin-bottom:6px" data-i18n="settings.runFsDiag">Run file system diagnostics</button>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-message-circle"></use></svg> <span data-i18n="settings.notificationsHeader">Notifications</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.notificationsHeaderHint">(browser permission required)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-message-circle"></use></svg> <span data-i18n="settings.notificationsHeader">Notifications</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.notificationsHeaderHint">(browser permission required)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setTaskNotifications" style="width:auto;margin:0"> <span data-i18n="settings.taskNotificationsEnable">Notify when a conversation task finishes</span></label>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.taskNotificationsDesc">Uses browser notifications for completed or failed chat and media runs. Click a notification to reopen that conversation.</div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><span data-i18n="settings.ralphHeader">Ralph Loop</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.ralphHeaderHint">(unattended continue-until-done mode)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><span data-i18n="settings.ralphHeader">Ralph Loop</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.ralphHeaderHint">(unattended continue-until-done mode)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setRalphEnabled" style="width:auto;margin:0"> <span data-i18n="settings.ralphEnable">Enable Ralph Loop by default</span></label>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
         <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.ralphMaxIter">Max Ralph iterations</label>
@@ -1084,8 +1095,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <input type="text" id="setRalphCompletionMarker" placeholder="RALPH_DONE" style="margin-bottom:6px">
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.ralphDesc">Unattended mode stops when the assistant outputs the completion marker. It will not approve Plan Mode or destructive human prompts.</div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span data-i18n="settings.swarmHeader">Agent Swarm</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.swarmHeaderHint">(parallel orchestrator-worker fanout)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span data-i18n="settings.swarmHeader">Agent Swarm</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.swarmHeaderHint">(parallel orchestrator-worker fanout)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmEnabled" style="width:auto;margin:0"> <span data-i18n-html="settings.swarmEnable">Enable Swarm (exposes <code>SwarmSpawn</code> tool to the lead agent)</span></label>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
         <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.swarmConcurrency">Max concurrency</label>
@@ -1111,16 +1123,18 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmAgentRolesPerConv" style="width:auto;margin:0" disabled> <span data-i18n="settings.swarmAgentRolesPerConv">Save per-conversation (instead of globally; only when persistence is on)</span></label>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.swarmAgentRolesHint">Agent-created roles appear in the Swarms sidebar with a blue [agent] badge. You can delete them like any custom role; built-in and user-authored roles are protected from RoleManager.</div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard-list"></use></svg> <span data-i18n="settings.cronHeader">Scheduled Tasks</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cronHeaderHint">(cron-driven prompts, tab-only)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard-list"></use></svg> <span data-i18n="settings.cronHeader">Scheduled Tasks</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cronHeaderHint">(cron-driven prompts, tab-only)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setCronEnabled" style="width:auto;margin:0" onchange="_onCronEnabledToggle()"> <span data-i18n="settings.cronEnable">Enable scheduled tasks</span></label>
       <div style="font-size:10px;color:var(--accent-yellow,var(--text-dim));line-height:1.5;margin-bottom:6px;border-left:2px solid var(--accent-yellow,var(--border));padding-left:8px" data-i18n="settings.cronWarning">Triggered tasks consume LLM tokens automatically. Tasks run only while this browser tab is open; closed tabs miss fires.</div>
       <div id="cronTasksContainer" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;max-height:240px;overflow-y:auto"></div>
       <button type="button" class="modal-btn secondary" onclick="openCronTaskModal(null)" style="width:100%;padding:6px 10px;font-size:11px;margin-bottom:6px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.cronAddTask">Add task</span></button>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.cronDesc">5-field local-time cron: minute hour day-of-month month day-of-week. Each fire opens a fresh conversation. Ralph Loop has priority — fires that overlap a Ralph run are skipped and rolled forward.</div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-brain"></use></svg> <span data-i18n="settings.memHeader">Memory</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.memHeaderHint">(persists facts across conversations)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-brain"></use></svg> <span data-i18n="settings.memHeader">Memory</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.memHeaderHint">(persists facts across conversations)</span></summary>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setMemEnabled" style="width:auto;margin:0"> <span data-i18n="settings.memEnable">Enable memory (default off)</span></label>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setMemAutoExtract" style="width:auto;margin:0" checked> <span data-i18n="settings.memAutoExtract">Auto-extract facts after each assistant turn (adds one lightweight LLM call)</span></label>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
@@ -1129,8 +1143,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       </div>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.memDesc">Memory = Information + Time Label + Searchable Relationships. Records live in IndexedDB and sync via the cloud-sync layer below when configured.</div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg> <span data-i18n="settings.stateHeader">State Repo</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.stateHeaderHint">(a private GitHub repo you own)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg> <span data-i18n="settings.stateHeader">State Repo</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.stateHeaderHint">(a private GitHub repo you own)</span></summary>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.stateDesc">Config, conversations, skills, memory and the quipu knowledge graph, pushed to a private repo as one commit. Uses the same GitHub token as the github_* tools. The repo must be private \u2014 creel refuses to push state to a public one.</div>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setStateEnabled" style="width:auto;margin:0"> <span data-i18n="settings.stateEnable">Use the state repo as this browser's sync destination</span></label>
       <div style="display:flex;gap:8px">
@@ -1161,8 +1176,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       </div>
       <div id="stateRepoStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg> <span data-i18n="settings.cloudHeader">Cloud Sync</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cloudHeaderHint">(S3-compatible \u2014 AWS, R2, MinIO, B2)</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg> <span data-i18n="settings.cloudHeader">Cloud Sync</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cloudHeaderHint">(S3-compatible \u2014 AWS, R2, MinIO, B2)</span></summary>
       <label><span data-i18n="settings.s3Endpoint">Endpoint</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.s3EndpointHint">(e.g. https://s3.us-east-1.amazonaws.com)</span></label>
       <input type="text" id="setS3Endpoint" placeholder="https://s3.us-east-1.amazonaws.com">
       <div style="display:flex;gap:8px">
@@ -1191,11 +1207,13 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       </div>
       <div id="s3Status" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
 
-      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--accent-red);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-alert-triangle"></use></svg> <span data-i18n="settings.dangerHeader">Danger Zone</span></label>
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title danger"><svg class="ui-icon" aria-hidden="true"><use href="#i-alert-triangle"></use></svg> <span data-i18n="settings.dangerHeader">Danger Zone</span></summary>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.clearAllDesc">Delete all local settings, conversations, memories, skills, files, sync config, and cached data on this device.</div>
       <button type="button" class="modal-btn secondary" onclick="clearAllAppData()" style="width:100%;padding:8px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,107,107,.35)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg> <span data-i18n="settings.clearAllBtn">Clear all local data</span></button>
 
+      </details>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="modal-btn primary" onclick="saveSettings()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
         <button class="modal-btn secondary" onclick="closeSettingsModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
