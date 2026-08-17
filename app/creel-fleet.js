@@ -60,6 +60,55 @@
   const genId = () => Math.random().toString(36).slice(2, 10);
   const notify = () => { try { BC.postMessage({ type: 'update' }); } catch { /* closed */ } };
 
+  // ── fleet work log (creel-vis) ────────────────────────────────────
+  // Every task transition (claimed/done/failed/requeued/aborted) is
+  // appended to a shared log in the task store, and the main tab drains
+  // it into its own conversation — so ALL fleet work is visible to the
+  // operator's agent automatically, not just to whoever polls. Workers
+  // only append; they never inject into the main tab. The main tab is
+  // the one with no MY_TASK_ID and no MY_WORKER_ID.
+  const DIGEST_ID = 'meta:digest';
+  const DIGEST_CURSOR_ID = 'meta:digest-cursor';
+  const MAX_DIGEST = 200;
+  const isDispatcher = () => !MY_TASK_ID && !MY_WORKER_ID;
+  async function digestAdd(event, t, detail) {
+    const d = (await getTask(DIGEST_ID)) || { id: DIGEST_ID, kind: 'meta', status: 'meta', entries: [] };
+    d.entries = d.entries || [];
+    const ts = Math.max(Date.now(), (d.entries[d.entries.length - 1]?.ts || 0) + 1); // strictly increasing
+    d.entries.push({ ts, event, id: t.id, label: t.label || null, detail: detail ? String(detail).slice(0, 300) : undefined });
+    if (d.entries.length > MAX_DIGEST) d.entries.splice(0, d.entries.length - MAX_DIGEST);
+    await putTask(d);
+    notify();
+  }
+  let digestFlushTimer = null;
+  function scheduleDigestDrain() {
+    if (!isDispatcher()) return;
+    clearTimeout(digestFlushTimer);
+    digestFlushTimer = setTimeout(drainDigest, 800); // debounce: batch burst events into one message
+  }
+  async function drainDigest() {
+    if (!isDispatcher()) return;
+    const d = await getTask(DIGEST_ID);
+    if (!d || !d.entries || !d.entries.length) return;
+    const c = (await getTask(DIGEST_CURSOR_ID)) || { id: DIGEST_CURSOR_ID, kind: 'meta', status: 'meta', ts: 0 };
+    const fresh = d.entries.filter((e) => e.ts > (c.ts || 0));
+    if (!fresh.length) return;
+    await putTask({ ...c, ts: fresh[fresh.length - 1].ts });
+    const lines = fresh.map((e) => {
+      const who = e.label || e.id;
+      switch (e.event) {
+        case 'claimed': return `· ${who} claimed by a worker`;
+        case 'done': return `· ${who} DONE${e.detail ? `: ${e.detail}` : ''}`;
+        case 'failed': return `· ${who} FAILED: ${e.detail || ''}`;
+        case 'requeued': return `· ${who} requeued (${e.detail || 'stale'}) — its worker froze or died`;
+        case 'aborted': return `· ${who} aborted`;
+        case 'enqueued': return `· ${who} enqueued`;
+        default: return `· ${who} ${e.event}${e.detail ? `: ${e.detail}` : ''}`;
+      }
+    });
+    injectTask('🧺 FLEET DIGEST\n' + lines.join('\n'));
+  }
+
   // creel-sbx: read the harness's token counters (top-level `let` globals in
   // onepagent.html — classic scripts share the global lexical scope). They are
   // cumulative for the tab's session; the delta between a task's start and its
@@ -176,6 +225,7 @@
         t.claimedBy = null;
         t.lastHeartbeat = null;
         await putTask(t);
+        digestAdd('requeued', t, t.requeueReason || 'stale');
         requeued.push(t.id);
       }
     }
@@ -288,8 +338,17 @@
     },
     {
       name: 'fleet_status',
-      description: 'List fleet tasks/agents: queued, running (with tab-alive liveness from Web Locks), done (with results), failed, or dead (tab closed without reporting).',
+      description: 'List fleet tasks/agents: queued, running (with tab-alive liveness from Web Locks), done (with results), failed, or dead (tab closed without reporting). Rows include the task text, heartbeat age (seconds since the worker last checked in), and requeue reason when a task was requeued.',
       inputSchema: { type: 'object', properties: {}, required: [] },
+    },
+    {
+      name: 'fleet_digest',
+      description: 'Return the fleet work log — every task transition (claimed/done/failed/requeued/aborted) with timestamps and detail. The main tab also receives an automatic 🧺 FLEET DIGEST message when work changes; use this to audit history or catch up after a reload.',
+      inputSchema: {
+        type: 'object',
+        properties: { limit: { type: 'integer', description: 'how many recent entries (default 30)' } },
+        required: [],
+      },
     },
     {
       name: 'fleet_report',
@@ -437,10 +496,24 @@
 
     async fleet_status() {
       const report = await statusReport();
-      return report.map(({ id, label, kind, status, alive, result, createdAt, doneAt, claimedBy, requeues, inputTokens, outputTokens, totalTokens }) => ({
+      const mapped = report.map(({ id, label, kind, status, alive, result, createdAt, doneAt, claimedBy, requeues, inputTokens, outputTokens, totalTokens, lastHeartbeat, requeueReason, task }) => ({
         id, label, kind: kind || 'agent', status, alive, result, createdAt, doneAt, claimedBy, requeues,
         inputTokens: inputTokens || 0, outputTokens: outputTokens || 0, totalTokens: totalTokens || 0,
+        task: task ? String(task).slice(0, 300) : undefined,
+        heartbeatAgeSec: lastHeartbeat ? Math.round((Date.now() - lastHeartbeat) / 1000) : null,
+        requeueReason: requeueReason || undefined,
       }));
+      return mapped;
+    },
+
+    async fleet_digest(args) {
+      const d = await getTask(DIGEST_ID);
+      const entries = d ? d.entries.slice(-(args.limit || 30)).reverse() : [];
+      return {
+        count: entries.length,
+        hint: 'every fleet transition (claimed/done/failed/requeued/aborted) is logged here; the main tab also receives an automatic digest when work changes',
+        entries,
+      };
     },
 
     async fleet_report(args) {
@@ -461,6 +534,7 @@
       t.doneAt = Date.now();
       t.lastHeartbeat = null;
       await putTask(t);
+      digestAdd(t.status === 'done' ? 'done' : 'failed', t, args.result);
       stopHeartbeat();
       notify();
       // Lease workers: release the task lock and pull the next one.
@@ -609,6 +683,7 @@
         t.status = 'failed';
         t.result = t.result || 'aborted';
         await putTask(t);
+        digestAdd('aborted', t);
       }
       notify();
       return { ok: true };
@@ -794,6 +869,7 @@
       fresh.lastHeartbeat = Date.now();
       fresh.tokenStart = readTokenCounters();
       await putTask(fresh);
+      digestAdd('claimed', fresh);
       startHeartbeat(fresh.id);
       currentLeaseTaskId = fresh.id;
       idleNoticeShown = false;
@@ -977,6 +1053,7 @@
 
   BC.addEventListener('message', (e) => {
     if (e.data?.type === 'update' && overlay) renderDashboard();
+    if (e.data?.type === 'update') scheduleDigestDrain();
     if (e.data?.type === 'msg') onFleetMsg(e.data);
   });
 
@@ -998,11 +1075,14 @@
     isolateContext();
     if (MY_TASK_ID) agentBoot();
     if (MY_WORKER_ID) workerBoot();
-    // Dashboard tabs: periodically requeue stale leases (frozen-tab detection).
+    // Dashboard tabs: periodically requeue stale leases (frozen-tab detection)
+    // and drain the fleet work log into the main tab's conversation.
     if (!MY_TASK_ID && !MY_WORKER_ID) {
+      drainDigest();
       setInterval(async () => {
         const requeued = await requeueStale();
         if (requeued.length && overlay) renderDashboard();
+        drainDigest();
       }, 60000);
     }
   }
