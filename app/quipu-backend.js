@@ -107,6 +107,9 @@
                     build: window.CREEL_BUILD || 'unknown',
                     server: this.provider?.serverInfo?.name,
                     storage: this.storageInfo || undefined,
+                    group: tabGroupId() || undefined,
+                    groupHint: 'episodes this tab ingests are stamped with this group_id unless '
+                      + 'you pass your own; reads are fleet-wide by default',
                     bootError: this.lastBootError || undefined,
                     hint: this.provider
                       ? 'quipu tools are live in-page; call them directly'
@@ -119,7 +122,7 @@
             if (!this.provider) {
               return fail(`quipu-wasm provider not bound (${this.lastBootError || 'boot not attempted'}); cannot call ${name}`);
             }
-            const result = await this.provider.callTool(name, args || {});
+            const result = await this.provider.callTool(name, scopeArgs(name, args || {}));
             return reply({
               content: [{
                 type: 'text',
@@ -172,6 +175,46 @@
    * tab dies its lock releases, the next queued tab boots the store from
    * the same OPFS bytes and takes over serving. No locks API → plain
    * per-tab store, as before. */
+  /* ── Per-tab attribution in a shared graph (creel-age) ───────────
+   *
+   * Every tab writes into ONE store — that is the point of the shared brain,
+   * and forking a database per tab would trade the thing that makes cheap
+   * agents viable (everyone sees what anyone learned) for isolation nobody
+   * asked for. What was missing is not separation but ATTRIBUTION: with one
+   * store and no marking, a fact recorded by a bobbin three tabs over is
+   * indistinguishable from one the operator wrote, so nothing can be scoped,
+   * reviewed, or undone per agent.
+   *
+   * quipu already has the handle: episodes carry a group_id. So a tab stamps
+   * its own group on any episode that does not name one, and every fact it
+   * ingests is thereafter queryable as its subgraph — or ignored, and the
+   * whole graph read fleet-wide, which is still the default for reads.
+   *
+   * An explicit group_id from the caller always wins: an agent deliberately
+   * writing into a shared or another agent's group is doing something
+   * meaningful, and silently overriding it would be the bug.
+   */
+  const GROUPED_TOOLS = new Set(['quipu_episode', 'quipu_episodes_complete']);
+
+  /** This tab's stable graph group. Prefers the fleet agent id (a spawned
+   *  bobbin keeps its identity across a reload) and falls back to the tab id
+   *  that creel-self.js keeps in sessionStorage. */
+  function tabGroupId() {
+    const self = window.CreelSelf;
+    const id = (self && (self.agentId || self.tabId))
+      || (() => { try { return sessionStorage.getItem('creel_tab_id'); } catch { return null; } })();
+    return id ? `agent:${id}` : null;
+  }
+
+  function scopeArgs(name, args) {
+    if (!GROUPED_TOOLS.has(name)) return args;
+    if (args.group_id) return args;
+    const group = tabGroupId();
+    return group ? { ...args, group_id: group } : args;
+  }
+
+  CreelQuipu.tabGroupId = tabGroupId;
+
   const STORE_LOCK = 'creel-quipu-store';
   const RPC_BC = new BroadcastChannel('creel-quipu-rpc');
   const TAB_ID = Math.random().toString(36).slice(2, 10);

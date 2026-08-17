@@ -142,6 +142,22 @@
    * staged tree between the first object and the commit. */
   let live = null;
 
+  /* The scope the CURRENT operation is running under (creel-age). The sync
+   * engine reads its config through syncConfig() with no arguments, from deep
+   * inside a push, so the scope cannot be threaded through as a parameter —
+   * it is set for the duration of one operation and cleared after. */
+  let activeScope = null;
+
+  /** This tab's own slice id. A spawned bobbin keeps its fleet agent id across
+   *  reloads; an ordinary tab uses the id creel-self.js holds in
+   *  sessionStorage. Either way it is stable for the life of the tab, which is
+   *  what makes the slice worth writing. */
+  function tabScope() {
+    const self = window.CreelSelf;
+    if (self && (self.agentId || self.tabId)) return self.agentId || self.tabId;
+    try { return sessionStorage.getItem('creel_tab_id') || null; } catch { return null; }
+  }
+
   function makeTransport(cfg) {
     const slug = repoSlug(cfg);
     const branch = cfg.branch || DEFAULT_BRANCH;
@@ -286,12 +302,13 @@
      *  one, plus the backend tag that selects this transport. */
     syncConfig(scope) {
       const c = loadCfg() || {};
+      const want = scope || activeScope || c.scope;
       return {
         backend: 'github',
         owner: c.owner || '',
         repo: c.repo || DEFAULT_REPO,
         branch: c.branch || DEFAULT_BRANCH,
-        prefix: scopePrefix(c, scope || c.scope),
+        prefix: scopePrefix(c, want),
         passphrase: c.passphrase || '',
         includeSecrets: !!c.includeSecrets,
       };
@@ -305,6 +322,23 @@
 
     /** Drop the memoized transport so the next operation re-reads the repo. */
     reset() { live = null; },
+
+    /** This tab's slice id, or null when there is no stable identity yet. */
+    tabScope,
+
+    /** Run one operation under a scope. 'shared' (default) is the operator's
+     *  own state; 'agent' is this tab's slice, so two tabs can hold divergent
+     *  state without either clobbering the other. */
+    async withScope(scope, fn) {
+      const resolved = scope === 'agent' ? tabScope() : (scope === 'shared' ? null : scope);
+      if (scope === 'agent' && !resolved) {
+        throw new Error('this tab has no stable id yet, so it has no slice to write — retry once the page has finished loading');
+      }
+      const prev = activeScope;
+      activeScope = resolved;
+      live = null;                    // a different prefix is a different tree
+      try { return await fn(); } finally { activeScope = prev; live = null; }
+    },
 
     /** The authenticated login — used to fill in an owner the operator left
      *  blank rather than refusing over a field only GitHub can answer. */
@@ -355,13 +389,29 @@
       name: 'state_push',
       description: 'Push the current state to the configured state repo as a single commit. '
         + 'Incremental: only objects and blobs the repo does not already have are uploaded.',
-      inputSchema: { type: 'object', properties: {}, required: [] },
+      inputSchema: { type: 'object', properties: {
+          scope: {
+            type: 'string',
+            enum: ['shared', 'agent'],
+            description: "shared (default) = the operator's own state. agent = THIS TAB's slice, "
+              + 'kept under agents/<tab-id>/ so two agent tabs can hold divergent state without '
+              + 'overwriting each other or the shared store.',
+          },
+      }, required: [] },
     },
     {
       name: 'state_pull',
       description: 'Restore state from the state repo, replacing local conversations, skills, settings and '
         + 'the quipu graph with the pushed ones. Local API keys are never overwritten by a pull.',
-      inputSchema: { type: 'object', properties: {}, required: [] },
+      inputSchema: { type: 'object', properties: {
+          scope: {
+            type: 'string',
+            enum: ['shared', 'agent'],
+            description: "shared (default) = the operator's own state. agent = THIS TAB's slice, "
+              + 'kept under agents/<tab-id>/ so two agent tabs can hold divergent state without '
+              + 'overwriting each other or the shared store.',
+          },
+      }, required: [] },
     },
   ];
 
@@ -391,6 +441,8 @@
           : undefined,
         hasToken: !!token(),
         lastSync: last ? new Date(last).toISOString() : null,
+        // What `scope: "agent"` would resolve to from THIS tab.
+        agentSlice: tabScope() ? scopePrefix(c, tabScope()) : null,
       };
     },
 
@@ -429,31 +481,36 @@
       };
     },
 
-    async state_push() {
+    async state_push(args) {
       if (!CreelState.isConfigured()) throw new Error('no state repo configured — call state_configure first');
-      const cfg = CreelState.syncConfig();
-      // Re-verify every push: a repo can be flipped to public after setup, and
-      // the check is worth nothing if it only runs once.
-      await verifyRepo(cfg);
-      CreelState.reset();
-      const manifest = await pushSnapshotToS3(true);
-      return {
-        pushed: true,
-        repo: repoSlug(cfg),
-        branch: cfg.branch,
-        conversations: (manifest.conversations || []).length,
-        skills: (manifest.skills || []).length,
-        blobs: (manifest.blobs || []).length,
-        quipu: manifest.quipu ? { bytes: manifest.quipu.size } : null,
-        encrypted: !!manifest.encrypted,
-      };
+      return CreelState.withScope(args.scope, async () => {
+        const cfg = CreelState.syncConfig();
+        // Re-verify every push: a repo can be flipped to public after setup,
+        // and the check is worth nothing if it only runs once.
+        await verifyRepo(cfg);
+        const manifest = await pushSnapshotToS3(true);
+        return {
+          pushed: true,
+          repo: repoSlug(cfg),
+          branch: cfg.branch,
+          scope: args.scope || 'shared',
+          prefix: cfg.prefix,
+          conversations: (manifest.conversations || []).length,
+          skills: (manifest.skills || []).length,
+          blobs: (manifest.blobs || []).length,
+          quipu: manifest.quipu ? { bytes: manifest.quipu.size } : null,
+          encrypted: !!manifest.encrypted,
+        };
+      });
     },
 
-    async state_pull() {
+    async state_pull(args) {
       if (!CreelState.isConfigured()) throw new Error('no state repo configured — call state_configure first');
-      CreelState.reset();
-      await pullSnapshotFromS3();
-      return { pulled: true, repo: repoSlug(loadCfg()) };
+      return CreelState.withScope(args.scope, async () => {
+        await pullSnapshotFromS3();
+        return { pulled: true, repo: repoSlug(loadCfg()), scope: args.scope || 'shared',
+                 prefix: CreelState.syncConfig().prefix };
+      });
     },
   };
 

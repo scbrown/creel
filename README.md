@@ -152,8 +152,8 @@ Details, and what's still missing, in [docs/hands.md](docs/hands.md).
 
 ## Tests
 
-`just test` — 150 assertions, no dependencies and no `node_modules`. The fast
-half (69) runs creel's logic against a DOM stub; the other half (81) drives the
+`just test` — 157 assertions, no dependencies and no `node_modules`. The fast
+half (69) runs creel's logic against a DOM stub; the other half (88) drives the
 **real page and the real extension in real headless Chromium**, over CDP through
 Node's built-in WebSocket (`tests/browser.js`). Nothing in the browser tests
 reaches into internals to make an assertion pass that an agent could not also

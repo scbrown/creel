@@ -359,6 +359,127 @@ function installFakeGitHub() {
     assert.strictEqual(magic, 'SQLite', 'what was restored is not a database: ' + magic);
   });
 
+  await check('a tab has a stable slice id of its own', async () => {
+    const a = await page.evaluate(() => CreelState.tabScope());
+    assert.ok(a, 'the tab has no slice id at all');
+    // Stable within the tab — a slice that changes identity is not a slice.
+    assert.strictEqual(await page.evaluate(() => CreelState.tabScope()), a);
+    const status = await state('state_status');
+    assert.match(status.agentSlice, /^state\/agents\//, 'status does not say where the slice lands');
+    assert.ok(status.agentSlice.includes(a), 'the reported slice is not this tab\'s');
+  });
+
+  await check('an agent push lands beside the shared state, not on top of it', async () => {
+    const sharedBefore = await page.evaluate(() => Object.keys(readRemoteFiles())
+      .filter((p) => p.startsWith('state/') && !p.startsWith('state/agents/')).sort());
+    const r = await state('state_push', { scope: 'agent' });
+    assert.strictEqual(r.scope, 'agent');
+    assert.match(r.prefix, /^state\/agents\//);
+
+    const paths = await page.evaluate(() => Object.keys(readRemoteFiles()));
+    assert.ok(paths.some((p) => p.startsWith(r.prefix + '/objects/')),
+      'the agent slice wrote no objects under its own prefix');
+    assert.ok(paths.includes(r.prefix + '/manifest.json'), 'the slice has no manifest of its own');
+
+    // The shared state is untouched: two scopes, two trees.
+    const sharedAfter = await page.evaluate(() => Object.keys(readRemoteFiles())
+      .filter((p) => p.startsWith('state/') && !p.startsWith('state/agents/')).sort());
+    assert.deepStrictEqual(sharedAfter, sharedBefore, 'an agent push disturbed the shared state');
+  });
+
+  await check('two tabs get two slices, and neither is the other', async () => {
+    const other = await browser.newPage('/onepagent.html#creel-agent=beta1');
+    await other.waitForFunction(() => !!window.CreelState, { message: 'state backend' });
+    const mine = await page.evaluate(() => CreelState.tabScope());
+    const theirs = await other.evaluate(() => CreelState.tabScope());
+    assert.notStrictEqual(mine, theirs, 'two tabs resolved to the same slice');
+    assert.strictEqual(theirs, 'beta1', 'a spawned agent tab should use its fleet agent id');
+    await other.close();
+  });
+
+  await check('after a scoped push the shared scope is still the default', async () => {
+    // withScope must not leak: a push that left the scope set would silently
+    // redirect every later operation into one tab's slice.
+    assert.strictEqual(await page.evaluate(() => CreelState.syncConfig().prefix), 'state');
+    const r = await state('state_push');
+    assert.strictEqual(r.scope, 'shared');
+    assert.strictEqual(r.prefix, 'state');
+  });
+
+  await check('a tab stamps its own group on the facts it ingests', async () => {
+    const booted = await page.evaluate(async () => {
+      try { await window.CreelQuipu.ensureWasm(); return true; } catch { return false; }
+    });
+    if (!booted) return;   // no wasm bundle in this checkout
+
+    const group = await page.evaluate(() => window.CreelQuipu.tabGroupId());
+    assert.match(group, /^agent:/, 'the tab has no graph group');
+
+    // Ingest through the MCP surface an agent uses, with no group_id given.
+    const seen = await page.evaluate(async () => {
+      const real = window.CreelQuipu.provider.callTool.bind(window.CreelQuipu.provider);
+      let sawArgs = null;
+      window.CreelQuipu.provider.callTool = (name, args) => {
+        if (name === 'quipu_episode') sawArgs = args;
+        return real(name, args);
+      };
+      try {
+        await window.CreelQuipu.handle({
+          jsonrpc: '2.0', id: 1, method: 'tools/call',
+          params: { name: 'quipu_episode', arguments: {
+            name: 'creel-age-probe', episode_body: 'a fact written by one tab',
+            nodes: [{ name: 'probe-entity', type: 'Probe', description: 'x' }], edges: [],
+          } },
+        });
+      } finally { window.CreelQuipu.provider.callTool = real; }
+      return sawArgs;
+    });
+    assert.ok(seen, 'the episode never reached the provider');
+    assert.strictEqual(seen.group_id, group, 'the episode was not stamped with the tab group');
+  });
+
+  await check('an explicit group always wins over the tab default', async () => {
+    const booted = await page.evaluate(() => !!window.CreelQuipu.provider);
+    if (!booted) return;
+    const seen = await page.evaluate(async () => {
+      const real = window.CreelQuipu.provider.callTool.bind(window.CreelQuipu.provider);
+      let sawArgs = null;
+      window.CreelQuipu.provider.callTool = (name, args) => { sawArgs = args; return real(name, args); };
+      try {
+        await window.CreelQuipu.handle({
+          jsonrpc: '2.0', id: 2, method: 'tools/call',
+          params: { name: 'quipu_episode', arguments: {
+            name: 'creel-age-probe-2', episode_body: 'deliberately shared',
+            group_id: 'shared:crew', nodes: [], edges: [],
+          } },
+        });
+      } finally { window.CreelQuipu.provider.callTool = real; }
+      return sawArgs;
+    });
+    assert.strictEqual(seen.group_id, 'shared:crew',
+      'an agent writing deliberately into a named group was overridden');
+  });
+
+  await check('reads stay fleet-wide — attribution is not isolation', async () => {
+    const booted = await page.evaluate(() => !!window.CreelQuipu.provider);
+    if (!booted) return;
+    // A query carries no group filter unless the caller writes one, so a fact
+    // stamped by this tab is still visible to every other tab's reads.
+    const seen = await page.evaluate(async () => {
+      const real = window.CreelQuipu.provider.callTool.bind(window.CreelQuipu.provider);
+      let sawArgs = null;
+      window.CreelQuipu.provider.callTool = (name, args) => { sawArgs = args; return real(name, args); };
+      try {
+        await window.CreelQuipu.handle({
+          jsonrpc: '2.0', id: 3, method: 'tools/call',
+          params: { name: 'quipu_cord', arguments: { limit: 5 } },
+        });
+      } finally { window.CreelQuipu.provider.callTool = real; }
+      return sawArgs;
+    });
+    assert.ok(!('group_id' in seen), 'a read was silently scoped to one tab');
+  });
+
   await check('the settings block round-trips the config an agent set', async () => {
     // Settings is where a human configures this, so what the tools write must
     // show up there — and what the fields say must be what gets saved.
