@@ -51,7 +51,7 @@
     button: 'button', submit: 'button', reset: 'button', image: 'button',
     checkbox: 'checkbox', radio: 'radio', range: 'slider', number: 'spinbutton',
     search: 'searchbox', email: 'textbox', tel: 'textbox', text: 'textbox',
-    url: 'textbox', password: 'textbox',
+    url: 'textbox', password: 'textbox', file: 'fileinput',
   };
   const TAG_ROLES = {
     A: 'link', BUTTON: 'button', TEXTAREA: 'textbox', SELECT: 'combobox',
@@ -61,6 +61,7 @@
     ASIDE: 'complementary', DIALOG: 'dialog', SUMMARY: 'button',
     H1: 'heading', H2: 'heading', H3: 'heading', H4: 'heading', H5: 'heading', H6: 'heading',
     P: 'paragraph', LABEL: 'label', PROGRESS: 'progressbar', HR: 'separator',
+    IFRAME: 'frame',
   };
 
   /** The element's ARIA role: explicit wins, then the implicit mapping. */
@@ -155,6 +156,46 @@
     ? !!el.checked
     : el.getAttribute('aria-checked') === 'true';
 
+  // ── piercing traversal: open shadow roots + same-origin iframes ──
+  // The snapshot and locator resolution reach into open shadow roots and
+  // same-origin iframes, because those are still *the page*: an agent should
+  // be able to see and act on them with the same vocabulary. Closed roots
+  // and cross-origin frames stay opaque — a closed root is the page saying
+  // "keep out", and a cross-origin frame is a hard wall (the same-origin
+  // policy, which no injected MAIN-world code can cross).
+  const FRAME_DEPTH_MAX = 4;
+
+  /** Yield every element under `node` (an Element, Document or ShadowRoot) in
+   *  document order: light-DOM children, then open shadow-root content, then
+   *  same-origin iframe documents (recursively). Each frame document is
+   *  visited once, so an iframe chain cannot loop. */
+  function *pierceEls(node, frameDepth, seenDocs) {
+    const kids = node.children || (node.documentElement ? [node.documentElement] : []);
+    for (const el of kids) {
+      yield el;
+      if (el.shadowRoot && el.shadowRoot.mode !== 'closed') yield *pierceEls(el.shadowRoot, frameDepth, seenDocs);
+      if (frameDepth < FRAME_DEPTH_MAX && el.tagName === 'IFRAME' && el.contentDocument && !seenDocs.has(el.contentDocument)) {
+        const d = el.contentDocument;
+        seenDocs.add(d);
+        yield *pierceEls(d.body || d, frameDepth + 1, seenDocs);
+      }
+      yield *pierceEls(el, frameDepth, seenDocs);
+    }
+  }
+
+  /** querySelectorAll across the same pierce surface. Selector resolution
+   *  pierces shadow roots too, which document.querySelectorAll cannot do. */
+  function pierceQueryAll(sel) {
+    const out = [];
+    let syntaxErr = null;
+    for (const el of pierceEls(document, 0, new Set())) {
+      if (syntaxErr) break;
+      try { if (el.matches(sel)) out.push(el); } catch (e) { syntaxErr = e; }
+    }
+    if (syntaxErr) throw syntaxErr;
+    return out;
+  }
+
   // ── resolution ───────────────────────────────────────────────────
   const nameMatches = (actual, want, exact) => (exact
     ? clean(actual) === clean(want)
@@ -171,9 +212,13 @@
       if (!el.isConnected) throw new Error(`ref ${loc.ref} points at an element that has been removed from the page — take a fresh ui_snapshot`);
       return [el];
     }
-    if (loc.selector) return [...doc.querySelectorAll(loc.selector)];
+    if (loc.selector) return pierceQueryAll(loc.selector);
 
-    const all = [...doc.querySelectorAll('*')];
+    // The whole walkable surface: light DOM, open shadow roots, and
+    // same-origin iframes. `doc` may be a Document, a ShadowRoot or an
+    // Element when a caller passes `root`; `doc.body || doc` covers all.
+    const base = doc.body || doc;
+    const all = [...pierceEls(base, 0, new Set())];
     const exact = loc.exact === true;
     let hits = all;
 
@@ -276,7 +321,7 @@
   const INTERESTING = new Set([
     'button', 'link', 'textbox', 'searchbox', 'checkbox', 'radio', 'combobox',
     'listbox', 'option', 'slider', 'spinbutton', 'heading', 'tab', 'tabpanel',
-    'dialog', 'menuitem', 'switch', 'progressbar', 'img',
+    'dialog', 'menuitem', 'switch', 'progressbar', 'img', 'frame', 'fileinput',
   ]);
 
   /** The page as an agent should see it: roles, accessible names, refs, and
@@ -287,7 +332,8 @@
     const want = String(filter || '').toLowerCase();
     const out = [];
 
-    (function walk(node, depth) {
+    (function walk(node, depth, seenDocs) {
+      if (depth > 12) return;
       for (const el of node.children || []) {
         if (out.length >= limit) return;
         if (SKIP.test(el.tagName)) continue;
@@ -298,21 +344,31 @@
           const name = accessibleName(el);
           if (!want || `${name} ${r} ${el.id || ''}`.toLowerCase().includes(want)) {
             const credential = isCredential(el);
-            const node = { ref: refFor(el), role: r, name, depth };
+            const n = { ref: refFor(el), role: r, name, depth };
             if (/^(textbox|searchbox|combobox|spinbutton|slider)$/.test(r)) {
-              node.value = credential ? MASK : readValue(el);
+              n.value = credential ? MASK : readValue(el);
             }
-            if (credential) node.credential = 'write-only';
-            if (r === 'checkbox' || r === 'radio' || r === 'switch') node.checked = isChecked(el);
-            if (!isEnabled(el)) node.disabled = true;
-            if (el.tagName === 'SELECT') node.options = [...el.options].slice(0, 20).map((o) => o.value);
-            if (el.id) node.id = el.id;
-            out.push(node);
+            if (credential) n.credential = 'write-only';
+            if (r === 'checkbox' || r === 'radio' || r === 'switch') n.checked = isChecked(el);
+            if (!isEnabled(el)) n.disabled = true;
+            if (el.tagName === 'SELECT') n.options = [...el.options].slice(0, 20).map((o) => o.value);
+            if (r === 'fileinput') n.files = [...el.files].slice(0, 10).map((f) => f.name);
+            if (el.tagName === 'IFRAME') n.src = (el.getAttribute('src') || 'about:blank').slice(0, 120);
+            if (el.id) n.id = el.id;
+            out.push(n);
           }
         }
-        walk(el, depth + 1);
+        // Recurse into light children, open shadow roots, and same-origin
+        // iframes — all three are "the page" an agent is driving.
+        if (el.shadowRoot && el.shadowRoot.mode !== 'closed') walk(el.shadowRoot, depth + 1, seenDocs);
+        if (el.tagName === 'IFRAME' && el.contentDocument && !seenDocs.has(el.contentDocument)) {
+          const d = el.contentDocument;
+          seenDocs.add(d);
+          walk(d.body || d, depth + 1, seenDocs);
+        }
+        walk(el, depth + 1, seenDocs);
       }
-    })(start, 0);
+    })(start, 0, new Set());
 
     return out;
   }
@@ -328,6 +384,8 @@
       if (n.checked !== undefined) bits.push(n.checked ? ' [checked]' : ' [unchecked]');
       if (n.disabled) bits.push(' [disabled]');
       if (n.options) bits.push(` options=${JSON.stringify(n.options)}`);
+      if (n.files) bits.push(` files=${JSON.stringify(n.files)}`);
+      if (n.src) bits.push(` src=${JSON.stringify(n.src)}`);
       return bits.join('');
     }).join('\n');
   }
@@ -424,12 +482,52 @@
       fire(el, 'change');
       return { ok: true, selected: opt.value, label: clean(opt.text) };
     },
+
+    /** Attach files to an <input type="file"> through the platform's own
+     *  mechanism: build a real DataTransfer, add real File objects, and set
+     *  `input.files` to its FileList. The page's change handler sees genuine
+     *  files — the same objects a user's picker or drag-and-drop would have
+     *  produced — so there is nothing for the page to detect or for an agent
+     *  to fake. `content` is UTF-8 text; `base64` (when given) wins and
+     *  carries binary payloads. */
+    async setFile(loc, files, opts = {}) {
+      const el = await actionable(loc, opts.timeout);
+      const type = (el.getAttribute && (el.getAttribute('type') || '')).toLowerCase();
+      if (el.tagName !== 'INPUT' || type !== 'file') {
+        throw new Error(`${describe(loc)} is ${el.tagName.toLowerCase()} (type "${type || 'text'}"), not an <input type="file">`);
+      }
+      if (!Array.isArray(files) || !files.length) {
+        throw new Error('attach_file needs files: [{name, content|base64, mimeType?}]');
+      }
+      const dt = new DataTransfer();
+      for (const f of files.slice(0, 50)) {
+        const name = String(f.name || 'file').replace(/[\/\\]/g, '_');
+        const mime = f.mimeType || 'application/octet-stream';
+        let bytes;
+        if (f.base64 != null) {
+          const bin = atob(String(f.base64).replace(/\s+/g, ''));
+          bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        } else {
+          bytes = new TextEncoder().encode(String(f.content == null ? '' : f.content));
+        }
+        dt.items.add(new File([bytes], name, { type: mime, lastModified: f.lastModified || Date.now() }));
+      }
+      // Modern Chrome has a files setter; everywhere else, define it. The
+      // result is the same: el.files is a real FileList the page can read.
+      try { el.files = dt.files; }
+      catch { Object.defineProperty(el, 'files', { value: dt.files, configurable: true }); }
+      fire(el, 'input');
+      fire(el, 'change');
+      if (window.CreelSelf && window.CreelSelf.flash) window.CreelSelf.flash(el, true);
+      return { ok: true, role: role(el), name: accessibleName(el), files: [...el.files].map((f) => f.name) };
+    },
   };
 
   window.CreelLocator = {
     snapshot, snapshotText, resolve, queryAll, waitFor, actionable, actions,
     role, accessibleName, isVisible, isEnabled, isChecked, isCredential, readValue,
-    describe, MASK,
+    describe, MASK, setFile: actions.setFile,
     /** Read-only text of an element — never a credential value. */
     text(loc, opts) {
       const el = resolve(loc, opts && opts.root);
