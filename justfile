@@ -19,21 +19,37 @@ check:
     done
     python3 -m py_compile proxy/local-proxy.py
     python3 -c "import json;json.load(open('extension/manifest.json'))"
+    # The extension injects the app's locator engine into foreign pages, so
+    # the two copies must be byte-identical or an agent gets one vocabulary
+    # for creel tabs and a subtly different one for the web.
+    if ! cmp -s app/creel-locator.js extension/creel-locator.js; then
+        echo "extension/creel-locator.js has drifted from app/creel-locator.js — run: just sync-locator" >&2
+        diff -u app/creel-locator.js extension/creel-locator.js | head -20 >&2
+        exit 1
+    fi
     echo "check ok"
+
+# Re-copy the locator engine into the extension after editing the app's copy.
+sync-locator:
+    cp -f app/creel-locator.js extension/creel-locator.js
+    @echo "extension locator synced"
 
 # Everything: fast logic tests, then the real page in real Chromium.
 test: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-ui-browser.js
+    node tests/test-bridge-browser.js
 
 # Just the fast ones — routing and the bridge handshake, against a DOM stub.
 test-unit: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
 
-# The real page, in real headless Chromium, driven only through the ui tools.
-# Zero dependencies: Node's built-in WebSocket speaking CDP (tests/browser.js).
-# Skips cleanly when no Chromium is installed; CHROME_PATH overrides discovery.
+# The real page and the real extension, in real headless Chromium, driven only
+# through the tool surfaces an agent gets. Zero dependencies: Node's built-in
+# WebSocket speaking CDP (tests/browser.js). Skips cleanly when no Chromium is
+# installed; CHROME_PATH overrides discovery.
 test-ui: check
     node tests/test-ui-browser.js
+    node tests/test-bridge-browser.js

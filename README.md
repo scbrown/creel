@@ -93,27 +93,45 @@ complement, not compete.
 
 ## The agents have hands
 
-An agent in creel can do what the operator can. Two tool servers, split by
-which side of the origin boundary they work on:
+An agent in creel can do what the operator can, and names things the way a
+test author does — by ARIA role and accessible name, never by guessing at CSS.
 
 - **`ui_*` — creel itself, in any tab.** Every tool takes an optional `tab`,
   and the call is carried over a `creel-ui` BroadcastChannel to that tab and
-  run against *its* DOM. So an agent can list the live tabs, read another
-  bobbin's transcript, re-point its provider, snapshot its controls, type
-  into its chat (`ui_prompt`, indistinguishable from the human typing) or hit
-  its stop button — the same reach the operator gets by switching windows.
-  Every touch flashes a highlight ring: **orange for agent hands, cyan for
-  human**. Two refusals are permanent: no agent fills a credential field, and
-  no tab prompts itself.
+  run against *its* DOM. An agent can list the live tabs, read another
+  bobbin's transcript, re-point its provider, type into its chat
+  (`ui_prompt`, indistinguishable from the human typing) or hit its stop
+  button — the same reach the operator gets by switching windows.
 - **`browser_*` — any website.** Opt-in via the
-  [creel bridge](extension/README.md) Chrome extension: open and drive
-  cross-origin tabs, snapshot every control with a working selector, click,
-  fill, press keys, wait for content. Without the extension the surface is a
-  single `browser_status` tool — installing it *is* the grant, and the bridge
-  refuses to act on creel's own origins so an agent can never puppet its
-  harness through the privileged path.
+  [creel bridge](extension/README.md) Chrome extension, which injects the
+  *same* locator engine into the far page. Without the extension the surface
+  is a single `browser_status` tool; installing it is the grant, and the
+  bridge refuses to act on creel's own origins so an agent can never puppet
+  its harness through the privileged path.
+
+Both sets share one vocabulary, borrowed from Playwright: take a
+`snapshot` (the accessibility tree, with `[ref]` handles), then act by
+`{ref}` or `{role, name}`. **Every action auto-waits** for its target to be
+visible and enabled, so an agent never sleeps; an **ambiguous locator is an
+error** listing the candidates, not a coin flip. Every touch flashes a
+highlight ring: **orange for agent hands, cyan for human**.
+
+**Credentials go in, never out.** An operator who pastes an API key and says
+"set this up" is asking for something an agent should be able to do, so the
+write path is open (`ui_fill`, `ui_set_credential`). Every read path is
+closed: snapshots mark such fields write-only, results report a character
+count rather than a value, and `ui_describe` says only whether a key exists.
 
 Details, and what's still missing, in [docs/hands.md](docs/hands.md).
+
+## Tests
+
+`just test` — 68 assertions, no dependencies and no `node_modules`. The fast
+half runs creel's logic against a DOM stub; the other half drives the **real
+page and the real extension in real headless Chromium**, over CDP through
+Node's built-in WebSocket (`tests/browser.js`). Nothing in the browser tests
+reaches into internals to make an assertion pass that an agent could not also
+reach. `just test-unit` skips the browser; `just test-ui` runs only it.
 
 ## Status
 

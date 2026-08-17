@@ -42,6 +42,15 @@ advisory; the ping is the contract. `tests/test-bridge.js` drives exactly the
 hostile order — connector announcing into an empty window before the page
 exists — and asserts the page still finds it.
 
+### Injection is by file, never by eval
+
+The locator engine is installed with `chrome.scripting.executeScript({files})`.
+It is never shipped as source and evaluated in the page, because the MAIN
+world inherits the page's **CSP** and most serious sites forbid `eval`. The
+test fixture (`tests/fixtures/site.html`) sets `script-src 'self'` for exactly
+this reason: an eval-based implementation passes every other test and fails on
+any real website.
+
 ### Version skew is negotiated
 
 The hello carries the worker's op list (`__ops`). The page offers only tools
@@ -51,35 +60,39 @@ failures discovered mid-task. `browser_status` reports the version and ops.
 
 ## Tools (once installed)
 
+The action tools speak **the same locator vocabulary as creel's own `ui_`
+tools**, because the bridge injects the very same engine
+(`creel-locator.js`, kept byte-identical to `app/`'s copy by `just check`)
+into the target page. One mental model drives a creel tab and a stranger's
+website alike: snapshot, then act by `{ref}` or `{role, name}`.
+
 | tool | what it does |
 |---|---|
 | `browser_status` | is the bridge installed, which version, which ops |
+| `browser_snapshot` | **the page's accessibility tree with [ref] handles** |
+| `browser_click` / `fill` / `type` / `press` | act on a control; all auto-wait |
+| `browser_hover` / `check` / `select_option` | menus, checkboxes, dropdowns |
+| `browser_wait_for` | wait for visible / hidden / attached / detached / enabled |
+| `browser_text` | read one located region |
 | `browser_list_tabs` | the user's open tabs (creel's own excluded) |
-| `browser_open_tab` | open any site; becomes the default target for later calls |
-| `browser_navigate` | point a tab at a URL |
-| `browser_close_tab` | clean up when done |
-| `browser_history` | back / forward / reload |
-| `browser_snapshot` | **every visible control with a verified CSS selector** |
-| `browser_read` | visible text of the page or a region |
-| `browser_query` | elements matching a selector, each with its own selector |
-| `browser_click` | click |
-| `browser_fill` | fill an input/textarea/contenteditable, optionally submit |
-| `browser_select_option` | choose in a `<select>`, by value or label |
-| `browser_press` | press a key (Enter submits forms) |
-| `browser_scroll` | top / bottom / delta / bring a selector into view |
-| `browser_wait_for` | wait for a selector to appear or vanish, or for text |
+| `browser_open_tab` | open any site; becomes the default target |
+| `browser_navigate` / `close_tab` / `history` | move around, clean up |
+| `browser_read` / `query` / `scroll` | bulk text, CSS escape hatch, scrolling |
 
-`browser_snapshot` is the one that changes how well the rest work: an agent
-that guesses CSS selectors fails constantly, and an agent handed labelled,
-uniqueness-verified selectors does not. Call it after every navigation.
+Three properties carry most of the value:
+
+- **Snapshot instead of guessing.** An agent handed roles and accessible
+  names succeeds where one guessing at CSS fails constantly.
+- **Auto-waiting.** Every action waits for its target to be visible and
+  enabled, so a click after a navigation needs no sleep. Acting on an
+  invisible control is refused — it is not something a user could have done.
+- **Ambiguity errors.** A locator matching several elements fails with the
+  candidates listed, rather than silently picking one.
 
 `browser_fill` writes through the prototype's `value` setter, so React and
-other frameworks that patch the element's own setter actually observe the
-change instead of reverting it.
-
-Ops that miss softly in the page (selector not found, wait timed out) are
-surfaced as **tool errors**, not as an `ok` result with an `error` field
-inside — an agent must not be able to read a miss as a success.
+friends observe the change instead of reverting it. Password fields are
+writable — an operator may need an agent to enter one — but no read path
+returns their value.
 
 ## Install (unpacked)
 
@@ -89,8 +102,26 @@ inside — an agent must not be able to read a miss as a success.
    `browser` server's toolset expands automatically within a second or two
    — verify with the `browser_status` tool.
 
-To point the bridge at another creel origin, add it to `content_scripts.matches`
-and the `CREEL_ORIGINS` list in `background.js`.
+### Running creel on a different origin or port
+
+Chrome match patterns **cannot express a port**, so `content_scripts.matches`
+necessarily injects the connector into *every* `localhost` page. The real gate
+is therefore the port-aware check in `background.js`, whose default is:
+
+```
+https://scbrown.github.io/creel   ·   http://localhost:8420   ·   http://127.0.0.1:8420
+```
+
+For any other deployment, set it at runtime — this is the supported path, and
+what the tests themselves use:
+
+```js
+chrome.storage.local.set({ creelOrigins: ['http://localhost:1234'] })
+```
+
+Getting this wrong in the permissive direction is the interesting failure: a
+port-blind check makes every dev server on `localhost` *both* undriveable by
+the bridge *and* able to command it.
 
 ## Two independent axes: listen vs act
 
@@ -112,6 +143,19 @@ and the `CREEL_ORIGINS` list in `background.js`.
   the obvious ones — so an agent can't puppet its own harness through the
   bridge. Driving creel is the `ui` server's job, in-origin and visible.
   `tests/test-bridge.js` asserts this per op.
+- **Origin checks include the port.** See "Running creel on a different origin
+  or port" above; this is what keeps an unrelated `localhost` page from
+  commanding the bridge.
 - Only http/https targets are allowed (no `file:`, `chrome:`, etc.).
-- Injected code never uses `eval`/`new Function`: the MAIN world inherits the
-  page's CSP, and most serious sites ban it.
+- Injected code never uses `eval`/`new Function`, and the engine arrives as a
+  file, so a page's CSP neither blocks the bridge nor is weakened by it.
+
+## Tests
+
+`tests/test-bridge.js` covers the handshake and the guards against stubs.
+`tests/test-bridge-browser.js` loads **this extension into real headless
+Chromium**, serves creel and a CSP-strict fixture site on two different ports,
+and drives the fixture end to end — proving the extension loads, the connector
+reaches the worker, the engine installs under a strict CSP, and a password
+written into the far page cannot be read back. Run both with `just test`, or
+just the browser ones with `just test-ui`.

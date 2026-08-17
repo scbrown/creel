@@ -109,6 +109,7 @@ class Browser {
     this.proc = proc;
     this.ws = ws;
     this.fileServer = fileServer;
+    this.extraServers = [];
     this.origin = origin;
     this.seq = 0;
     this.pending = new Map();
@@ -150,20 +151,51 @@ class Browser {
   async close() {
     try { this.ws.close(); } catch { /* already gone */ }
     this.proc.kill();
+    for (const s of this.extraServers) await new Promise((r) => s.close(r));
     await new Promise((r) => this.fileServer.close(r));
+  }
+
+  /** Serve a second directory on its own port — a genuinely different
+   *  origin, which is what the cross-origin bridge tests need. */
+  async serveExtra(root) {
+    const { server, port } = await serve(root);
+    this.extraServers.push(server);
+    return `http://127.0.0.1:${port}`;
+  }
+
+  /** Wait for the extension's service worker and return a Page-like handle
+   *  attached to it, so tests can inspect the privileged half directly. */
+  async extensionWorker({ timeout = 15000 } = {}) {
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      const { targetInfos } = await this.send('Target.getTargets');
+      const sw = targetInfos.find((t) => t.type === 'service_worker' && t.url.startsWith('chrome-extension://'));
+      if (sw) {
+        const { sessionId } = await this.send('Target.attachToTarget', { targetId: sw.targetId, flatten: true });
+        await this.send('Runtime.enable', {}, sessionId);
+        return new Page(this, sessionId, sw.targetId);
+      }
+      if (Date.now() > deadline) throw new Error('the extension service worker never started');
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
 
   static available() { return !!findChrome(); }
 
-  static async launch({ root }) {
+  static async launch({ root, extension }) {
     const chrome = findChrome();
     if (!chrome) throw new Error('no Chromium found — set CHROME_PATH');
     const { server, port } = await serve(root);
     const userDataDir = fs.mkdtempSync('/tmp/creel-cdp-');
-    const proc = spawn(chrome, [
+    const args = [
       '--headless=new', '--remote-debugging-port=0', '--no-sandbox', '--disable-gpu',
-      '--disable-dev-shm-usage', `--user-data-dir=${userDataDir}`, 'about:blank',
-    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+      '--disable-dev-shm-usage', `--user-data-dir=${userDataDir}`,
+    ];
+    if (extension) {
+      args.push(`--disable-extensions-except=${extension}`, `--load-extension=${extension}`);
+    }
+    args.push('about:blank');
+    const proc = spawn(chrome, args, { stdio: ['ignore', 'ignore', 'pipe'] });
 
     // Chromium prints the devtools endpoint on stderr when the port is 0.
     const wsUrl = await new Promise((resolve, reject) => {

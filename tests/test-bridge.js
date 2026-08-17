@@ -156,7 +156,7 @@ const check = async (name, fn) => {
     await new Promise((r) => setTimeout(r, 500));       // a few ping rounds
     const s = await call('browser_status');
     assert.strictEqual(s.bridge_installed, true, 'the lost hello did not doom discovery');
-    assert.strictEqual(s.version, '0.2.0');
+    assert.strictEqual(s.version, '0.3.0');
   });
 
   await check('the full toolset appears once the bridge is found', async () => {
@@ -233,7 +233,7 @@ const check = async (name, fn) => {
 
   await check('__ops advertises the op surface for negotiation', async () => {
     const r = await worker.send('__ops', {});
-    assert.strictEqual(r.result.version, '0.2.0');
+    assert.strictEqual(r.result.version, '0.3.0');
     assert.ok(r.result.ops.includes('snapshot'));
     assert.ok(!r.result.ops.includes('__ops'), 'the meta op is not advertised as a capability');
   });

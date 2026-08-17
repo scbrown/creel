@@ -17,10 +17,12 @@
  * 3. SELF-CONFIGURATION + VISIBLE HANDS. The 'ui' in-page MCP server lets the
  *    agent drive creel's own interface from user demands — switch model,
  *    reconfigure the provider, toggle tool servers, open panels, read the
- *    transcript, type into the chat, stop a run, click and fill arbitrary
- *    controls. Every input — the human's and the agent's — flashes a
- *    highlight ring, so what is being touched is always visible (agent
- *    touches glow orange, human touches cyan).
+ *    transcript, type into the chat, stop a run, and operate any control.
+ *    Targets are named Playwright-style, by ARIA role and accessible name or
+ *    by a [ref] from ui_snapshot, and every action auto-waits for its target
+ *    to be visible and enabled (see app/creel-locator.js). Every input — the
+ *    human's and the agent's — flashes a highlight ring, so what is being
+ *    touched is always visible (agent touches glow orange, human cyan).
  *
  * 4. THOSE HANDS REACH ACROSS TABS. Every ui_ tool takes an optional `tab`,
  *    and a 'creel-ui' BroadcastChannel carries the call to that tab, which
@@ -31,16 +33,25 @@
  *    an agent that can only touch its own tab is not a peer of the operator,
  *    it is a guest in one window.
  *
- *    Two things stay deliberately out of reach: API-key fields (ui_fill
- *    refuses credential inputs, local or remote) and a tab prompting itself
- *    (that is a token-burning loop, not a capability).
+ * 5. CREDENTIALS GO IN, NEVER OUT. An operator who pastes an API key and
+ *    says "set this up" is asking for something an agent should be able to
+ *    do, so the write path is open — ui_fill writes credential fields, and
+ *    ui_set_credential persists a provider key. The read path is closed at
+ *    every exit: snapshots mark such fields write-only, action results
+ *    report a character count rather than the value, and ui_describe says
+ *    only whether a key EXISTS. The asymmetry is the design; a symmetric
+ *    rule would either block a legitimate request or turn every agent into
+ *    an exfiltration path.
+ *
+ *    The one other permanent limit: a tab may not prompt itself, because
+ *    that is a token-burning loop rather than a capability.
  */
 (function () {
   'use strict';
 
   const IS_AGENT_TAB = /creel-agent=/.test(location.hash);
   const ROOT_LOCK = 'creel-root-pane';
-  const WORLD_VERSION = 'creel-world-model-v2';
+  const WORLD_VERSION = 'creel-world-model-v3';
 
   // A stable handle for this tab, in sessionStorage so it survives reload
   // (a reloaded tab is the same bobbin) but never leaks to a new tab.
@@ -669,8 +680,8 @@
           github: 'repo checkout into FILES and push back over the GitHub API (github_checkout/push/open_pr)',
           local: 'sync a real local folder in/out of FILES (desktop Chrome/Edge)',
           fleet: 'spawn agent tabs, message them (fleet_send/inbox), collect results (fleet_status/report)',
-          ui: 'operate creel itself, in ANY tab: ui_tabs lists the live tabs; every other ui_ tool takes `tab` to act on one of them — describe, snapshot controls, switch model/provider, toggle servers, open panels, read the transcript, prompt the chat, stop the run, click/fill',
-          browser: 'drive cross-origin websites through the creel bridge extension: open/navigate/close tabs, snapshot the page\'s controls, read, click, fill, select, press keys, scroll, wait. Absent the extension only browser_status exists',
+          ui: 'operate creel itself, in ANY tab: ui_tabs lists the live tabs; every other ui_ tool takes `tab` to act on one of them. Locate controls the Playwright way — {ref} from ui_snapshot, or {role,name} — and every action auto-waits for its target. Describe, snapshot, switch model/provider, toggle servers, open panels, read the transcript, prompt the chat, stop the run, click/fill/type/press/hover/check/select',
+          browser: 'drive cross-origin websites through the creel bridge extension, with the SAME locator vocabulary the ui tools use — the bridge injects the same engine into the far page. Absent the extension only browser_status exists',
         }[s.name] || 'in-page tool server',
       }));
 
@@ -689,8 +700,13 @@
           + 'switching windows. Beyond creel, the browser tools drive real cross-origin websites when the creel '
           + 'bridge extension is installed (browser_status says whether it is). Every click and input flashes a '
           + 'highlight (orange = agent hands, cyan = human hands), so nothing an agent touches is invisible. '
-          + 'Two limits are deliberate and permanent: API-key fields are never fillable by an agent, and a tab '
-          + 'cannot prompt itself. Query this graph, not documentation, to understand the world.',
+          + 'Never guess a CSS selector: call ui_snapshot for the accessibility tree and act by {ref} or '
+          + '{role, name}. Actions auto-wait for their target to be visible and enabled, so never sleep first; '
+          + 'an ambiguous locator is an error listing the candidates, not a coin flip. '
+          + 'CREDENTIALS ARE WRITE-ONLY: you CAN put an API key the operator gives you into the field that '
+          + 'needs it (ui_fill, or ui_set_credential to persist a provider key), and you can never read one '
+          + 'back — every snapshot and text read masks them. The other permanent limit is that a tab cannot '
+          + 'prompt itself. Query this graph, not documentation, to understand the world.',
         source: 'creel-self',
         nodes: [
           { name: WORLD_VERSION, type: 'WorldModel', description: 'versioned self-description marker; re-seeded only when the version bumps' },
@@ -701,6 +717,8 @@
           { name: 'graph-explorer', type: 'Surface', description: '◉ graph button: visual view of this very store (force layout, SPARQL, entity history)' },
           { name: 'fleet-dashboard', type: 'Surface', description: '🧺 fleet button: live agent list, results, comms log, manual spawn' },
           { name: 'cross-tab-hands', type: 'Capability', description: 'the ui_ tools take a `tab` argument and route over the creel-ui BroadcastChannel, so any tab can operate any other tab\'s interface — parity with the operator, who could just switch windows' },
+          { name: 'locator-engine', type: 'Subsystem', description: 'creel-locator.js: Playwright\'s model in the page — ARIA roles, accessible names, [ref] handles, strict resolution (ambiguity is an error), and auto-waiting on every action. The same file is injected into cross-origin pages by the bridge, so one vocabulary drives both' },
+          { name: 'credential-asymmetry', type: 'Policy', description: 'an agent may WRITE a credential the operator hands it (ui_fill, ui_set_credential) and may never READ one: snapshots mark such fields write-only, results report a length not a value, ui_describe reports only whether a key exists' },
           { name: 'web-hands', type: 'Capability', description: 'the browser_ tools drive cross-origin websites via the creel bridge Chrome extension (MV3). Opt-in: without the extension only browser_status exists. The bridge refuses to act on creel\'s own origins — that is the ui server\'s job' },
           ...serverNodes,
         ],
@@ -709,6 +727,9 @@
           { source: 'bobbin', target: 'cross-tab-hands', relation: 'wields' },
           { source: 'root-pane', target: 'cross-tab-hands', relation: 'wields' },
           { source: 'bobbin', target: 'web-hands', relation: 'wields' },
+          { source: 'cross-tab-hands', target: 'locator-engine', relation: 'built_on' },
+          { source: 'web-hands', target: 'locator-engine', relation: 'built_on' },
+          { source: 'locator-engine', target: 'credential-asymmetry', relation: 'enforces' },
           { source: 'root-pane', target: WORLD_VERSION, relation: 'maintains' },
           { source: 'bobbin', target: 'shared-brain', relation: 'grounds_in' },
           { source: 'root-pane', target: 'shared-brain', relation: 'grounds_in' },

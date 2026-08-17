@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- A stand-in for "some website on the internet", served from a different
+     port (a genuinely different origin) so the bridge tests exercise the
+     real cross-origin path rather than a same-origin shortcut.
+
+     It sets a strict Content-Security-Policy on purpose: the MAIN world
+     inherits the page's CSP, so this is what proves the locator engine is
+     injected as a FILE and never evaluated from source. A page like this one
+     is where an eval-based design silently stops working. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Fixture Shop</title>
+<style>
+  body { font: 15px system-ui; margin: 2rem; max-width: 40rem; }
+  .hidden { display: none; }
+  #banner { padding: .5rem; background: #eee; }
+</style>
+
+<h1>Fixture Shop</h1>
+<p id="banner">Nothing ordered yet.</p>
+
+<form id="order">
+  <label for="item">Item name</label>
+  <input id="item" name="item" placeholder="What do you want?">
+
+  <label for="qty">Quantity</label>
+  <select id="qty" aria-label="Quantity">
+    <option value="1">One</option>
+    <option value="2">Two</option>
+    <option value="3">Three</option>
+  </select>
+
+  <label><input type="checkbox" id="gift" aria-label="Wrap as a gift"> Gift wrap</label>
+
+  <label for="secret">Card number</label>
+  <input type="password" id="secret" name="cardNumber" aria-label="Card number">
+
+  <button type="button" id="submit" aria-label="Place order">Place order</button>
+  <button type="button" id="reveal" aria-label="Show delayed notice">Show notice</button>
+</form>
+
+<p id="delayed" class="hidden">Your order is being prepared.</p>
+
+<script src="site.js"></script>

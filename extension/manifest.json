@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "creel bridge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Lets creel agents drive cross-origin web pages the static creel page cannot reach on its own.",
-  "permissions": ["tabs", "scripting", "activeTab"],
+  "permissions": ["tabs", "scripting", "activeTab", "storage"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "//": "The connector is injected ONLY on creel origins — this is the sole surface that can command the bridge. host_permissions stays broad so the bridge can ACT on any site; the two are independent. Remove the localhost entries for a production-only build.",
+      "//": "Chrome match patterns cannot express a port, so these localhost entries necessarily inject the connector into EVERY localhost page. That is why the real gate is the port-aware origin check in background.js (creelOrigins, default :8420) — a dev server on another port is treated as a stranger and cannot command the bridge. host_permissions stays broad so the bridge can ACT on any site; the two axes are independent. Remove the localhost entries for a production-only build.",
       "matches": [
         "https://scbrown.github.io/creel/*",
         "http://localhost/*",

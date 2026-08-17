@@ -102,22 +102,51 @@
 
   const TAB = { type: 'integer', description: 'target tab; omit to reuse the tab this bridge last opened or navigated' };
 
+  // The same locator vocabulary creel's own ui_ tools use — deliberately
+  // identical, so an agent has one mental model for "drive a page" whether
+  // the page is creel's or a stranger's. The bridge injects the very same
+  // engine (creel-locator.js) into the target tab.
+  const LOC = {
+    ref: { type: 'string', description: 'a [ref] handle from the last browser_snapshot of this tab' },
+    role: { type: 'string', description: 'ARIA role: button, link, textbox, checkbox, combobox, heading…' },
+    name: { type: 'string', description: 'accessible name, case-insensitive substring (pair with role)' },
+    text: { type: 'string', description: 'visible text of the element that most directly contains it' },
+    label: { type: 'string', description: 'the label of a form field' },
+    placeholder: { type: 'string', description: 'a field\'s placeholder text' },
+    testId: { type: 'string', description: 'data-testid value' },
+    selector: { type: 'string', description: 'CSS escape hatch' },
+    exact: { type: 'boolean' },
+    nth: { type: 'integer', description: '0-based index when the locator matches several' },
+  };
+  // Locator fields travel nested under `locator` on the wire, but an agent
+  // should be able to write them flat; the call path lifts them.
+  const withLoc = (extra) => ({ ...LOC, ...extra, tabId: TAB, timeout: { type: 'integer', description: 'ms to auto-wait, default 5000' } });
+
   const BRIDGE_TOOLS = [
     { op: 'list_tabs', name: 'browser_list_tabs', description: 'List the user\'s open browser tabs (excluding creel\'s own tabs). Returns {id, title, url, active}.', inputSchema: { type: 'object', properties: {}, required: [] } },
     { op: 'open_tab', name: 'browser_open_tab', description: 'Open a new browser tab at any website (bare hosts get https://) and return {tabId, url, title} once loaded. Subsequent browser_* calls default to this tab.', inputSchema: { type: 'object', properties: { url: { type: 'string', description: 'website URL or bare host' }, focus: { type: 'boolean', description: 'foreground the tab (default true)' }, wait: { type: 'boolean', description: 'wait for load before returning (default true)' } }, required: ['url'] } },
     { op: 'navigate', name: 'browser_navigate', description: 'Navigate a tab to any website; returns {tabId, url, title} once loaded.', inputSchema: { type: 'object', properties: { url: { type: 'string' }, tabId: TAB, wait: { type: 'boolean' } }, required: ['url'] } },
     { op: 'close_tab', name: 'browser_close_tab', description: 'Close a tab the bridge opened. Clean up when done with a site.', inputSchema: { type: 'object', properties: { tabId: TAB }, required: [] } },
     { op: 'history', name: 'browser_history', description: 'Go back, go forward, or reload a tab.', inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['back', 'forward', 'reload'] }, tabId: TAB, wait: { type: 'boolean' } }, required: ['action'] } },
-    { op: 'snapshot', name: 'browser_snapshot', description: 'The page as a list of things you can DO: every visible link, button, input and select with a label and a verified CSS selector. Call this before click/fill instead of guessing selectors.', inputSchema: { type: 'object', properties: { limit: { type: 'integer', description: 'max elements (default 60)' }, tabId: TAB }, required: [] } },
-    { op: 'read', name: 'browser_read', description: 'Read the visible text of a tab (or a CSS-selected region). Returns {url, title, text}.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, limit: { type: 'integer', description: 'max characters (default 20000)' }, tabId: TAB }, required: [] } },
-    { op: 'query', name: 'browser_query', description: 'List elements matching a CSS selector: {tag, text, href, id, name, selector}. Narrower than browser_snapshot when you know what you are looking for.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, limit: { type: 'integer' }, tabId: TAB }, required: ['selector'] } },
-    { op: 'click', name: 'browser_click', description: 'Click an element (CSS selector) on a tab.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, tabId: TAB }, required: ['selector'] } },
-    { op: 'fill', name: 'browser_fill', description: 'Fill an input/textarea/contenteditable (CSS selector) and fire input/change events. Set submit:true to submit the owning form.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, value: { type: 'string' }, submit: { type: 'boolean' }, tabId: TAB }, required: ['selector', 'value'] } },
-    { op: 'select_option', name: 'browser_select_option', description: 'Choose an option in a <select>, by value or by visible label.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, value: { type: 'string' }, label: { type: 'string' }, tabId: TAB }, required: ['selector'] } },
-    { op: 'press', name: 'browser_press', description: 'Press a key (default Enter) on an element or the focused element — submits forms and triggers key handlers a click cannot.', inputSchema: { type: 'object', properties: { key: { type: 'string', description: 'e.g. Enter, Escape, ArrowDown, a' }, selector: { type: 'string' }, tabId: TAB }, required: [] } },
-    { op: 'scroll', name: 'browser_scroll', description: 'Scroll a tab to top/bottom, by a pixel delta, or bring a selector into view (lazy-loaded content).', inputSchema: { type: 'object', properties: { to: { type: 'string', description: '"top", "bottom", or a pixel delta' }, selector: { type: 'string' }, tabId: TAB }, required: [] } },
-    { op: 'wait_for', name: 'browser_wait_for', description: 'Wait until a selector appears (or vanishes with gone:true), or until text shows up in the page. Use after clicks that trigger navigation or async loads instead of guessing.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, text: { type: 'string' }, gone: { type: 'boolean' }, timeoutMs: { type: 'integer', description: 'default 10000, max 30000' }, tabId: TAB }, required: [] } },
+    { op: 'snapshot', name: 'browser_snapshot', description: 'The accessibility tree of a web page: every visible control as role + accessible name + a [ref] handle. Take a snapshot after every navigation, then act by {ref} or {role, name} — never by guessing at CSS.', inputSchema: { type: 'object', properties: { limit: { type: 'integer', description: 'default 200' }, all: { type: 'boolean', description: 'include landmarks and headings too' }, filter: { type: 'string' }, format: { type: 'string', enum: ['text', 'json'] }, tabId: TAB }, required: [] } },
+    { op: 'click', name: 'browser_click', description: 'Click a control. Auto-waits for it to be visible and enabled, so no sleep is ever needed first.', inputSchema: { type: 'object', properties: withLoc({}), required: [] } },
+    { op: 'fill', name: 'browser_fill', description: 'Set the value of a field (clears then writes, firing input+change so frameworks observe it). Auto-waits. Password fields are written but never echoed back.', inputSchema: { type: 'object', properties: withLoc({ value: { type: 'string' } }), required: ['value'] } },
+    { op: 'type', name: 'browser_type', description: 'Type key by key, appending — for inputs that react to each keystroke, like autocompletes.', inputSchema: { type: 'object', properties: withLoc({ text: { type: 'string' } }), required: ['text'] } },
+    { op: 'press', name: 'browser_press', description: 'Press a key on a control, or on whatever is focused. Enter submits the owning form when the page does not handle it.', inputSchema: { type: 'object', properties: withLoc({ key: { type: 'string', description: 'e.g. Enter, Escape, ArrowDown' } }), required: [] } },
+    { op: 'hover', name: 'browser_hover', description: 'Hover a control — reveals menus and tooltips that only appear on pointer-over.', inputSchema: { type: 'object', properties: withLoc({}), required: [] } },
+    { op: 'check', name: 'browser_check', description: 'Check or uncheck a checkbox, idempotently — it verifies the resulting state rather than blindly toggling.', inputSchema: { type: 'object', properties: withLoc({ checked: { type: 'boolean', description: 'default true' } }), required: [] } },
+    { op: 'select_option', name: 'browser_select_option', description: 'Choose an option in a <select>, by value or by visible label.', inputSchema: { type: 'object', properties: withLoc({ value: { type: 'string' }, label: { type: 'string' } }), required: [] } },
+    { op: 'wait_for', name: 'browser_wait_for', description: 'Wait until a control is visible / hidden / attached / detached / enabled. Use after a click that triggers navigation or async loading instead of guessing at a delay.', inputSchema: { type: 'object', properties: withLoc({ state: { type: 'string', enum: ['visible', 'hidden', 'attached', 'detached', 'enabled'] } }), required: [] } },
+    { op: 'text', name: 'browser_text', description: 'Read the text of one region of a page, located the same way as any action.', inputSchema: { type: 'object', properties: withLoc({}), required: [] } },
+    { op: 'read', name: 'browser_read', description: 'Read the visible text of a whole tab (or a CSS-selected region) — the bulk-reading counterpart to browser_text.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, limit: { type: 'integer', description: 'max characters (default 20000)' }, tabId: TAB }, required: [] } },
+    { op: 'query', name: 'browser_query', description: 'List elements matching a CSS selector, each with its own selector. The escape hatch for pages the accessibility tree describes poorly.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, limit: { type: 'integer' }, tabId: TAB }, required: ['selector'] } },
+    { op: 'scroll', name: 'browser_scroll', description: 'Scroll a tab to top/bottom, by a pixel delta, or bring a CSS selector into view (lazy-loaded content).', inputSchema: { type: 'object', properties: { to: { type: 'string', description: '"top", "bottom", or a pixel delta' }, selector: { type: 'string' }, tabId: TAB }, required: [] } },
   ];
+
+  // Which tools speak the locator vocabulary — their flat locator fields are
+  // lifted into `locator` before crossing to the extension.
+  const LOCATOR_TOOLS = new Set(['browser_click', 'browser_fill', 'browser_type', 'browser_press', 'browser_hover', 'browser_check', 'browser_select_option', 'browser_wait_for', 'browser_text']);
+  const LOC_KEYS = Object.keys(LOC);
 
   const OP = Object.fromEntries(BRIDGE_TOOLS.map((t) => [t.name, t.op]));
 
@@ -156,7 +185,18 @@
               }) }] });
             }
             if (!OP[name]) return fail(`unknown tool: ${name}`);
-            const result = await bridgeCall(OP[name], args || {});
+            let payload = args || {};
+            if (LOCATOR_TOOLS.has(name)) {
+              // Agents write locator fields flat; the engine wants them
+              // grouped. Lift them here so both shapes work.
+              const locator = {};
+              const rest = {};
+              for (const [k, v] of Object.entries(payload)) {
+                if (LOC_KEYS.includes(k)) locator[k] = v; else rest[k] = v;
+              }
+              payload = { ...rest, locator };
+            }
+            const result = await bridgeCall(OP[name], payload);
             // In-page ops report soft failures (selector missed, wait timed
             // out) as {error} rather than throwing. Surface those as tool
             // errors so the agent retries instead of reading "ok" — carrying

@@ -12,12 +12,54 @@
  * job (app/creel-self.js), which does it in-origin and cross-tab.
  */
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
-// Origins that may COMMAND the bridge (must match the manifest's content-script
-// matches). Distinct from what the bridge may ACT ON — it opens/drives any site.
-const CREEL_ORIGINS = [/^https:\/\/scbrown\.github\.io\/creel\//, /^https?:\/\/(localhost|127\.0\.0\.1)[:/]/];
-const isCreelUrl = (url) => CREEL_ORIGINS.some((re) => re.test(url || ''));
+/* ── which origins may COMMAND the bridge ─────────────────────────
+ * This is the security boundary, and it is checked BY ORIGIN INCLUDING
+ * PORT. Chrome match patterns cannot express a port, so the manifest's
+ * content-script `matches` necessarily injects the connector into every
+ * localhost page — which means this list, not the manifest, is what
+ * actually decides who can drive the bridge. A dev server on some other
+ * localhost port is a stranger, exactly like any website.
+ *
+ * The same list decides what the bridge refuses to ACT ON, so an agent
+ * cannot puppet its own harness. Note the consequence of getting this
+ * wrong in the other direction: too broad, and your own dev server on
+ * :3000 becomes both undriveable and able to command the bridge.
+ *
+ * Configure for a different creel deployment with:
+ *   chrome.storage.local.set({ creelOrigins: ['http://localhost:1234'] })
+ */
+const DEFAULT_CREEL_ORIGINS = [
+  'https://scbrown.github.io',        // production Pages deployment
+  'http://localhost:8420',            // `just serve`
+  'http://127.0.0.1:8420',
+];
+// The Pages deployment serves creel under a path, so that one origin is
+// additionally path-scoped; everything else is a whole origin.
+const PAGES_PREFIX = 'https://scbrown.github.io/creel';
+
+let creelOrigins = new Set(DEFAULT_CREEL_ORIGINS);
+
+function applyOrigins(list) {
+  if (Array.isArray(list) && list.length) {
+    creelOrigins = new Set(list.map((o) => { try { return new URL(o).origin; } catch { return o; } }));
+  } else {
+    creelOrigins = new Set(DEFAULT_CREEL_ORIGINS);
+  }
+}
+chrome.storage?.local?.get('creelOrigins').then((r) => applyOrigins(r.creelOrigins)).catch(() => {});
+chrome.storage?.onChanged?.addListener((changes, area) => {
+  if (area === 'local' && changes.creelOrigins) applyOrigins(changes.creelOrigins.newValue);
+});
+
+function isCreelUrl(url) {
+  if (!url) return false;
+  let parsed;
+  try { parsed = new URL(url); } catch { return false; }
+  if (parsed.origin === 'https://scbrown.github.io') return url.startsWith(PAGES_PREFIX);
+  return creelOrigins.has(parsed.origin);
+}
 
 // The last tab this bridge opened or navigated. Multi-step flows (open →
 // query → fill → click) are the norm, and defaulting to the *active* tab
@@ -76,6 +118,69 @@ async function inPage(tabId, func, funcArgs) {
     args: funcArgs,
   });
   return res.result;
+}
+
+/* ── the locator engine, on the far side ──────────────────────────
+ * creel-locator.js is the SAME file the app serves (kept identical by
+ * `just check`), injected into the target page so that driving a foreign
+ * website and driving a creel tab are one mental model: roles, accessible
+ * names, refs, auto-waiting. Injection is by file rather than by evaluating
+ * source, because the MAIN world inherits the page's CSP and most serious
+ * sites ban eval.
+ *
+ * Refs live in the injected engine's own state, so they persist across calls
+ * for as long as the page does — and die with a navigation, which is
+ * correct: a ref into a page that has been replaced is meaningless.
+ */
+async function ensureLocator(tabId) {
+  const present = await inPage(tabId, () => !!window.CreelLocator, []);
+  if (present) return;
+  await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', files: ['creel-locator.js'] });
+  const ok = await inPage(tabId, () => !!window.CreelLocator, []);
+  if (!ok) throw new Error('could not install the locator engine in that page (its CSP may forbid injected scripts) — the read/query/click ops still work with plain CSS selectors');
+}
+
+/** One self-contained dispatcher, injected as a function and selected by
+ *  name. Deliberately NOT a serialized closure evaluated in the page: eval
+ *  from page context is what a strict CSP blocks, and this has to work on
+ *  sites that set one. */
+async function locatorOp(tab, op, args) {
+  await ensureLocator(tab.id);
+  const result = await inPage(tab.id, async (which, a) => {
+    const L = window.CreelLocator;
+    if (!L) return { ok: false, error: 'the locator engine is not present in this page' };
+    const loc = a.locator || {};
+    const targeted = Object.keys(loc).length > 0;
+    const opts = { timeout: a.timeout };
+    const head = { url: location.href, title: document.title };
+    try {
+      switch (which) {
+        case 'snapshot': {
+          const body = a.format === 'json'
+            ? { nodes: L.snapshot(a) }
+            : { snapshot: L.snapshotText(a) || '(nothing interactive is visible — try all:true)' };
+          return { ok: true, value: { ...head, ...body } };
+        }
+        case 'click': return { ok: true, value: await L.actions.click(loc, opts) };
+        case 'fill': return { ok: true, value: await L.actions.fill(loc, String(a.value ?? ''), opts) };
+        case 'type': return { ok: true, value: await L.actions.type(loc, String(a.text ?? ''), opts) };
+        case 'hover': return { ok: true, value: await L.actions.hover(loc, opts) };
+        case 'check': return { ok: true, value: await L.actions.check(loc, a.checked !== false, opts) };
+        case 'select_option': return { ok: true, value: await L.actions.selectOption(loc, { value: a.value, label: a.label }, opts) };
+        case 'press': return { ok: true, value: await L.actions.press(targeted ? loc : null, a.key || 'Enter', opts) };
+        case 'text': return { ok: true, value: { ...head, ...L.text(loc) } };
+        case 'wait_for': {
+          const el = await L.waitFor(loc, { state: a.state || 'visible', timeout: a.timeout || 5000 });
+          return { ok: true, value: { ...head, ok: true, state: a.state || 'visible', found: !!el, name: el ? L.accessibleName(el) : undefined } };
+        }
+        default: return { ok: false, error: `unknown locator op: ${which}` };
+      }
+    } catch (e) {
+      return { ok: false, error: (e && e.message) || String(e) };
+    }
+  }, [op, args]);
+  if (!result || !result.ok) throw new Error((result && result.error) || 'locator op failed');
+  return result.value;
 }
 
 /* ── injected code ────────────────────────────────────────────────
@@ -198,9 +303,24 @@ const ops = {
     }, [args.selector, args.limit || null]);
   },
 
-  /** The page as a list of things you can DO, each with a selector that
-   *  works. This is the call that replaces guessing at CSS. */
-  async snapshot(args) {
+  // ── locator ops: the same surface creel's own `ui` tools expose ──
+  // Everything below routes through the shared locator engine, so an agent
+  // uses one mental model — roles, accessible names, refs, auto-waiting —
+  // whether the tab is creel's or a stranger's.
+  async snapshot(args) { return locatorOp(await targetTab(args, 'read'), 'snapshot', args); },
+  async click(args) { return locatorOp(await targetTab(args), 'click', args); },
+  async fill(args) { return locatorOp(await targetTab(args), 'fill', args); },
+  async type(args) { return locatorOp(await targetTab(args), 'type', args); },
+  async hover(args) { return locatorOp(await targetTab(args), 'hover', args); },
+  async check(args) { return locatorOp(await targetTab(args), 'check', args); },
+  async select_option(args) { return locatorOp(await targetTab(args), 'select_option', args); },
+  async press(args) { return locatorOp(await targetTab(args), 'press', args); },
+  async text(args) { return locatorOp(await targetTab(args, 'read'), 'text', args); },
+  async wait_for(args) { return locatorOp(await targetTab(args, 'read'), 'wait_for', args); },
+
+  /** Retained: a plain CSS listing, for pages where the locator engine
+   *  cannot be installed at all. */
+  async legacy_snapshot(args) {
     const tab = await targetTab(args, 'read');
     return inPage(tab.id, (limit) => {
       const uniq = (s) => { try { return document.querySelectorAll(s).length === 1; } catch { return false; } };
@@ -257,75 +377,6 @@ const ops = {
     }, [args.limit || null]);
   },
 
-  async click(args) {
-    const tab = await targetTab(args);
-    return inPage(tab.id, (sel) => {
-      const el = document.querySelector(sel);
-      if (!el) return { error: `no element matches ${sel}` };
-      el.scrollIntoView({ block: 'center' });
-      el.click();
-      return { ok: true, clicked: sel };
-    }, [args.selector]);
-  },
-
-  async fill(args) {
-    const tab = await targetTab(args);
-    return inPage(tab.id, (sel, value, submit) => {
-      const el = document.querySelector(sel);
-      if (!el) return { error: `no element matches ${sel}` };
-      el.focus();
-      if (el.isContentEditable) {
-        el.textContent = value;
-      } else {
-        // React and friends patch the value setter on the element; going
-        // through the prototype's setter is what makes the framework
-        // actually see the change instead of reverting it.
-        const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-        const setter = Object.getOwnPropertyDescriptor(proto, 'value');
-        if (setter && setter.set) setter.set.call(el, value); else el.value = value;
-      }
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      if (submit && el.form && el.form.requestSubmit) el.form.requestSubmit();
-      return { ok: true, filled: sel, submitted: !!submit };
-    }, [args.selector, args.value, args.submit === true]);
-  },
-
-  async select_option(args) {
-    const tab = await targetTab(args);
-    return inPage(tab.id, (sel, value, label) => {
-      const el = document.querySelector(sel);
-      if (!el) return { error: `no element matches ${sel}` };
-      if (el.tagName.toLowerCase() !== 'select') return { error: `${sel} is not a <select>` };
-      const opts = Array.from(el.options);
-      const hit = value != null
-        ? opts.find((o) => o.value === value)
-        : opts.find((o) => (o.text || '').trim() === label);
-      if (!hit) return { error: `no option matching ${JSON.stringify(value ?? label)}`, options: opts.map((o) => o.value) };
-      el.value = hit.value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return { ok: true, selected: hit.value, text: hit.text };
-    }, [args.selector, args.value ?? null, args.label ?? null]);
-  },
-
-  async press(args) {
-    const tab = await targetTab(args);
-    return inPage(tab.id, (sel, key) => {
-      const el = sel ? document.querySelector(sel) : (document.activeElement || document.body);
-      if (!el) return { error: `no element matches ${sel}` };
-      if (el.focus) el.focus();
-      const init = { key, code: key.length === 1 ? `Key${key.toUpperCase()}` : key, bubbles: true, cancelable: true };
-      const down = new KeyboardEvent('keydown', init);
-      const prevented = !el.dispatchEvent(down);
-      el.dispatchEvent(new KeyboardEvent('keyup', init));
-      // A bare Enter in a real browser submits the owning form. Only do it
-      // when the page did not already handle (and cancel) the keydown.
-      if (key === 'Enter' && !prevented && el.form && el.form.requestSubmit) el.form.requestSubmit();
-      return { ok: true, key, target: sel || 'activeElement', defaultPrevented: prevented };
-    }, [args.selector || null, args.key || 'Enter']);
-  },
-
   async scroll(args) {
     const tab = await targetTab(args);
     return inPage(tab.id, (sel, to) => {
@@ -340,32 +391,6 @@ const ops = {
       else window.scrollBy(0, Number(to) || 0);
       return { ok: true, y: window.scrollY, height: document.body.scrollHeight };
     }, [args.selector || null, args.to ?? null]);
-  },
-
-  /** Wait for the page to reach a state, instead of guessing at sleeps:
-   *  a selector appearing (or vanishing), or text showing up in the body. */
-  async wait_for(args) {
-    const tab = await targetTab(args, 'read');
-    const timeoutMs = Math.min(Math.max(Number(args.timeoutMs) || 10000, 500), 30000);
-    return inPage(tab.id, (sel, text, gone, timeout) => new Promise((resolve) => {
-      const started = Date.now();
-      const met = () => {
-        if (sel) {
-          const found = !!document.querySelector(sel);
-          return gone ? !found : found;
-        }
-        if (text) return (document.body.innerText || '').includes(text);
-        return true;
-      };
-      const tick = () => {
-        if (met()) return resolve({ ok: true, waitedMs: Date.now() - started, url: location.href, title: document.title });
-        if (Date.now() - started >= timeout) {
-          return resolve({ ok: false, error: `timed out after ${timeout}ms waiting for ${sel ? (gone ? `${sel} to vanish` : sel) : JSON.stringify(text)}`, url: location.href });
-        }
-        setTimeout(tick, 200);
-      };
-      tick();
-    }), [args.selector || null, args.text || null, args.gone === true, timeoutMs]);
   },
 };
 
