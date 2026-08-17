@@ -714,7 +714,6 @@
       await call('quipu_episode', {
         name: WORLD_VERSION,
         episode_body: `The creel world model (${WORLD_VERSION}${priorVersions.length ? `, superseding ${priorVersions.join(', ')}` : ''}): how this system is organized, written for its own agents. `
-          + 
           + 'creel is a static browser page running agent loops. There is always exactly ONE root pane '
           + '(the dispatcher, elected by Web Lock, badge ⬢): it spawns bobbins (agent tabs), seeds and owns this '
           + 'world model, and synthesizes results. Bobbins work one task, coordinate via fleet_send, and MUST '
