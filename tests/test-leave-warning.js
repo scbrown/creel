@@ -1,0 +1,80 @@
+/* The leave warning: when may creel pop the native beforeunload dialog?
+ *
+ * The predicate runs inside the unload path, so it must be pure and
+ * synchronous, and the page's copy is the single source of truth — this test
+ * extracts the fenced function verbatim from app/onepagent.html and evaluates
+ * it in a stubbed window. If the fence markers move, the test fails loudly
+ * instead of silently testing a stale copy.
+ *
+ * Run: node tests/test-leave-warning.js   (or `just test-unit`)
+ */
+'use strict';
+
+const vm = require('node:vm');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert');
+
+const HTML = fs.readFileSync(path.join(__dirname, '..', 'app', 'onepagent.html'), 'utf8');
+
+const m = HTML.match(/\/\/ BEGIN creelShouldWarnOnLeave\n([\s\S]*?)\n\/\/ END creelShouldWarnOnLeave/);
+assert.ok(m, 'fenced creelShouldWarnOnLeave must exist in app/onepagent.html');
+
+// The fence body is `window.creelShouldWarnOnLeave = function ... };` —
+// strip the assignment so it can be eval'd as a plain function expression.
+const FN = m[1].replace('window.creelShouldWarnOnLeave = ', '');
+
+// The wiring must exist too: the handler consults the suppress flag (fleet
+// abort closes must not be blocked) and only acts when the predicate is true.
+assert.match(
+  HTML,
+  /addEventListener\('beforeunload', \(e\) => \{\s*if \(window\.__creelSuppressLeaveWarn\) return;\s*if \(!window\.creelShouldWarnOnLeave\(\)\) return;/,
+  'the unload handler must be wired after the fence'
+);
+
+function boot(stubs) {
+  const win = {};
+  const sandbox = {
+    window: win,
+    console,
+    document: stubs.document,
+    localStorage: stubs.localStorage,
+  };
+  sandbox.window = sandbox; // page code assigns to window.*
+  vm.createContext(sandbox);
+  vm.runInContext(`window.creelShouldWarnOnLeave = ${FN};`, sandbox);
+  return sandbox.window.creelShouldWarnOnLeave;
+}
+
+const noStorage = { getItem: () => null };
+const chat = (realMessages) => ({
+  querySelector: (sel) => (realMessages && sel === '.msg:not(.msg-placeholder)') ? { found: true } : null,
+});
+
+const cases = [
+  ['a pristine page (no chat element) never warns', boot({ document: { getElementById: () => null }, localStorage: noStorage }), false],
+  ['a placeholder-only conversation never warns', boot({ document: { getElementById: () => chat(false) }, localStorage: noStorage }), false],
+  ['a conversation with real messages warns', boot({ document: { getElementById: () => chat(true) }, localStorage: noStorage }), true],
+  ['live fleet activity warns even with an empty conversation', boot({ document: { getElementById: () => chat(false) }, localStorage: { getItem: () => '3' } }), true],
+  ['a zero fleet count does not warn', boot({ document: { getElementById: () => chat(false) }, localStorage: { getItem: () => '0' } }), false],
+  ['an unset fleet count does not warn', boot({ document: { getElementById: () => chat(false) }, localStorage: noStorage }), false],
+  ['a broken DOM never throws', boot({ document: { getElementById: () => { throw new Error('boom'); } }, localStorage: noStorage }), false],
+  ['a broken storage never throws', boot({ document: { getElementById: () => chat(false) }, localStorage: { getItem: () => { throw new Error('boom'); } } }), false],
+];
+
+let pass = 0;
+for (const [label, fn, expected] of cases) {
+  let actual;
+  let threw = false;
+  try { actual = fn(); } catch (e) { threw = true; actual = 'THREW: ' + e.message; }
+  try {
+    assert.strictEqual(threw, false, `${label} must not throw`);
+    assert.strictEqual(actual, expected, label);
+    pass++;
+    console.log(`ok - ${label}`);
+  } catch (e) {
+    console.error(`not ok - ${label}: ${e.message}`);
+    process.exitCode = 1;
+  }
+}
+console.log(`${pass}/${cases.length} leave-warning checks passed`);

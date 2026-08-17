@@ -38,6 +38,7 @@ sync-locator:
 test: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
+    node tests/test-leave-warning.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
@@ -45,6 +46,7 @@ test: check
 test-unit: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
+    node tests/test-leave-warning.js
 
 # The real page and the real extension, in real headless Chromium, driven only
 # through the tool surfaces an agent gets. Zero dependencies: Node's built-in

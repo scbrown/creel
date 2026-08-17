@@ -73,7 +73,7 @@ const check = async (name, fn) => {
   let tabId = null;
 
   await check('Chromium loads the extension and its service worker starts', async () => {
-    assert.strictEqual(await worker.evaluate(() => VERSION), '0.3.0');
+    assert.strictEqual(await worker.evaluate(() => VERSION), '0.4.0');
   });
 
   await check('the creel-origin gate distinguishes localhost ports', async () => {
@@ -100,13 +100,14 @@ const check = async (name, fn) => {
     }, { timeout: 15000, message: 'the bridge to announce itself' });
     const status = await tool('browser_status');
     assert.strictEqual(status.bridge_installed, true);
-    assert.strictEqual(status.version, '0.3.0');
+    assert.strictEqual(status.version, '0.4.0');
     assert.ok(status.ops.includes('snapshot'), 'the real worker advertises its ops');
+    assert.ok(status.ops.includes('attach_file'), 'the v-next op is advertised');
   });
 
   await check('the full locator toolset is offered once connected', async () => {
     const names = await toolNames();
-    for (const t of ['browser_snapshot', 'browser_click', 'browser_fill', 'browser_hover', 'browser_check', 'browser_wait_for', 'browser_text']) {
+    for (const t of ['browser_snapshot', 'browser_click', 'browser_fill', 'browser_hover', 'browser_check', 'browser_wait_for', 'browser_text', 'browser_attach_file']) {
       assert.ok(names.includes(t), `${t} offered`);
     }
   });
@@ -167,6 +168,49 @@ const check = async (name, fn) => {
     assert.doesNotMatch(JSON.stringify(snap), /4111111111119999/);
     const read = await tool('browser_read', { tabId });
     assert.doesNotMatch(JSON.stringify(read), /4111111111119999/);
+  });
+
+  await check('files attach through the bridge; the page sees real File objects', async () => {
+    await tool('browser_attach_file', {
+      tabId,
+      role: 'fileinput',
+      name: 'Receipt',
+      files: [{ name: 'receipt.pdf', content: 'hello pdf', mimeType: 'application/pdf' }],
+    });
+    // The page's own change handler saw the files — names, sizes, types —
+    // which only real File objects can supply.
+    const up = await tool('browser_text', { tabId, selector: '#uploaded' });
+    assert.match(up.text, /receipt\.pdf/, 'the page saw the name');
+    assert.match(up.text, /application\/pdf/, 'the page saw the type');
+    // The input is a fileinput in the snapshot and carries the attached name.
+    const snap = await tool('browser_snapshot', { tabId, format: 'json' });
+    const fi = snap.nodes.find((n) => n.name === 'Receipt');
+    assert.ok(fi, 'the input is in the snapshot');
+    assert.strictEqual(fi.role, 'fileinput');
+    assert.ok(Array.isArray(fi.files) && fi.files.includes('receipt.pdf'), 'snapshot carries the attached file name');
+  });
+
+  await check('locators resolve into a same-origin iframe', async () => {
+    const snap = await tool('browser_snapshot', { tabId });
+    assert.match(snap.snapshot, /frame "Notes"/, 'the iframe appears as a frame node');
+    assert.match(snap.snapshot, /textbox "Note text"/, 'the iframe field is on the same surface');
+    await tool('browser_fill', { tabId, role: 'textbox', name: 'Note text', value: 'typed from outside the frame' });
+    await tool('browser_click', { tabId, role: 'button', name: 'Save note' });
+    const out = await tool('browser_text', { tabId, selector: '#note-out' });
+    assert.match(out.text, /typed from outside the frame/, 'the action landed inside the frame');
+  });
+
+  await check('open shadow roots are pierced by snapshot, actions and refs', async () => {
+    const snap = await tool('browser_snapshot', { tabId });
+    assert.match(snap.snapshot, /button "Turbo widget"/, 'the shadow control is on the surface');
+    await tool('browser_click', { tabId, role: 'button', name: 'Turbo widget' });
+    const banner = await tool('browser_text', { tabId, selector: '#banner' });
+    assert.match(banner.text, /Turbo widget engaged/, 'the click landed inside the shadow root');
+    // Refs work through the shadow boundary too: resolve and act by ref.
+    const js = await tool('browser_snapshot', { tabId, format: 'json' });
+    const node = js.nodes.find((n) => n.name === 'Turbo widget');
+    assert.ok(node && node.ref, 'the shadow control got a ref');
+    await tool('browser_click', { tabId, ref: node.ref });
   });
 
   await check('the bridge still refuses to act on creel\'s own origin', async () => {

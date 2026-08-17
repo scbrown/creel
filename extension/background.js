@@ -12,7 +12,7 @@
  * job (app/creel-self.js), which does it in-origin and cross-tab.
  */
 
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 
 /* ── which origins may COMMAND the bridge ─────────────────────────
  * This is the security boundary, and it is checked BY ORIGIN INCLUDING
@@ -167,6 +167,10 @@ async function locatorOp(tab, op, args) {
         case 'hover': return { ok: true, value: await L.actions.hover(loc, opts) };
         case 'check': return { ok: true, value: await L.actions.check(loc, a.checked !== false, opts) };
         case 'select_option': return { ok: true, value: await L.actions.selectOption(loc, { value: a.value, label: a.label }, opts) };
+        case 'attach_file': {
+          const files = Array.isArray(a.files) ? a.files : (a.files ? [a.files] : []);
+          return { ok: true, value: await L.actions.setFile(loc, files, opts) };
+        }
         case 'press': return { ok: true, value: await L.actions.press(targeted ? loc : null, a.key || 'Enter', opts) };
         case 'text': return { ok: true, value: { ...head, ...L.text(loc) } };
         case 'wait_for': {
@@ -317,6 +321,49 @@ const ops = {
   async press(args) { return locatorOp(await targetTab(args), 'press', args); },
   async text(args) { return locatorOp(await targetTab(args, 'read'), 'text', args); },
   async wait_for(args) { return locatorOp(await targetTab(args, 'read'), 'wait_for', args); },
+  /** Attach files to an <input type="file"> in the target page. The engine
+   *  builds a real DataTransfer with real File objects in the page itself, so
+   *  the page's change handler sees exactly what a user's picker would have
+   *  produced. `files` is [{name, content|base64, mimeType?, lastModified?}]. */
+  async attach_file(args) { return locatorOp(await targetTab(args), 'attach_file', args); },
+
+  /** The popup's view of the boundary: the effective creel-origin list
+   *  (defaults unless the user overrode them in chrome.storage.local), what
+   *  the defaults are, and the path prefix the Pages deployment lives under.
+   *  Origin *management* only — never a way to act on tabs. */
+  async list_origins() {
+    return {
+      version: VERSION,
+      origins: [...creelOrigins].sort(),
+      defaults: DEFAULT_CREEL_ORIGINS,
+      pagesPrefix: PAGES_PREFIX,
+      storageKey: 'creelOrigins',
+    };
+  },
+
+  /** The popup's edit path: normalize each entry to an exact origin (the URL
+   *  constructor drops any path/query, keeping scheme+host+port — the same
+   *  normalization the boundary itself uses), persist, and apply immediately.
+   *  An empty list clears the override and returns to the defaults. */
+  async set_origins(args) {
+    if (!Array.isArray(args.origins)) throw new Error('set_origins needs origins: [origin strings]');
+    const normalized = args.origins.map((o) => {
+      const s = String(o).trim();
+      if (!s) throw new Error('empty origin entry');
+      const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`);
+      if (!/^https?:$/.test(u.protocol)) throw new Error(`only http/https origins allowed, got ${u.protocol}//`);
+      return u.origin;
+    });
+    if (new Set(normalized).size !== normalized.length) throw new Error('duplicate origins in list');
+    if (!normalized.length) {
+      await chrome.storage.local.remove('creelOrigins');
+      applyOrigins([]);
+    } else {
+      await chrome.storage.local.set({ creelOrigins: normalized });
+      applyOrigins(normalized);
+    }
+    return { ok: true, origins: [...creelOrigins].sort() };
+  },
 
   /** Retained: a plain CSS listing, for pages where the locator engine
    *  cannot be installed at all. */
@@ -394,9 +441,23 @@ const ops = {
   },
 };
 
+// Ops our own extension pages (the popup) may call directly. These manage
+// the origins list — the boundary itself — and never act on a tab. Everything
+// else keeps the single narrow gate: the connector, on a creel origin.
+const EXTENSION_PAGE_OPS = new Set(['__ops', 'list_origins', 'set_origins']);
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  // Only accept from our own content script on a creel origin.
-  if (!sender.tab || !isCreelUrl(sender.tab.url)) {
+  // Two trust paths, both deliberately narrow:
+  // 1. Our content script on a creel origin — the normal path. The page can
+  //    only reach the bridge through the connector, and the connector only
+  //    runs on creel origins (manifest matches), so this is the one gate.
+  // 2. Our own extension pages (popup) — but ONLY for the origins ops above.
+  //    A popup message has no sender.tab, so without this carve-out the popup
+  //    could never read or edit the list it exists to manage. It still cannot
+  //    command tabs: every tab-commanding op keeps gate 1.
+  const fromConnector = !!sender.tab && isCreelUrl(sender.tab.url);
+  const fromExtensionPage = !sender.tab && sender.id === chrome.runtime.id && EXTENSION_PAGE_OPS.has(msg.op);
+  if (!fromConnector && !fromExtensionPage) {
     sendResponse({ ok: false, error: 'unauthorized sender' });
     return false;
   }

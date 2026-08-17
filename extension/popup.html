@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>creel bridge — origins</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>creel bridge</h1>
+    <p class="sub">v<span id="version">…</span> · <span id="ops-count"></span></p>
+  </header>
+
+  <section class="card">
+    <h2>creel origins</h2>
+    <p class="hint">
+      These origins may <em>command</em> the bridge — and the bridge refuses to
+      act on them. The check is exact, <em>including port</em>: a dev server on
+      another localhost port is a stranger, like any website.
+    </p>
+    <ul id="origins" class="origins"></ul>
+    <p id="empty" class="empty hidden">No override set — using the defaults below.</p>
+  </section>
+
+  <section class="card">
+    <h2>add an origin</h2>
+    <form id="add-form">
+      <input id="new-origin" type="text" placeholder="http://localhost:3000" spellcheck="false" autocomplete="off">
+      <button type="submit" id="add-btn">Add</button>
+    </form>
+    <p class="err hidden" id="err"></p>
+    <p class="hint">Normalized to its exact origin (scheme + host + port); any path is dropped.</p>
+  </section>
+
+  <section class="card">
+    <h2>defaults</h2>
+    <ul id="defaults" class="origins muted"></ul>
+    <div class="row">
+      <button id="reset-btn" type="button">Reset to defaults</button>
+    </div>
+  </section>
+
+  <footer>
+    <p class="hint">
+      A creel deployment not listed here is undriveable — and <em>cannot</em>
+      command the bridge. The Pages deployment is additionally path-scoped to
+      <span id="pages-prefix"></span>.
+    </p>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
