@@ -148,13 +148,22 @@ Two things are worth repeating here:
   necessarily injects the connector into every `localhost` page; the real gate
   is `creelOrigins` in `background.js` (default `:8420`). A dev server on
   another port is a stranger — which is both why it cannot command the bridge
-  and why the bridge is willing to drive it.
+  and why the bridge is willing to drive it. The extension popup lists and
+  edits `creelOrigins` (add, remove, reset to defaults); entries are normalized
+  to exact origins, and the popup can manage the boundary but never command a
+  tab.
+- **The bridge pierces what it can see.** `snapshot`, locator resolution and
+  actions descend into open shadow roots and same-origin iframes, so a control
+  inside a widget's shadow tree or a site's own frame is located and driven
+  like any top-level element. Cross-origin frames stay opaque by design.
 
 ## What is still missing
 
 - **No vision.** Snapshots give structure, not pixels; a page whose meaning is
   in its layout is opaque. Tool results are text-only in the vendored harness,
   so a screenshot op would have nowhere to land (`creel-hty`).
-- **No drag, no file pickers, no iframe traversal** in either set of hands.
-- **`ui_snapshot` does not cross shadow roots.** creel does not use them
-  today, so this is a latent gap rather than a current one.
+- **No drag-and-drop.** File *pickers* work (`browser_attach_file` builds a
+  real `DataTransfer`), but synthesizing an HTML5 drag gesture with readable
+  payloads — the browser makes `dataTransfer` read-only to script — is not
+  done. No `iframe` traversal **across** origins: same-origin frames are
+  pierced; a cross-origin frame stays opaque, as the platform intends.

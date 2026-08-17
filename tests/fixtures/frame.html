@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- Same-origin iframe for the bridge's iframe piercing: served by the same
+     fixture server as site.html, loaded into it via <iframe src="frame.html">.
+     No CSP here — the point is the *same-origin* walk, not injection. -->
+<title>Notes</title>
+<style>
+  body { font: 13px system-ui; margin: 1rem; }
+</style>
+
+<label for="note">Note text</label>
+<input id="note" aria-label="Note text" placeholder="Jot something">
+
+<button type="button" id="save" aria-label="Save note">Save note</button>
+
+<p id="note-out">Nothing saved.</p>
+
+<script src="frame.js"></script>

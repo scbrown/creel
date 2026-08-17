@@ -136,6 +136,7 @@
     { op: 'hover', name: 'browser_hover', description: 'Hover a control — reveals menus and tooltips that only appear on pointer-over.', inputSchema: { type: 'object', properties: withLoc({}), required: [] } },
     { op: 'check', name: 'browser_check', description: 'Check or uncheck a checkbox, idempotently — it verifies the resulting state rather than blindly toggling.', inputSchema: { type: 'object', properties: withLoc({ checked: { type: 'boolean', description: 'default true' } }), required: [] } },
     { op: 'select_option', name: 'browser_select_option', description: 'Choose an option in a <select>, by value or by visible label.', inputSchema: { type: 'object', properties: withLoc({ value: { type: 'string' }, label: { type: 'string' } }), required: [] } },
+    { op: 'attach_file', name: 'browser_attach_file', description: 'Attach files to an <input type="file"> in the target page. Files travel as {name, content|base64, mimeType?}: content is UTF-8 text, base64 carries binary payloads. The engine builds a real DataTransfer with real File objects in the page, so the page\'s change handler sees exactly what a user\'s picker would have produced — nothing an agent could fake.', inputSchema: { type: 'object', properties: withLoc({ files: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, content: { type: 'string', description: 'UTF-8 text payload' }, base64: { type: 'string', description: 'binary payload (wins over content when both are given)' }, mimeType: { type: 'string' }, lastModified: { type: 'integer' } } }, description: 'one or more files to attach (max 50)' } }), required: ['files'] } },
     { op: 'wait_for', name: 'browser_wait_for', description: 'Wait until a control is visible / hidden / attached / detached / enabled. Use after a click that triggers navigation or async loading instead of guessing at a delay.', inputSchema: { type: 'object', properties: withLoc({ state: { type: 'string', enum: ['visible', 'hidden', 'attached', 'detached', 'enabled'] } }), required: [] } },
     { op: 'text', name: 'browser_text', description: 'Read the text of one region of a page, located the same way as any action.', inputSchema: { type: 'object', properties: withLoc({}), required: [] } },
     { op: 'read', name: 'browser_read', description: 'Read the visible text of a whole tab (or a CSS-selected region) — the bulk-reading counterpart to browser_text.', inputSchema: { type: 'object', properties: { selector: { type: 'string' }, limit: { type: 'integer', description: 'max characters (default 20000)' }, tabId: TAB }, required: [] } },
@@ -145,7 +146,7 @@
 
   // Which tools speak the locator vocabulary — their flat locator fields are
   // lifted into `locator` before crossing to the extension.
-  const LOCATOR_TOOLS = new Set(['browser_click', 'browser_fill', 'browser_type', 'browser_press', 'browser_hover', 'browser_check', 'browser_select_option', 'browser_wait_for', 'browser_text']);
+  const LOCATOR_TOOLS = new Set(['browser_click', 'browser_fill', 'browser_type', 'browser_press', 'browser_hover', 'browser_check', 'browser_select_option', 'browser_attach_file', 'browser_wait_for', 'browser_text']);
   const LOC_KEYS = Object.keys(LOC);
 
   const OP = Object.fromEntries(BRIDGE_TOOLS.map((t) => [t.name, t.op]));

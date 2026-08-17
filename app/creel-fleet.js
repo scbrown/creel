@@ -52,10 +52,28 @@
       t.onerror = () => reject(t.error);
     });
   }
-  const putTask = (task) => tx('readwrite', (s) => { s.put(task); return task; });
+  const putTask = (task) => tx('readwrite', (s) => { s.put(task); return task; }).then((r) => { refreshLiveMirror(); return r; });
   const getTask = (id) => tx('readonly', (s) => s.get(id)).then((r) => r);
   const allTasks = () => tx('readonly', (s) => s.getAll()).then((r) => r || []);
-  const delTask = (id) => tx('readwrite', (s) => s.delete(id));
+  const delTask = (id) => tx('readwrite', (s) => s.delete(id)).then((r) => { refreshLiveMirror(); return r; });
+
+  // ── Live-task mirror ─────────────────────────────────────────────
+  // beforeunload handlers must be synchronous, and the task store is
+  // IndexedDB, so every mutation refreshes a localStorage count of live
+  // tasks (queued/spawned/running). Tabs that only READ fleet state (the
+  // dispatcher) get an accurate mirror at boot. Recompute-on-mutation keeps
+  // it race-free across tabs; a stale count can only over-warn, never under.
+  const LIVE_STATUS = new Set(['queued', 'spawned', 'running']);
+  function refreshLiveMirror() {
+    try {
+      allTasks()
+        .then((tasks) => {
+          const n = tasks.filter((t) => LIVE_STATUS.has(t && t.status)).length;
+          try { localStorage.setItem('creel_fleet_live', String(n)); } catch { /* private mode etc. */ }
+        })
+        .catch(() => {});
+    } catch { /* IDB unavailable — warning simply stays DOM-based */ }
+  }
 
   const genId = () => Math.random().toString(36).slice(2, 10);
   const notify = () => { try { BC.postMessage({ type: 'update' }); } catch { /* closed */ } };
@@ -797,7 +815,11 @@
     notify();
     startHeartbeat(MY_TASK_ID);
     BC.addEventListener('message', (e) => {
-      if (e.data?.type === 'abort' && e.data.id === MY_TASK_ID) window.close();
+      if (e.data?.type === 'abort' && e.data.id === MY_TASK_ID) {
+        // The app is closing us on purpose — no leave-site dialog.
+        window.__creelSuppressLeaveWarn = true;
+        window.close();
+      }
     });
     // Give the harness a beat to finish booting (providers, MCP connects),
     // then hand it the task exactly as a user would.
@@ -899,7 +921,11 @@
     });
     notify();
     BC.addEventListener('message', (e) => {
-      if (e.data?.type === 'abort' && e.data.id === MY_WORKER_ID) window.close();
+      if (e.data?.type === 'abort' && e.data.id === MY_WORKER_ID) {
+        // The app is closing us on purpose — no leave-site dialog.
+        window.__creelSuppressLeaveWarn = true;
+        window.close();
+      }
       // New work while idle → claim it.
       if (e.data?.type === 'update' && !currentLeaseTaskId) {
         setTimeout(() => { if (!currentLeaseTaskId) claimNext(); }, 500 + Math.random() * 1000);
@@ -1075,6 +1101,7 @@
     isolateContext();
     if (MY_TASK_ID) agentBoot();
     if (MY_WORKER_ID) workerBoot();
+    refreshLiveMirror(); // seed the count for dispatcher tabs that only read
     // Dashboard tabs: periodically requeue stale leases (frozen-tab detection)
     // and drain the fleet work log into the main tab's conversation.
     if (!MY_TASK_ID && !MY_WORKER_ID) {

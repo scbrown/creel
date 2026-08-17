@@ -72,12 +72,22 @@ website alike: snapshot, then act by `{ref}` or `{role, name}`.
 | `browser_snapshot` | **the page's accessibility tree with [ref] handles** |
 | `browser_click` / `fill` / `type` / `press` | act on a control; all auto-wait |
 | `browser_hover` / `check` / `select_option` | menus, checkboxes, dropdowns |
+| `browser_attach_file` | attach files to an `<input type="file">` via a real `DataTransfer` in the page — the change handler sees genuine `File` objects, indistinguishable from a user's picker |
 | `browser_wait_for` | wait for visible / hidden / attached / detached / enabled |
 | `browser_text` | read one located region |
 | `browser_list_tabs` | the user's open tabs (creel's own excluded) |
 | `browser_open_tab` | open any site; becomes the default target |
 | `browser_navigate` / `close_tab` / `history` | move around, clean up |
 | `browser_read` / `query` / `scroll` | bulk text, CSS escape hatch, scrolling |
+
+The locator engine also walks structures a naive crawler misses, using the
+same vocabulary everywhere: **shadow roots** (open ones — as shipped by real
+frameworks) and **same-origin iframes** are pierced during snapshotting,
+locator resolution, and action — `snapshot`, `queryAll`, `actionable`, the
+whole family. A control inside a widget's shadow tree or inside the site's own
+iframe is located and acted on exactly like a top-level element. Cross-origin
+iframes stay opaque (the platform enforces that); `browser_text`/`snapshot`
+report them by frame only.
 
 Three properties carry most of the value:
 
@@ -118,6 +128,12 @@ what the tests themselves use:
 ```js
 chrome.storage.local.set({ creelOrigins: ['http://localhost:1234'] })
 ```
+
+Or use the **popup** (click the extension's toolbar icon): it lists the
+current origins, adds new ones, and resets to the defaults — no console needed.
+The popup can only *manage the boundary*; it has no path to command a tab.
+Every entry is normalized to an exact origin (scheme + host + port) before it
+is persisted, the same normalization the boundary itself applies.
 
 Getting this wrong in the permissive direction is the interesting failure: a
 port-blind check makes every dev server on `localhost` *both* undriveable by

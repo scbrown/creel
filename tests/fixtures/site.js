@@ -16,3 +16,26 @@ document.getElementById('submit').addEventListener('click', () => {
 document.getElementById('reveal').addEventListener('click', () => {
   setTimeout(() => document.getElementById('delayed').classList.remove('hidden'), 700);
 });
+
+// The file input echoes what it really received. If the bridge's attach_file
+// produced genuine File objects (DataTransfer → FileList), the page sees
+// names, sizes and types — exactly like a user's picker. If an agent faked
+// it (e.g. by setting .value, which is impossible, or by dispatching a
+// synthetic event with no files), the handler below would have nothing to
+// read and this whole check would fail.
+document.getElementById('receipt').addEventListener('change', (e) => {
+  const names = [...e.target.files].map((f) => `${f.name}:${f.size}:${f.type}`).join(', ');
+  document.getElementById('uploaded').textContent = `Attached ${names || '(no files)'}`;
+});
+
+// An open shadow root with a button — the locator engine must pierce it.
+const host = document.getElementById('widget');
+const shadow = host.attachShadow({ mode: 'open' });
+const btn = document.createElement('button');
+btn.type = 'button';
+btn.setAttribute('aria-label', 'Turbo widget');
+btn.textContent = 'Turbo';
+btn.addEventListener('click', () => {
+  document.getElementById('banner').textContent = 'Turbo widget engaged';
+});
+shadow.appendChild(btn);

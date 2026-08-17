@@ -34,10 +34,22 @@
   <label for="secret">Card number</label>
   <input type="password" id="secret" name="cardNumber" aria-label="Card number">
 
+  <label for="receipt">Receipt</label>
+  <input type="file" id="receipt" aria-label="Receipt">
+
   <button type="button" id="submit" aria-label="Place order">Place order</button>
   <button type="button" id="reveal" aria-label="Show delayed notice">Show notice</button>
 </form>
 
+<p id="uploaded">No file yet.</p>
 <p id="delayed" class="hidden">Your order is being prepared.</p>
+
+<!-- Same-origin iframe: a site-within-the-site that the bridge must see and
+     act on with the same vocabulary (locator resolution pierces into it). -->
+<iframe id="notes" aria-label="Notes" src="frame.html"></iframe>
+
+<!-- Open shadow root: real frameworks ship UI this way, and the locator
+     engine must treat the shadow tree as part of the page. -->
+<div id="widget"></div>
 
 <script src="site.js"></script>

@@ -18818,6 +18818,35 @@ marked.setOptions({ gfm: true, breaks: true });
 window.addEventListener('beforeunload', () => { saveCurrentConv(); });
 window.addEventListener('pagehide', () => { saveCurrentConv(); });
 
+// ── Leave warning ─────────────────────────────────────────────────
+// Closing or navigating away from a creel tab is destructive: a live agent
+// loop dies with it and unsent work is lost. Pop the browser's native
+// beforeunload dialog whenever there is anything to lose — a conversation
+// with real content, or live fleet activity in any tab (mirrored to
+// localStorage by creel-fleet.js, since unload handlers must be sync).
+// The predicate is pure and synchronous, fenced below so the unit test
+// evaluates this exact source (tests/test-leave-warning.js). The app's own
+// programmatic closes (fleet abort) set window.__creelSuppressLeaveWarn.
+// BEGIN creelShouldWarnOnLeave
+window.creelShouldWarnOnLeave = function creelShouldWarnOnLeave() {
+  try {
+    const chat = document.getElementById('chatMessages');
+    if (chat && chat.querySelector('.msg:not(.msg-placeholder)')) return true;
+    try {
+      const live = parseInt(localStorage.getItem('creel_fleet_live') || '0', 10) || 0;
+      if (live > 0) return true;
+    } catch {}
+  } catch {}
+  return false;
+};
+// END creelShouldWarnOnLeave
+window.addEventListener('beforeunload', (e) => {
+  if (window.__creelSuppressLeaveWarn) return;
+  if (!window.creelShouldWarnOnLeave()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 // Boot the cron scheduler (tab-only — clears on unload)
 try {
   if (typeof CronScheduler !== 'undefined' && CronScheduler && typeof CronScheduler.start === 'function') {
