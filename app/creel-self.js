@@ -62,7 +62,7 @@
   })();
   const AGENT_ID = (location.hash.match(/creel-(?:agent|worker)=([a-z0-9]+)/) || [])[1] || null;
 
-  const CreelSelf = { role: IS_AGENT_TAB ? 'bobbin' : 'standby', tabId: TAB_ID, agentId: AGENT_ID };
+  const CreelSelf = { role: IS_AGENT_TAB ? 'bobbin' : 'standby', tabId: TAB_ID, agentId: AGENT_ID, worldVersion: WORLD_VERSION };
   window.CreelSelf = CreelSelf;
 
   // ── 1. root-pane election ────────────────────────────────────────
@@ -298,7 +298,7 @@
     },
     {
       name: 'ui_configure_provider',
-      description: 'Update a tab\'s active provider profile: endpoint base URL and/or default model. (API keys are never set through chat — direct the user to Settings for those.)',
+      description: 'Update a tab\'s active provider profile: endpoint base URL and/or default model. To set that profile\'s API key, use ui_set_credential — it writes without ever exposing the value.',
       inputSchema: {
         type: 'object',
         properties: withTab({
@@ -661,14 +661,40 @@
   window.CreelUi = CreelUi;
 
   // ── 2. seed the world model into the shared quipu store ──────────
-  async function seedWorldModel() {
+  /** Seed the world model, unless this version is already in the store.
+   *  `version` is a parameter rather than a closed-over constant so a test
+   *  can seed a later version against a store that already holds earlier
+   *  ones — which is the only way to exercise the supersedes path. */
+  async function seedWorldModel(version) {
+    // Shadowing the module constant deliberately, so the body below reads the
+    // same whether it is seeding the real version or a test's. (A default
+    // parameter would resolve against the outer constant, which works but
+    // reads like a bug.)
+    const WORLD_VERSION = version || CreelSelf.worldVersion;
     try {
       await window.CreelQuipu.ensureWasm();
       const call = (name, args) => window.CreelQuipu.provider.callTool(name, args);
+      const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
       const existing = await call('quipu_query', {
-        query: `SELECT ?s WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> "${WORLD_VERSION}" } LIMIT 1`,
+        query: `SELECT ?s WHERE { ?s <${RDFS_LABEL}> "${WORLD_VERSION}" } LIMIT 1`,
       });
       if (existing.count > 0) return;
+
+      // A store seeded at an earlier version keeps that version's nodes — the
+      // graph is append-only and facts stay true at write time, so we do not
+      // rewrite them. But an agent that finds v1 must not read it as current,
+      // so the new episode declares what it supersedes and edges point
+      // forward. Following `supersedes` backwards from any version reaches
+      // the newest one. (creel-b8b)
+      const priorVersions = [];
+      const currentN = Number((WORLD_VERSION.match(/v(\d+)$/) || [])[1] || 0);
+      for (let v = 1; v < currentN; v++) {
+        const label = WORLD_VERSION.replace(/v\d+$/, `v${v}`);
+        const hit = await call('quipu_query', {
+          query: `SELECT ?s WHERE { ?s <${RDFS_LABEL}> "${label}" } LIMIT 1`,
+        }).catch(() => ({ count: 0 }));
+        if (hit.count > 0) priorVersions.push(label);
+      }
 
       const servers = (typeof mcpServers !== 'undefined' ? mcpServers : [])
         .filter((s) => s.type === 'inpage');
@@ -687,7 +713,8 @@
 
       await call('quipu_episode', {
         name: WORLD_VERSION,
-        episode_body: 'The creel world model: how this system is organized, written for its own agents. '
+        episode_body: `The creel world model (${WORLD_VERSION}${priorVersions.length ? `, superseding ${priorVersions.join(', ')}` : ''}): how this system is organized, written for its own agents. `
+          + 
           + 'creel is a static browser page running agent loops. There is always exactly ONE root pane '
           + '(the dispatcher, elected by Web Lock, badge ⬢): it spawns bobbins (agent tabs), seeds and owns this '
           + 'world model, and synthesizes results. Bobbins work one task, coordinate via fleet_send, and MUST '
@@ -709,7 +736,8 @@
           + 'prompt itself. Query this graph, not documentation, to understand the world.',
         source: 'creel-self',
         nodes: [
-          { name: WORLD_VERSION, type: 'WorldModel', description: 'versioned self-description marker; re-seeded only when the version bumps' },
+          { name: WORLD_VERSION, type: 'WorldModel', description: `versioned self-description marker; re-seeded only when the version bumps. THIS IS THE CURRENT VERSION${priorVersions.length ? `, superseding ${priorVersions.join(', ')} — those remain in the graph as history, and are not current` : ''}` },
+          ...priorVersions.map((label) => ({ name: label, type: 'WorldModel', description: `superseded by ${WORLD_VERSION}; kept as history. Do not read it as current — follow supersedes forward` })),
           { name: 'root-pane', type: 'Role', description: 'the dispatcher: exactly one, Web-Lock elected among non-agent tabs, survives tab death by takeover; spawns and synthesizes' },
           { name: 'bobbin', type: 'Role', description: 'a spawned agent tab: one task, autonomous, reports via fleet_report, coordinates via fleet_send' },
           { name: 'shared-brain', type: 'Subsystem', description: 'one OPFS quipu store for all tabs; leader tab hosts, others RPC over BroadcastChannel; leader death → takeover with data intact' },
@@ -731,6 +759,7 @@
           { source: 'web-hands', target: 'locator-engine', relation: 'built_on' },
           { source: 'locator-engine', target: 'credential-asymmetry', relation: 'enforces' },
           { source: 'root-pane', target: WORLD_VERSION, relation: 'maintains' },
+          ...priorVersions.map((label) => ({ source: WORLD_VERSION, target: label, relation: 'supersedes' })),
           { source: 'bobbin', target: 'shared-brain', relation: 'grounds_in' },
           { source: 'root-pane', target: 'shared-brain', relation: 'grounds_in' },
           { source: 'graph-explorer', target: 'shared-brain', relation: 'renders' },
@@ -742,6 +771,9 @@
       console.warn('creel: world model seeding failed (will retry next root election)', e);
     }
   }
+
+  // Exposed for tests and for an operator re-seeding after clearing a store.
+  CreelSelf.seedWorldModel = seedWorldModel;
 
   function start() {
     CreelUi.registerDefaults();

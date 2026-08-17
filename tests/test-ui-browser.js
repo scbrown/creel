@@ -258,6 +258,35 @@ function uiCall(page) {
     }
   });
 
+  // ── the world model, in the real quipu store ─────────────────────
+
+  await check('the root pane seeds its world model into the real graph', async () => {
+    await alpha.waitForFunction(() => window.CreelSelf.role === 'root', { message: 'root election' });
+    const found = await alpha.evaluate(async () => {
+      await window.CreelQuipu.ensureWasm();
+      const r = await window.CreelQuipu.provider.callTool('quipu_query', {
+        query: `SELECT ?s WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> "${window.CreelSelf.worldVersion}" } LIMIT 1`,
+      });
+      return r.count;
+    });
+    assert.strictEqual(found, 1, 'the current world model is in the store');
+  });
+
+  await check('a newer world model declares what it supersedes, without rewriting it', async () => {
+    // Seed a later version against a store that already holds the current
+    // one — the only way to exercise the supersedes path (creel-b8b).
+    const out = await alpha.evaluate(async () => {
+      await window.CreelSelf.seedWorldModel('creel-world-model-v99');
+      const q = async (query) => (await window.CreelQuipu.provider.callTool('quipu_query', { query }));
+      const supersedes = await q(`SELECT ?o WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> "creel-world-model-v99" . ?s ?p ?o }`);
+      const older = await q(`SELECT ?s WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> "${window.CreelSelf.worldVersion}" } LIMIT 1`);
+      return { v99: (await q('SELECT ?s WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> "creel-world-model-v99" } LIMIT 1')).count, olderStillPresent: older.count, links: supersedes.count };
+    });
+    assert.strictEqual(out.v99, 1, 'the newer version seeded');
+    assert.strictEqual(out.olderStillPresent, 1, 'the older version is kept as history, not rewritten');
+    assert.ok(out.links > 0, 'the newer version carries relationships, including what it supersedes');
+  });
+
   // ── cross-tab, in a real browser ─────────────────────────────────
 
   const beta = await browser.newPage('/onepagent.html#creel-agent=btest');
