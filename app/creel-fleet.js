@@ -740,53 +740,53 @@
     const report = await statusReport();
     list.textContent = '';
     if (!report.length) {
-      list.appendChild(h('div', 'color:#8892a4;padding:14px;', 'No fleet tasks. Spawn below, or ask the agent to use fleet_spawn.'));
+      list.appendChild(h('div', 'color:var(--text-secondary);padding:14px;', 'No fleet tasks. Spawn below, or ask the agent to use fleet_spawn.'));
     }
-    const COLORS = { queued: '#e0af68', spawned: '#e0af68', running: '#8be9fd', done: '#9ece6a', failed: '#ff8080', dead: '#ff8080' };
+    const COLORS = { queued: 'var(--accent-yellow)', spawned: 'var(--accent-yellow)', running: '#8be9fd', done: 'var(--accent-green)', failed: 'var(--accent-red)', dead: 'var(--accent-red)' };
     for (const t of report) {
-      const row = h('div', 'border:1px solid #2a2a3a;border-radius:6px;padding:8px 10px;margin:8px 0;background:#181826;');
+      const row = h('div', 'border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin:8px 0;background:var(--bg-card);');
       const head = h('div', 'display:flex;gap:8px;align-items:center;');
       head.append(
         h('span', 'font-weight:600;', t.label || t.id),
-        h('span', `color:${COLORS[t.status] || '#cfd2d6'};font-size:11px;`, t.status + (t.status === 'running' && t.alive ? ' ●' : '')),
+        h('span', `color:${COLORS[t.status] || 'var(--text-primary)'};font-size:11px;`, t.status + (t.status === 'running' && t.alive ? ' ●' : '')),
         h('span', 'flex:1', ''),
       );
       if (['queued', 'spawned'].includes(t.status)) {
-        const launch = h('button', 'background:#1d2e1d;border:1px solid #2a3a2a;color:#9ece6a;padding:2px 10px;border-radius:4px;cursor:pointer;', 'Launch');
+        const launch = h('button', 'background:rgba(80,250,123,0.10);border:1px solid rgba(80,250,123,0.30);color:var(--accent-green);padding:2px 10px;border-radius:4px;cursor:pointer;', 'Launch');
         launch.onclick = () => { spawnWindow(t.id); };
         head.appendChild(launch);
       }
       if (['running', 'spawned', 'queued'].includes(t.status)) {
-        const abort = h('button', 'background:#2e1d1d;border:1px solid #3a2a2a;color:#ff8080;padding:2px 10px;border-radius:4px;cursor:pointer;', 'Abort');
+        const abort = h('button', 'background:rgba(255,85,85,0.10);border:1px solid rgba(255,85,85,0.35);color:var(--accent-red);padding:2px 10px;border-radius:4px;cursor:pointer;', 'Abort');
         abort.onclick = () => impl.fleet_abort({ id: t.id }).then(renderDashboard);
         head.appendChild(abort);
       }
       row.appendChild(head);
-      row.appendChild(h('div', 'color:#8892a4;font-size:12px;margin-top:4px;white-space:pre-wrap;', String(t.task || '').slice(0, 200)));
-      if (t.result) row.appendChild(h('div', 'color:#cfd2d6;font-size:12px;margin-top:6px;border-top:1px dashed #2a2a3a;padding-top:6px;white-space:pre-wrap;', t.result.slice(0, 500)));
+      row.appendChild(h('div', 'color:var(--text-secondary);font-size:12px;margin-top:4px;white-space:pre-wrap;', String(t.task || '').slice(0, 200)));
+      if (t.result) row.appendChild(h('div', 'color:var(--text-primary);font-size:12px;margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;white-space:pre-wrap;', t.result.slice(0, 500)));
       list.appendChild(row);
     }
 
     const comms = overlay.querySelector('#creelFleetComms');
     if (comms) {
       comms.textContent = '';
-      comms.appendChild(h('div', 'color:#e0af68;font-weight:600;margin-bottom:4px;', 'comms'));
-      if (!commsLog.length) comms.appendChild(h('div', 'color:#8892a4;', 'no fleet messages yet'));
+      comms.appendChild(h('div', 'color:var(--accent-yellow);font-weight:600;margin-bottom:4px;', 'comms'));
+      if (!commsLog.length) comms.appendChild(h('div', 'color:var(--text-secondary);', 'no fleet messages yet'));
       for (const m of commsLog.slice(-15).reverse()) {
-        comms.appendChild(h('div', 'color:#8892a4;margin:2px 0;',
+        comms.appendChild(h('div', 'color:var(--text-secondary);margin:2px 0;',
           `${new Date(m.ts).toLocaleTimeString()} · ${m.fromLabel || m.from} → ${m.to || 'all'}: `,
-          h('span', 'color:#cfd2d6;', m.text.slice(0, 120))));
+          h('span', 'color:var(--text-primary);', m.text.slice(0, 120))));
       }
     }
   }
 
   function openDashboard() {
     if (overlay) { overlay.remove(); overlay = null; return; }
-    overlay = h('div', 'position:fixed;top:0;right:0;bottom:0;width:min(430px,95vw);z-index:99998;background:#12121c;border-left:1px solid #2a2a3a;color:#cfd2d6;font:13px system-ui,sans-serif;display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.5);');
-    const head = h('div', 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #2a2a3a;');
+    overlay = h('div', 'position:fixed;top:0;right:0;bottom:0;width:min(430px,95vw);z-index:99998;background:var(--bg-panel);border-left:1px solid var(--border);color:var(--text-primary);font:13px 'Intel One Mono',sans-serif;display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.5);');
+    const head = h('div', 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);');
     // The weft: hand every finished result to the operator's own agent so it
     // synthesizes across the parallel threads, in this same conversation.
-    const weft = h('button', 'background:#2e2a12;border:1px solid #4a4422;color:#e0af68;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Synthesize');
+    const weft = h('button', 'background:rgba(241,250,140,0.10);border:1px solid rgba(241,250,140,0.35);color:var(--accent-yellow);padding:3px 10px;border-radius:4px;cursor:pointer;', 'Synthesize');
     weft.onclick = async () => {
       const s = await impl.fleet_synthesize();
       if (!s.tasks.length) { weft.textContent = 'no results yet'; setTimeout(() => { weft.textContent = 'Synthesize'; }, 1500); return; }
@@ -795,30 +795,30 @@
         + `Give one combined answer, note agreements/conflicts, then (if worth keeping) call fleet_writeback to record the key findings into the quipu graph.\n\n${lines}`);
       overlay.remove(); overlay = null;
     };
-    const clear = h('button', 'background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Clear done');
+    const clear = h('button', 'background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:3px 10px;border-radius:4px;cursor:pointer;', 'Clear done');
     clear.onclick = () => impl.fleet_clear().then(renderDashboard);
-    const close = h('button', 'background:#2a1d1d;border:1px solid #3a2a2a;color:#ff8080;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Close');
+    const close = h('button', 'background:rgba(255,85,85,0.10);border:1px solid rgba(255,85,85,0.35);color:var(--accent-red);padding:3px 10px;border-radius:4px;cursor:pointer;', 'Close');
     close.onclick = () => { overlay.remove(); overlay = null; };
-    head.append(h('span', 'font-weight:600;color:#e0af68;', '🧺 fleet'), h('span', 'flex:1', ''), weft, clear, close);
+    head.append(h('span', 'font-weight:600;color:var(--accent-yellow);', '🧺 fleet'), h('span', 'flex:1', ''), weft, clear, close);
     overlay.appendChild(head);
 
     const list = h('div', 'flex:1;overflow:auto;padding:6px 12px;');
     list.id = 'creelFleetList';
     overlay.appendChild(list);
 
-    const comms = h('div', 'max-height:30%;overflow:auto;border-top:1px solid #2a2a3a;padding:6px 12px;font-size:11px;');
+    const comms = h('div', 'max-height:30%;overflow:auto;border-top:1px solid var(--border);padding:6px 12px;font-size:11px;');
     comms.id = 'creelFleetComms';
     overlay.appendChild(comms);
 
-    const form = h('div', 'border-top:1px solid #2a2a3a;padding:10px 12px;display:flex;flex-direction:column;gap:6px;');
+    const form = h('div', 'border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:6px;');
     const label = document.createElement('input');
     label.placeholder = 'label (optional)';
-    label.style.cssText = 'background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:5px 8px;border-radius:4px;';
+    label.style.cssText = 'background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:5px 8px;border-radius:4px;';
     const task = document.createElement('textarea');
     task.placeholder = 'task for a new agent tab…';
     task.rows = 3;
-    task.style.cssText = 'background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:5px 8px;border-radius:4px;resize:vertical;';
-    const spawn = h('button', 'background:#1d2e1d;border:1px solid #2a3a2a;color:#9ece6a;padding:6px;border-radius:4px;cursor:pointer;font-weight:600;', 'Spawn agent tab');
+    task.style.cssText = 'background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:5px 8px;border-radius:4px;resize:vertical;';
+    const spawn = h('button', 'background:rgba(80,250,123,0.10);border:1px solid rgba(80,250,123,0.30);color:var(--accent-green);padding:6px;border-radius:4px;cursor:pointer;font-weight:600;', 'Spawn agent tab');
     spawn.onclick = async () => {
       if (!task.value.trim()) return;
       await impl.fleet_spawn({ task: task.value.trim(), label: label.value.trim() || undefined });
@@ -834,9 +834,9 @@
 
   function injectButton() {
     if (document.getElementById('creelFleetBtn')) return;
-    const btn = h('button', 'position:fixed;bottom:118px;right:16px;z-index:9999;background:#1d1d2e;color:#e0af68;'
-      + 'border:1px solid #2a2a3a;border-radius:18px;padding:7px 14px;cursor:pointer;'
-      + 'font:12px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);', '🧺 fleet');
+    const btn = h('button', 'position:fixed;bottom:118px;right:16px;z-index:9999;background:var(--bg-card);color:var(--accent-yellow);'
+      + 'border:1px solid var(--border);border-radius:18px;padding:7px 14px;cursor:pointer;'
+      + 'font:12px 'Intel One Mono',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);', '🧺 fleet');
     btn.id = 'creelFleetBtn';
     btn.title = 'Fleet dashboard — agents in tabs';
     // An emoji-prefixed label is a poor name to locate by; aria-label wins

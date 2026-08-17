@@ -76,9 +76,9 @@
       document.body.appendChild(badge);
     }
     const styles = {
-      root: 'background:#3a2e12;color:#e0af68;border:1px solid #5a4a22;',
-      bobbin: 'background:#12303a;color:#8be9fd;border:1px solid #224a5a;',
-      standby: 'background:#1d1d2e;color:#8892a4;border:1px solid #2a2a3a;',
+      root: 'background:rgba(241,250,140,0.12);color:var(--accent-yellow);border:1px solid rgba(241,250,140,0.35);',
+      bobbin: 'background:rgba(139,233,253,0.10);color:var(--accent-cyan);border:1px solid rgba(139,233,253,0.30);',
+      standby: 'background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);',
     };
     badge.style.cssText += styles[CreelSelf.role] || styles.standby;
     badge.textContent = CreelSelf.role === 'root' ? '⬢ root pane'

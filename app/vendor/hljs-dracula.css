@@ -1,0 +1,49 @@
+/* highlight.js token theme — Dracula palette (https://draculatheme.com)
+   Dark variant, for the dark creel theme. Background is left transparent:
+   the app's own `pre code` rules supply the panel background. */
+.hljs { display: block; overflow-x: auto; padding: 0.5em; color: #f8f8f2; background: transparent; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link,
+.hljs-property { color: #8be9fd; }
+.hljs-function .hljs-keyword { color: #ff79c6; }
+.hljs-built_in,
+.hljs-operator { color: #ff79c6; }
+.hljs-subst { color: #f8f8f2; }
+.hljs-string,
+.hljs-title,
+.hljs-name,
+.hljs-type,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition,
+.hljs-variable,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-selector-class,
+.hljs-selector-id { color: #f1fa8c; }
+.hljs-number,
+.hljs-meta .hljs-string,
+.hljs-regexp { color: #bd93f9; }
+.hljs-attr,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-title.class_,
+.hljs-title.function_ { color: #50fa7b; }
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion,
+.hljs-meta { color: #6272a4; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong { font-weight: bold; }
+.hljs-emphasis { font-style: italic; }

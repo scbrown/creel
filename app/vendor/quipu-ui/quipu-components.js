@@ -20,30 +20,30 @@
 const THEME_CSS = `
 :host {
   display: block;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #e0e0e0;
-  background: #1a1a2e;
-  border: 1px solid #2a2a4a;
+  font-family: 'Intel One Mono', monospace;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-a { color: #8be9fd; text-decoration: none; }
+a { color: var(--accent-cyan); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.loading { padding: 16px; color: #8892a4; font-style: italic; }
-.error { padding: 16px; color: #e94560; }
-.header { padding: 8px 12px; background: #16213e; border-bottom: 1px solid #2a2a4a;
-  font-size: 12px; color: #8892a4; display: flex; justify-content: space-between; align-items: center; }
-.header .title { font-weight: 600; color: #e0e0e0; }
-.popout { background: none; border: 1px solid #2a2a4a; color: #8be9fd; cursor: pointer;
+.loading { padding: 16px; color: var(--text-secondary); font-style: italic; }
+.error { padding: 16px; color: var(--accent-red); }
+.header { padding: 8px 12px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
+.header .title { font-weight: 600; color: var(--text-primary); }
+.popout { background: none; border: 1px solid var(--border); color: var(--accent-cyan); cursor: pointer;
   padding: 2px 8px; border-radius: 3px; font-size: 11px; }
-.popout:hover { background: #2a2a4a; }
-.badge { display: inline-block; background: #2d2d44; color: #8be9fd; font-size: 11px;
+.popout:hover { background: var(--border); }
+.badge { display: inline-block; background: var(--bg-hover); color: var(--accent-cyan); font-size: 11px;
   padding: 2px 6px; border-radius: 3px; margin: 0 4px 4px 0; }
 .content { padding: 12px; }
 table { width: 100%; border-collapse: collapse; }
 td { padding: 4px 8px 4px 0; font-size: 13px; vertical-align: top; }
-td:first-child { color: #8892a4; white-space: nowrap; }
+td:first-child { color: var(--text-secondary); white-space: nowrap; }
 `;
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -157,8 +157,8 @@ class QuipuGraph extends QuipuElement {
   static extraStyles = `
     .graph-container { width: 100%; height: 100%; min-height: 300px; position: relative; }
     .graph-container canvas { width: 100% !important; height: 100% !important; }
-    .graph-stats { position: absolute; bottom: 8px; right: 8px; font-size: 11px; color: #8892a4;
-      background: rgba(26,26,46,0.8); padding: 2px 6px; border-radius: 3px; }
+    .graph-stats { position: absolute; bottom: 8px; right: 8px; font-size: 11px; color: var(--text-secondary);
+      background: var(--bg-card); padding: 2px 6px; border-radius: 3px; }
   `;
 
   attributeChangedCallback() { if (this.isConnected) this._render(); }
@@ -246,8 +246,8 @@ class QuipuGraph extends QuipuElement {
     const graph = new Graph();
 
     const typeColors = {
-      ProxmoxNode: "#4cc9f0", LXCContainer: "#4ecca3", SystemdService: "#4ecca3",
-      CrewMember: "#f7a072", Rig: "#f7a072", Person: "#f7a072", default: "#8892a4",
+      ProxmoxNode: "#8be9fd", LXCContainer: "#50fa7b", SystemdService: "#50fa7b",
+      CrewMember: "#ffb86c", Rig: "#ffb86c", Person: "#ffb86c", default: "#6272a4",
     };
 
     for (const [iri, node] of nodes) {
@@ -264,16 +264,16 @@ class QuipuGraph extends QuipuElement {
       if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
         try {
           graph.addEdge(edge.source, edge.target, {
-            label: edge.label, size: 1, color: "#444",
+            label: edge.label, size: 1, color: "#565a70",
           });
         } catch (_) { /* multi-edge */ }
       }
     }
 
     const renderer = new window.Sigma(graph, container, {
-      renderLabels: true, labelColor: { color: "#e0e0e0" },
+      renderLabels: true, labelColor: { color: "#f8f8f2" },
       labelRenderedSizeThreshold: 6,
-      defaultEdgeColor: "#444", defaultNodeColor: "#8892a4",
+      defaultEdgeColor: "#565a70", defaultNodeColor: "#6272a4",
     });
 
     renderer.on("clickNode", ({ node }) => {
@@ -305,10 +305,10 @@ class QuipuGraph extends QuipuElement {
     for (const [iri, node] of nodes) {
       const nodeEdges = edges.filter(e => e.source === iri || e.target === iri);
       const el = document.createElement("div");
-      el.style.cssText = "margin-bottom: 8px; padding: 6px; background: #16213e; border-radius: 4px; cursor: pointer;";
+      el.style.cssText = "margin-bottom: 8px; padding: 6px; background: var(--bg-panel); border-radius: 4px; cursor: pointer;";
       el.innerHTML = `<span class="badge">${escapeHtml(node.type)}</span>
         <a href="${this.endpoint}/entity/${encodeURIComponent(iri)}">${escapeHtml(node.label)}</a>
-        <span style="color:#8892a4;font-size:11px"> (${nodeEdges.length} edges)</span>`;
+        <span style="color:var(--text-secondary);font-size:11px"> (${nodeEdges.length} edges)</span>`;
       el.onclick = () => {
         this._postToHost({ action: "nodeClick", iri });
         this.dispatchEvent(new CustomEvent("quipu-node-click", { detail: { iri } }));
@@ -347,14 +347,14 @@ class QuipuEntity extends QuipuElement {
   static extraStyles = `
     .entity-label { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .prop-group { margin-top: 12px; }
-    .prop-group-label { font-size: 12px; font-weight: 600; color: #8892a4;
+    .prop-group-label { font-size: 12px; font-weight: 600; color: var(--text-secondary);
       text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
-      border-bottom: 1px solid #2a2a4a; padding-bottom: 2px; }
+      border-bottom: 1px solid var(--border); padding-bottom: 2px; }
     .prop-value { padding: 2px 0; font-size: 13px; }
-    .history-entry { padding: 4px 0; font-size: 12px; border-bottom: 1px solid #1a1a2e; }
+    .history-entry { padding: 4px 0; font-size: 12px; border-bottom: 1px solid var(--bg-card); }
     .history-op { display: inline-block; width: 14px; }
-    .assert { color: #4ecca3; }
-    .retract { color: #e94560; }
+    .assert { color: var(--accent-green); }
+    .retract { color: var(--accent-red); }
   `;
 
   attributeChangedCallback() { if (this.isConnected) this._render(); }
@@ -450,9 +450,9 @@ class QuipuEntity extends QuipuElement {
               const opClass = entry.op === "assert" ? "assert" : "retract";
               const opSymbol = entry.op === "assert" ? "+" : "-";
               el.innerHTML = `<span class="history-op ${opClass}">${opSymbol}</span>
-                <span style="color:#8892a4">${escapeHtml(shortName(entry.predicate))}</span>
+                <span style="color:var(--text-secondary)">${escapeHtml(shortName(entry.predicate))}</span>
                 ${escapeHtml(typeof entry.value === "object" ? JSON.stringify(entry.value) : String(entry.value))}
-                <span style="color:#555;font-size:11px">${escapeHtml(entry.valid_from || "")}</span>`;
+                <span style="color:var(--text-dim);font-size:11px">${escapeHtml(entry.valid_from || "")}</span>`;
               hGroup.appendChild(el);
             }
             content.appendChild(hGroup);
@@ -493,20 +493,20 @@ class QuipuEntity extends QuipuElement {
 class QuipuSparql extends QuipuElement {
   static get observedAttributes() { return ["endpoint", "query"]; }
   static extraStyles = `
-    .sparql-editor { width: 100%; min-height: 120px; background: #0d1117; color: #e0e0e0;
+    .sparql-editor { width: 100%; min-height: 120px; background: var(--bg-root); color: var(--text-primary);
       border: none; padding: 8px; font-family: 'SF Mono', 'Cascadia Code', monospace;
-      font-size: 13px; resize: vertical; border-bottom: 1px solid #2a2a4a; }
-    .toolbar { padding: 6px 12px; background: #16213e; display: flex; gap: 8px; align-items: center; }
-    .run-btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 4px 12px;
+      font-size: 13px; resize: vertical; border-bottom: 1px solid var(--border); }
+    .toolbar { padding: 6px 12px; background: var(--bg-panel); display: flex; gap: 8px; align-items: center; }
+    .run-btn { background: var(--accent-green); color: var(--bg-card); border: none; padding: 4px 12px;
       border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 600; }
-    .run-btn:hover { background: #3dbb92; }
+    .run-btn:hover { background: var(--accent-green); filter: brightness(0.9); }
     .run-btn:disabled { opacity: 0.5; cursor: default; }
     .results { overflow: auto; max-height: 400px; }
     .results table { font-size: 12px; }
-    .results th { text-align: left; padding: 6px 8px; background: #16213e; color: #8892a4;
+    .results th { text-align: left; padding: 6px 8px; background: var(--bg-panel); color: var(--text-secondary);
       font-weight: 600; position: sticky; top: 0; }
-    .results td { padding: 4px 8px; border-bottom: 1px solid #1a1a2e; }
-    .result-count { font-size: 11px; color: #8892a4; padding: 4px 12px; }
+    .results td { padding: 4px 8px; border-bottom: 1px solid var(--bg-card); }
+    .result-count { font-size: 11px; color: var(--text-secondary); padding: 4px 12px; }
   `;
 
   async _render() {
@@ -554,7 +554,7 @@ class QuipuSparql extends QuipuElement {
         countEl.textContent = `${rows.length} results`;
 
         if (rows.length === 0) {
-          results.innerHTML = '<div style="padding:12px;color:#8892a4">No results</div>';
+          results.innerHTML = '<div style="padding:12px;color:var(--text-secondary)">No results</div>';
           return;
         }
 
@@ -629,21 +629,21 @@ class QuipuTimeline extends QuipuElement {
   static get observedAttributes() { return ["endpoint", "from", "to", "source-type"]; }
   static extraStyles = `
     .filters { padding: 8px 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .filter-btn { background: #2d2d44; color: #e0e0e0; border: 1px solid #2a2a4a;
+    .filter-btn { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border);
       padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; }
-    .filter-btn.active { background: #0f3460; border-color: #8be9fd; color: #8be9fd; }
-    .episode { padding: 10px 12px; border-bottom: 1px solid #1a1a2e; cursor: pointer; }
-    .episode:hover { background: #16213e; }
+    .filter-btn.active { background: var(--bg-hover); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    .episode { padding: 10px 12px; border-bottom: 1px solid var(--bg-card); cursor: pointer; }
+    .episode:hover { background: var(--bg-panel); }
     .episode-label { font-size: 14px; font-weight: 500; }
-    .episode-meta { font-size: 11px; color: #8892a4; margin-top: 2px; }
-    .episode-entities { padding: 8px 12px; background: #0d1117; font-size: 12px; display: none; }
+    .episode-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .episode-entities { padding: 8px 12px; background: var(--bg-root); font-size: 12px; display: none; }
     .episode.expanded .episode-entities { display: block; }
     .source-badge { font-size: 10px; padding: 1px 5px; border-radius: 2px; }
-    .source-agent { background: #2d2d44; color: #f7a072; }
-    .source-ci { background: #2d2d44; color: #4ecca3; }
-    .source-incident { background: #2d2d44; color: #e94560; }
-    .source-manual { background: #2d2d44; color: #8892a4; }
-    .source-obs { background: #2d2d44; color: #8be9fd; }
+    .source-agent { background: var(--bg-hover); color: var(--accent-orange); }
+    .source-ci { background: var(--bg-hover); color: var(--accent-green); }
+    .source-incident { background: var(--bg-hover); color: var(--accent-red); }
+    .source-manual { background: var(--bg-hover); color: var(--text-secondary); }
+    .source-obs { background: var(--bg-hover); color: var(--accent-cyan); }
   `;
 
   async _render() {
@@ -779,16 +779,16 @@ class QuipuSchema extends QuipuElement {
     .type-node { padding: 4px 0; }
     .type-indent { padding-left: 16px; }
     .type-name { cursor: pointer; }
-    .type-name:hover { color: #8be9fd; }
-    .type-count { color: #8892a4; font-size: 11px; margin-left: 4px; }
-    .shape-card { margin: 8px 12px; padding: 10px; background: #16213e; border-radius: 4px;
-      border: 1px solid #2a2a4a; }
+    .type-name:hover { color: var(--accent-cyan); }
+    .type-count { color: var(--text-secondary); font-size: 11px; margin-left: 4px; }
+    .shape-card { margin: 8px 12px; padding: 10px; background: var(--bg-panel); border-radius: 4px;
+      border: 1px solid var(--border); }
     .shape-name { font-weight: 600; margin-bottom: 6px; }
     .shape-prop { font-size: 12px; padding: 2px 0; }
-    .tabs { display: flex; border-bottom: 1px solid #2a2a4a; }
-    .tab { padding: 6px 16px; cursor: pointer; font-size: 13px; color: #8892a4;
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab { padding: 6px 16px; cursor: pointer; font-size: 13px; color: var(--text-secondary);
       border-bottom: 2px solid transparent; }
-    .tab.active { color: #8be9fd; border-bottom-color: #8be9fd; }
+    .tab.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
   `;
 
   async _render() {
@@ -860,7 +860,7 @@ class QuipuSchema extends QuipuElement {
 
       const shapes = data.shapes || [];
       if (shapes.length === 0) {
-        container.innerHTML = '<div style="padding:12px;color:#8892a4">No SHACL shapes loaded</div>';
+        container.innerHTML = '<div style="padding:12px;color:var(--text-secondary)">No SHACL shapes loaded</div>';
         return;
       }
 
@@ -868,7 +868,7 @@ class QuipuSchema extends QuipuElement {
         const card = document.createElement("div");
         card.className = "shape-card";
         card.innerHTML = `<div class="shape-name">${escapeHtml(shape.name || "")}</div>
-          <div class="shape-prop" style="color:#8892a4">Loaded: ${escapeHtml(shape.loaded_at || "")}</div>`;
+          <div class="shape-prop" style="color:var(--text-secondary)">Loaded: ${escapeHtml(shape.loaded_at || "")}</div>`;
         container.appendChild(card);
       }
     } catch (e) {

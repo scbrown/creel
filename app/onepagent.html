@@ -6,8 +6,8 @@
 <title>OnePagent &middot; Single-Page AI Agent</title>
 <meta name="description" content="Single-page, browser-native AI agent.">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#21222c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f3ec" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='a' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff6b35' stop-opacity='0.18'/><stop offset='1' stop-color='%23ff3399' stop-opacity='0.06'/></linearGradient><linearGradient id='b' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040'/><stop offset='1' stop-color='%23ff3399'/></linearGradient><linearGradient id='c' x1='7' y1='10' x2='16' y2='17' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040' stop-opacity='0.9'/><stop offset='1' stop-color='%23aa66ff' stop-opacity='0.9'/></linearGradient><radialGradient id='d' cx='40%25' cy='35%25'><stop stop-color='%23ffb070'/><stop offset='1' stop-color='%23cc1f77'/></radialGradient></defs><path d='M5 3H15L19 7V20A1 1 0 0 1 18 21H5A1 1 0 0 1 4 20V4A1 1 0 0 1 5 3Z' fill='url(%23a)' stroke='url(%23b)' stroke-width='1.1' stroke-linejoin='round'/><path d='M15 3V7H19' stroke='url(%23b)' stroke-width='1.1' fill='none' stroke-linejoin='round'/><circle cx='11.5' cy='13' r='2.6' fill='url(%23d)'/><circle cx='7' cy='10' r='0.9' fill='%23ff6b35'/><circle cx='16' cy='11' r='0.9' fill='%2300d4ff'/><circle cx='8' cy='17' r='0.9' fill='%23aa66ff'/><circle cx='15' cy='17' r='0.9' fill='%2300ff88'/><path d='M7 10L11.5 13L16 11M8 17L11.5 13L15 17' stroke='url(%23c)' stroke-width='0.9' stroke-linecap='round' fill='none' opacity='0.85'/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='a' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ffb86c' stop-opacity='0.18'/><stop offset='1' stop-color='%23ff79c6' stop-opacity='0.06'/></linearGradient><linearGradient id='b' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ffb86c'/><stop offset='1' stop-color='%23ff79c6'/></linearGradient><linearGradient id='c' x1='7' y1='10' x2='16' y2='17' gradientUnits='userSpaceOnUse'><stop stop-color='%23ffb86c' stop-opacity='0.9'/><stop offset='1' stop-color='%23bd93f9' stop-opacity='0.9'/></linearGradient><radialGradient id='d' cx='40%25' cy='35%25'><stop stop-color='%23ffb86c'/><stop offset='1' stop-color='%23ff79c6'/></radialGradient></defs><path d='M5 3H15L19 7V20A1 1 0 0 1 18 21H5A1 1 0 0 1 4 20V4A1 1 0 0 1 5 3Z' fill='url(%23a)' stroke='url(%23b)' stroke-width='1.1' stroke-linejoin='round'/><path d='M15 3V7H19' stroke='url(%23b)' stroke-width='1.1' fill='none' stroke-linejoin='round'/><circle cx='11.5' cy='13' r='2.6' fill='url(%23d)'/><circle cx='7' cy='10' r='0.9' fill='%23ffb86c'/><circle cx='16' cy='11' r='0.9' fill='%238be9fd'/><circle cx='8' cy='17' r='0.9' fill='%23bd93f9'/><circle cx='15' cy='17' r='0.9' fill='%2350fa7b'/><path d='M7 10L11.5 13L16 11M8 17L11.5 13L15 17' stroke='url(%23c)' stroke-width='0.9' stroke-linecap='round' fill='none' opacity='0.85'/></svg>">
 <script crossorigin="anonymous" src="vendor/marked.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
@@ -32,8 +32,8 @@ var j0=["BN","BN","BN","BN","BN","BN","BN","BN","BN","S","B","S","WS","B","BN","
 // Markdown → Pretext blocks renderer
 ;(function() {
 var PT = Pretext;
-var PT_SANS = "'Inter', sans-serif";
-var PT_MONO = "'JetBrains Mono', monospace";
+var PT_SANS = "'Intel One Mono', sans-serif";
+var PT_MONO = "'Intel One Mono', monospace";
 var PT_CODE_BLOCK_FONT = '400 12px ' + PT_MONO;
 var PT_CODE_FONT = '500 12px ' + PT_MONO;
 var PT_MARKER_FONT = '600 11px ' + PT_MONO;
@@ -418,71 +418,73 @@ function ptDomRule() {
      (PYODIDE_CDN_HOSTS below) — no static tag, so a slow/blocked primary CDN
      (cdn.jsdelivr.net is throttled or blocked on some networks, notably mainland
      China) can no longer stall the Python runtime load. -->
-<link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="vendor/github-dark.min.css">
+<link id="hljsTheme" rel="stylesheet" href="vendor/hljs-dracula.css">
 <script crossorigin="anonymous" src="vendor/highlight.min.js"></script>
-<link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/intel-one-mono.css">
 <style>
 :root {
-  --bg-root: #0a0a0f;
-  --bg-panel: #12121a;
-  --bg-card: #1a1a2e;
-  --bg-hover: #22223a;
-  --border: #2a2a3e;
-  --border-active: #3d3d5c;
-  --text-primary: #e0e0e8;
-  --text-secondary: #8888a0;
-  --text-dim: #555568;
-  --accent-orange: #ff6b35;
-  --accent-blue: #5b8af5;
-  --accent-green: #00ff88;
-  --accent-red: #ff4466;
-  --accent-purple: #aa66ff;
-  --accent-cyan: #00d4ff;
-  --accent-yellow: #ffd700;
-  --accent-pink: #ff3399;
+  /* ── Dracula palette (https://draculatheme.com) ── */
+  --bg-root: #21222c;
+  --bg-panel: #282a36;
+  --bg-card: #2f3140;
+  --bg-hover: #3a3d52;
+  --border: #44475a;
+  --border-active: #565a70;
+  --text-primary: #f8f8f2;
+  --text-secondary: #a6acc4;
+  --text-dim: #6272a4;
+  --accent-orange: #ffb86c;
+  --accent-blue: #6272a4;
+  --accent-green: #50fa7b;
+  --accent-red: #ff5555;
+  --accent-purple: #bd93f9;
+  --accent-cyan: #8be9fd;
+  --accent-yellow: #f1fa8c;
+  --accent-pink: #ff79c6;
   /* Overlay tints adapt to theme (light-on-dark here, dark-on-light below) */
-  --overlay-soft: rgba(255,255,255,0.03);
-  --overlay-med: rgba(255,255,255,0.06);
-  --overlay-strong: rgba(255,255,255,0.1);
-  --overlay-line: rgba(255,255,255,0.12);
-  --code-bg: rgba(255,255,255,0.06);
+  --overlay-soft: rgba(248,248,242,0.04);
+  --overlay-med: rgba(248,248,242,0.07);
+  --overlay-strong: rgba(248,248,242,0.12);
+  --overlay-line: rgba(248,248,242,0.14);
+  --code-bg: rgba(248,248,242,0.06);
   --code-text: var(--accent-cyan);
-  --reasoning-bg: rgba(255,255,255,0.03);
-  --reasoning-border: rgba(255,255,255,0.12);
+  --reasoning-bg: rgba(241,250,140,0.04);
+  --reasoning-border: rgba(241,250,140,0.18);
 }
 html[data-theme="light"] {
-  --bg-root: #f5f6fa;
-  --bg-panel: #ffffff;
-  --bg-card: #f2f3f8;
-  --bg-hover: #e7e9f0;
-  --border: #d8dae5;
-  --border-active: #b0b3c5;
-  --text-primary: #1a1a24;
-  --text-secondary: #4a4d60;
-  --text-dim: #8a8fa3;
-  /* Accents tuned for contrast on white panels */
-  --accent-orange: #d9531e;
-  --accent-blue: #2f63d6;
-  --accent-green: #0a8a56;
+  /* Dracula-inspired light theme: warm paper surfaces, dracula-tinted accents */
+  --bg-root: #f4f3ec;
+  --bg-panel: #fbfaf5;
+  --bg-card: #efecdf;
+  --bg-hover: #e3dfcf;
+  --border: #d6d2c1;
+  --border-active: #b6b09a;
+  --text-primary: #282a36;
+  --text-secondary: #4b4f63;
+  --text-dim: #7d8297;
+  /* Accents tuned for contrast on warm-white panels */
+  --accent-orange: #a8601a;
+  --accent-blue: #45539b;
+  --accent-green: #1b7d55;
   --accent-red: #c42a48;
-  --accent-purple: #7a4acc;
-  --accent-cyan: #067a96;
-  --accent-yellow: #a67900;
-  --accent-pink: #c82676;
+  --accent-purple: #6e56cf;
+  --accent-cyan: #0e7490;
+  --accent-yellow: #8a6d00;
+  --accent-pink: #bf3577;
   /* Dark-on-light overlays */
-  --overlay-soft: rgba(20,22,40,0.03);
-  --overlay-med: rgba(20,22,40,0.055);
-  --overlay-strong: rgba(20,22,40,0.09);
-  --overlay-line: rgba(20,22,40,0.11);
-  --code-bg: rgba(20,22,40,0.05);
-  --code-text: #0f5f76;
-  --reasoning-bg: #fffaf0;
-  --reasoning-border: rgba(166,121,0,0.25);
+  --overlay-soft: rgba(40,42,54,0.03);
+  --overlay-med: rgba(40,42,54,0.055);
+  --overlay-strong: rgba(40,42,54,0.09);
+  --overlay-line: rgba(40,42,54,0.11);
+  --code-bg: rgba(40,42,54,0.05);
+  --code-text: #0e7490;
+  --reasoning-bg: #fdf6d6;
+  --reasoning-border: rgba(138,109,0,0.25);
 }
 html[data-theme="light"] body { background: var(--bg-root); }
-html[data-theme="light"] .status-dot { box-shadow: 0 0 6px rgba(0,200,120,0.5); }
+html[data-theme="light"] .status-dot { box-shadow: 0 0 6px rgba(27,125,85,0.45); }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(--text-primary); height: 100vh; height: 100dvh; overflow: hidden; }
+body { font-family: 'Intel One Mono', sans-serif; background: var(--bg-root); color: var(--text-primary); height: 100vh; height: 100dvh; overflow: hidden; }
 
 /* ── App Grid ── */
 .app { display: grid; grid-template-columns: var(--left-w, clamp(200px, 18vw, 280px)) var(--left-handle-w, 4px) minmax(0, 1fr) var(--right-handle-w, 4px) var(--right-w, clamp(240px, 20vw, 320px)); grid-template-rows: 44px 1fr; height: 100vh; height: 100dvh; gap: 0; background: var(--border); transition: grid-template-columns 0.22s ease; }
@@ -496,11 +498,11 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 /* ── Top Bar ── */
 .top-bar { grid-column: 1/-1; background: var(--bg-panel); display: flex; align-items: center; padding: 0 clamp(8px, 1.2vw, 14px); gap: clamp(6px, 0.8vw, 10px); }
 .top-bar-center { flex: 1; display: flex; align-items: center; gap: clamp(6px, 0.8vw, 10px); min-width: 0; }
-.logo { display: flex; align-items: center; gap: clamp(6px, 0.6vw, 8px); font-weight: 700; font-size: clamp(12px, 1.3vw, 14px); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.logo { display: flex; align-items: center; gap: clamp(6px, 0.6vw, 8px); font-weight: 700; font-size: clamp(12px, 1.3vw, 14px); font-family: 'Intel One Mono', monospace; flex-shrink: 0; }
 .logo-icon { width: clamp(18px, 1.9vw, 22px); height: clamp(18px, 1.9vw, 22px); flex-shrink: 0; }
 .logo-text { background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px; }
 .github-link { display: inline-flex; align-items: center; justify-content: center; width: clamp(26px, 2.6vw, 30px); height: clamp(26px, 2.6vw, 30px); color: var(--text-secondary); border-radius: 6px; text-decoration: none; flex-shrink: 0; transition: color 0.15s, background 0.15s, transform 0.15s; }
-.github-link:hover { color: var(--accent-orange); background: rgba(255, 107, 53, 0.1); transform: translateY(-1px); }
+.github-link:hover { color: var(--accent-orange); background: rgba(255, 184, 108, 0.12); transform: translateY(-1px); }
 .github-link svg { width: clamp(16px, 1.7vw, 18px); height: clamp(16px, 1.7vw, 18px); display: block; }
 .ui-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.15em} 
 .icon{display:inline-flex;align-items:center;justify-content:center} 
@@ -512,17 +514,17 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); transition: all 0.3s; flex-shrink: 0; }
 .status-dot.running { background: var(--accent-orange); box-shadow: 0 0 8px var(--accent-orange); animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
-.status-text { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.status-text { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'Intel One Mono', monospace; flex-shrink: 0; }
 .top-right { margin-left: auto; display: flex; align-items: center; gap: clamp(4px, 0.6vw, 8px); flex-shrink: 0; }
-.provider-badge { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; padding: clamp(2px, 0.3vw, 3px) clamp(6px, 0.8vw, 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.model-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: clamp(10px, 1vw, 11px); padding: 2px 6px; outline: none; max-width: clamp(100px, 16vw, 220px); cursor: pointer; }
-.provider-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: clamp(10px, 1vw, 11px); padding: 2px 6px; outline: none; max-width: clamp(120px, 18vw, 240px); cursor: pointer; }
+.provider-badge { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'Intel One Mono', monospace; padding: clamp(2px, 0.3vw, 3px) clamp(6px, 0.8vw, 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.model-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'Intel One Mono', monospace; font-size: clamp(10px, 1vw, 11px); padding: 2px 6px; outline: none; max-width: clamp(100px, 16vw, 220px); cursor: pointer; }
+.provider-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'Intel One Mono', monospace; font-size: clamp(10px, 1vw, 11px); padding: 2px 6px; outline: none; max-width: clamp(120px, 18vw, 240px); cursor: pointer; }
 .model-select:focus { border-color: var(--accent-orange); }
-.think-badge { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'Inter', sans-serif; padding: clamp(2px, 0.3vw, 3px) clamp(4px, 0.6vw, 8px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.think-badge { font-size: clamp(10px, 1vw, 11px); color: var(--text-secondary); font-family: 'Intel One Mono', sans-serif; padding: clamp(2px, 0.3vw, 3px) clamp(4px, 0.6vw, 8px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .think-badge.on { border-color: var(--accent-purple); color: var(--accent-purple); }
-.think-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: clamp(10px, 1vw, 11px); padding: 1px 4px; outline: none; cursor: pointer; }
+.think-select { background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'Intel One Mono', sans-serif; font-size: clamp(10px, 1vw, 11px); padding: 1px 4px; outline: none; cursor: pointer; }
 .think-select:focus { border-color: var(--accent-purple); }
-.top-btn { padding: clamp(3px, 0.5vw, 5px) clamp(6px, 1vw, 12px); border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: clamp(10px, 1vw, 11px); cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.top-btn { padding: clamp(3px, 0.5vw, 5px) clamp(6px, 1vw, 12px); border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: clamp(10px, 1vw, 11px); cursor: pointer; font-family: 'Intel One Mono', sans-serif; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .top-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 .top-btn-icon { display: inline-flex; align-items: center; gap: 4px; }
 .top-btn-icon svg { flex-shrink: 0; }
@@ -534,7 +536,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .left-panel > .panel-section[data-section="files"] .section-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
 .panel-section.collapsed .section-body { display: none !important; }
 .panel-section.collapsed .section-title .section-arrow { transform: rotate(-90deg); }
-.section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; cursor: pointer; user-select: none; }
+.section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-family: 'Intel One Mono', monospace; cursor: pointer; user-select: none; }
 .section-title:hover { color: var(--text-primary); }
 .section-title .icon { font-size: 12px; }
 .section-arrow { font-size: 8px; color: var(--text-dim); transition: transform 0.2s; margin-left: auto; flex-shrink: 0; }
@@ -542,7 +544,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 
 /* ── Left Panel ── */
 .left-panel { background: var(--bg-panel); display: flex; flex-direction: column; overflow-y: auto; grid-row: 2; grid-column: 1; }
-.context-editor { width: 100%; min-height: 100px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 8px; resize: vertical; line-height: 1.6; outline: none; }
+.context-editor { width: 100%; min-height: 100px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-family: 'Intel One Mono', monospace; font-size: 11px; padding: 8px; resize: vertical; line-height: 1.6; outline: none; }
 .context-editor:focus { border-color: var(--accent-orange); }
 .context-editor[readonly] { opacity: 0.7; cursor: default; resize: none; }
 .context-editor.editing { border-color: var(--accent-orange); opacity: 1; }
@@ -553,16 +555,16 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .skills-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
 .skill-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 12px; background: var(--bg-root); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
 .skill-item:hover { border-color: var(--accent-yellow); }
-.skill-item.active { border-color: var(--accent-yellow); background: rgba(255,215,0,0.05); }
+.skill-item.active { border-color: var(--accent-yellow); background: rgba(241,250,140,0.08); }
 .skill-item.off { opacity: 0.4; }
 .skill-item .s-toggle { font-size: 10px; flex-shrink: 0; width: 14px; text-align: center; }
 .skill-item .s-icon { font-size: 14px; flex-shrink: 0; }
 .skill-item .s-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .skill-item .s-remove { font-size: 10px; color: var(--text-dim); cursor: pointer; padding: 2px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.15s; }
 .skill-item:hover .s-remove { opacity: 1; }
-.skill-item .s-remove:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
+.skill-item .s-remove:hover { color: var(--accent-red); background: rgba(255,85,85,0.12); }
 .skill-install-bar { display: flex; gap: 4px; margin-top: 6px; }
-.skill-install-btn { flex: 1; padding: 5px 4px; border: 1px dashed var(--border); border-radius: 4px; background: transparent; color: var(--text-dim); font-size: 10px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; text-align: center; }
+.skill-install-btn { flex: 1; padding: 5px 4px; border: 1px dashed var(--border); border-radius: 4px; background: transparent; color: var(--text-dim); font-size: 10px; cursor: pointer; font-family: 'Intel One Mono', sans-serif; transition: all 0.15s; text-align: center; }
 .skill-install-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 
 /* Model-context list (Settings modal) */
@@ -571,16 +573,16 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .mc-empty { font-size: 10px; color: var(--text-dim); padding: 10px; text-align: center; border: 1px dashed var(--border); border-radius: 5px; margin-bottom: 6px; background: var(--bg-root); }
 .mc-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; background: var(--bg-panel); border: 1px solid var(--border); transition: border-color 0.15s; }
 .mc-row:hover { border-color: var(--border-active); }
-.mc-row .mc-model { flex: 1; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mc-row .mc-value { width: 96px; flex-shrink: 0; padding: 4px 6px !important; margin: 0 !important; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; }
+.mc-row .mc-model { flex: 1; min-width: 0; font-family: 'Intel One Mono', monospace; font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-row .mc-value { width: 96px; flex-shrink: 0; padding: 4px 6px !important; margin: 0 !important; font-family: 'Intel One Mono', monospace; font-size: 11px; text-align: right; }
 .mc-row .mc-presets { display: flex; gap: 2px; flex-shrink: 0; }
-.mc-preset-btn { padding: 2px 6px; font-size: 9px; font-family: 'JetBrains Mono', monospace; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+.mc-preset-btn { padding: 2px 6px; font-size: 9px; font-family: 'Intel One Mono', monospace; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all 0.15s; }
 .mc-preset-btn:hover { color: var(--accent-orange); border-color: var(--accent-orange); }
-.mc-preset-btn.is-active { color: var(--accent-orange); border-color: var(--accent-orange); background: rgba(255,107,53,0.08); }
+.mc-preset-btn.is-active { color: var(--accent-orange); border-color: var(--accent-orange); background: rgba(255,184,108,0.10); }
 .mc-remove { padding: 0 6px; font-size: 14px; line-height: 1; background: transparent; color: var(--text-dim); border: none; cursor: pointer; border-radius: 3px; flex-shrink: 0; }
-.mc-remove:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
+.mc-remove:hover { color: var(--accent-red); background: rgba(255,85,85,0.12); }
 .mc-add-row { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; }
-.mc-add-row > input { margin: 0 !important; padding: 6px 8px !important; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.mc-add-row > input { margin: 0 !important; padding: 6px 8px !important; font-size: 11px; font-family: 'Intel One Mono', monospace; }
 .mc-add-row > input[type=text] { flex: 1; min-width: 0; }
 .mc-add-row > input[type=number] { width: 110px; flex-shrink: 0; text-align: right; }
 
@@ -590,13 +592,13 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .rc-empty { font-size: 10px; color: var(--text-dim); padding: 10px; text-align: center; border: 1px dashed var(--border); border-radius: 5px; margin-bottom: 6px; background: var(--bg-root); }
 .rc-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; background: var(--bg-panel); border: 1px solid var(--border); transition: border-color 0.15s; }
 .rc-row:hover { border-color: var(--border-active); }
-.rc-row .rc-model { flex: 1; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rc-row .rc-mode { width: 92px; flex-shrink: 0; padding: 4px 6px !important; margin: 0 !important; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); }
+.rc-row .rc-model { flex: 1; min-width: 0; font-family: 'Intel One Mono', monospace; font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-row .rc-mode { width: 92px; flex-shrink: 0; padding: 4px 6px !important; margin: 0 !important; font-family: 'Intel One Mono', monospace; font-size: 11px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); }
 .rc-row .rc-effective { width: 78px; flex-shrink: 0; font-size: 10px; color: var(--text-dim); text-align: right; }
 .rc-remove { padding: 0 6px; font-size: 14px; line-height: 1; background: transparent; color: var(--text-dim); border: none; cursor: pointer; border-radius: 3px; flex-shrink: 0; }
-.rc-remove:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
+.rc-remove:hover { color: var(--accent-red); background: rgba(255,85,85,0.12); }
 .rc-add-row { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; }
-.rc-add-row > input { margin: 0 !important; padding: 6px 8px !important; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.rc-add-row > input { margin: 0 !important; padding: 6px 8px !important; font-size: 11px; font-family: 'Intel One Mono', monospace; }
 .rc-add-row > input[type=text] { flex: 1; min-width: 0; }
 
 /* File explorer */
@@ -605,7 +607,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .fe-item:hover { background: var(--bg-hover); }
 .fe-item:hover .fe-check { opacity: 1; }
 .fe-item.active { color: var(--accent-blue); background: var(--bg-card); }
-.fe-item.selected { background: rgba(91,138,245,0.12); }
+.fe-item.selected { background: rgba(98,114,164,0.20); }
 .fe-item.selected .fe-check { opacity: 1; }
 .fe-item .icon { width: 14px; text-align: center; flex-shrink: 0; font-size: 11px; }
 .fe-item .arrow { width: 12px; text-align: center; flex-shrink: 0; font-size: 8px; color: var(--text-dim); transition: transform 0.15s; }
@@ -616,7 +618,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .fe-item.indent-1 .fe-check { margin-left: 0; }
 .fe-item.indent-1{padding-left:20px}.fe-item.indent-2{padding-left:32px}.fe-item.indent-3{padding-left:44px}.fe-item.indent-4{padding-left:56px}.fe-item.indent-5{padding-left:68px}
 .fe-bottom-stack { position: sticky; bottom: 0; z-index: 6; margin-top: auto; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--bg-panel) 28%, var(--bg-panel) 100%); }
-.fe-select-bar { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--border); border-bottom: none; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, rgba(91,138,245,0.1), var(--bg-card)); font-size: 11px; flex-shrink: 0; box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
+.fe-select-bar { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--border); border-bottom: none; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, rgba(98,114,164,0.18), var(--bg-card)); font-size: 11px; flex-shrink: 0; box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
 .fe-select-bar .fe-select-count { flex: 1; min-width: 0; color: var(--accent-blue); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .fe-select-bar .skill-install-btn { flex: 0 0 auto; min-width: 58px; padding: 5px 10px; background: var(--bg-panel); }
 /* Context menu */
@@ -626,18 +628,18 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .fe-ctx-item.danger { color: var(--accent-red); }
 .fe-ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
 /* Inline rename */
-.fe-rename { background: var(--bg-root); border: 1px solid var(--accent-blue); color: var(--text-primary); font-size: 11px; font-family: 'Inter',sans-serif; padding: 1px 4px; border-radius: 3px; outline: none; width: 100%; }
+.fe-rename { background: var(--bg-root); border: 1px solid var(--accent-blue); color: var(--text-primary); font-size: 11px; font-family: 'Intel One Mono',sans-serif; padding: 1px 4px; border-radius: 3px; outline: none; width: 100%; }
 .fe-upload-zone { margin: 0; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 9px; font-size: 10px; color: var(--text-dim); position: relative; transition: all 0.2s; display: flex; align-items: center; gap: 8px; background: var(--bg-panel); flex-shrink: 0; }
 .fe-bottom-stack.has-selection .fe-upload-zone { border-top-style: solid; border-top-left-radius: 0; border-top-right-radius: 0; }
 .fe-upload-zone:hover { border-color: var(--accent-blue); color: var(--text-secondary); }
-.fe-upload-zone.dragover { border-color: var(--accent-green); background: rgba(0,255,136,0.03); }
+.fe-upload-zone.dragover { border-color: var(--accent-green); background: rgba(80,250,123,0.05); }
 .fe-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .fe-upload-label { flex: 1; text-align: center; pointer-events: none; }
 .fe-upload-folder-btn { position: relative; z-index: 1; flex: none; margin: 0; padding: 3px 8px; }
 
 /* ── Center Panel ── */
 .center-panel { background: var(--bg-root); display: flex; flex-direction: column; overflow: hidden; grid-row: 2; grid-column: 3; }
-.loop-badge { background: var(--bg-card); padding: 2px 8px; border-radius: 10px; font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+.loop-badge { background: var(--bg-card); padding: 2px 8px; border-radius: 10px; font-size: 10px; color: var(--text-secondary); font-family: 'Intel One Mono', monospace; }
 
 /* Messages */
 .chat-messages { flex: 1; overflow-y: auto; padding: clamp(8px, 1.2vw, 14px); display: flex; flex-direction: column; gap: clamp(6px, 0.8vw, 10px); }
@@ -653,7 +655,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .msg-assistant .msg-body { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 2px 10px 10px 10px; padding: 10px 14px; font-size: 13px; line-height: 1.7; width: fit-content; min-width: min(320px, 100%); max-width: min(820px, 100%); }
 .msg-assistant .msg-body p { margin-bottom: 6px; }
 .msg-assistant .msg-body p:last-child { margin-bottom: 0; }
-.msg-assistant .msg-body code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg-root); padding: 1px 5px; border-radius: 3px; }
+.msg-assistant .msg-body code { font-family: 'Intel One Mono', monospace; font-size: 12px; background: var(--bg-root); padding: 1px 5px; border-radius: 3px; }
 .msg-assistant .msg-body pre { margin: 6px 0; border-radius: 6px; overflow-x: auto; }
 .msg-assistant .msg-body pre code { display: block; padding: 10px; background: var(--bg-root); border: 1px solid var(--border); }
 .msg-assistant .msg-body table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
@@ -670,33 +672,33 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .msg-action-btn { padding: 4px 8px; border: none; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.15s; line-height: 1; white-space: nowrap; user-select: none; display: flex; align-items: center; justify-content: center; min-width: 30px; }
 .msg-action-btn:last-child { border-right: none; }
 .msg-action-btn:hover { color: var(--accent-cyan); background: var(--bg-hover); }
-.msg-action-btn.ok { color: var(--accent-green) !important; background: rgba(0,255,136,0.06) !important; }
-.msg-action-btn.bad { color: var(--accent-red) !important; background: rgba(255,68,102,0.06) !important; }
-.msg-action-btn.fmt-active { color: var(--accent-yellow); background: rgba(255,215,0,0.06); }
-.msg-action-btn .btn-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; margin-left: 4px; }
+.msg-action-btn.ok { color: var(--accent-green) !important; background: rgba(80,250,123,0.08) !important; }
+.msg-action-btn.bad { color: var(--accent-red) !important; background: rgba(255,85,85,0.08) !important; }
+.msg-action-btn.fmt-active { color: var(--accent-yellow); background: rgba(241,250,140,0.08); }
+.msg-action-btn .btn-label { font-size: 10px; font-family: 'Intel One Mono', monospace; margin-left: 4px; }
 
 /* Rich HTML frame (used for full-html assistant responses) */
 .msg-html-frame { width: 100%; min-height: 220px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: block; margin-top: 6px; }
 
 /* HTML preview card — compact in-chat card */
 .html-preview-card { border: 1px solid var(--border); border-radius: 6px; margin: 6px 0; overflow: hidden; border-left: 3px solid var(--accent-green); cursor: pointer; transition: all 0.15s; width: min(100%, 980px); max-width: 100%; }
-.html-preview-card:hover { border-color: var(--accent-green); box-shadow: 0 0 12px rgba(0,255,136,0.08); }
+.html-preview-card:hover { border-color: var(--accent-green); box-shadow: 0 0 12px rgba(80,250,123,0.10); }
 .html-preview-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-panel); }
 .html-preview-icon { font-size: 20px; flex-shrink: 0; }
 .html-preview-info { flex: 1; min-width: 0; }
-.html-preview-label { font-size: 11px; font-weight: 600; color: var(--accent-green); font-family: 'JetBrains Mono', monospace; }
-.html-preview-path { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; margin-top: 2px; }
-.html-preview-open { padding: 4px 12px; border: 1px solid var(--accent-green); border-radius: 4px; background: transparent; color: var(--accent-green); font-size: 10px; cursor: pointer; font-family: 'JetBrains Mono', monospace; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
-.html-preview-open:hover { background: rgba(0,255,136,0.1); }
+.html-preview-label { font-size: 11px; font-weight: 600; color: var(--accent-green); font-family: 'Intel One Mono', monospace; }
+.html-preview-path { font-size: 10px; color: var(--text-dim); font-family: 'Intel One Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; margin-top: 2px; }
+.html-preview-open { padding: 4px 12px; border: 1px solid var(--accent-green); border-radius: 4px; background: transparent; color: var(--accent-green); font-size: 10px; cursor: pointer; font-family: 'Intel One Mono', monospace; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
+.html-preview-open:hover { background: rgba(80,250,123,0.12); }
 
 /* HTML Preview Modal — large overlay */
 .html-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
 .html-modal-overlay.show { display: flex; }
 .html-modal { width: 92vw; height: 90vh; max-width: 1400px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
 .html-modal-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card); flex-shrink: 0; }
-.html-modal-path { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--accent-blue); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.html-modal-path { font-size: 12px; font-family: 'Intel One Mono', monospace; color: var(--accent-blue); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .html-modal-tabs { display: flex; gap: 2px; background: var(--bg-root); border-radius: 5px; padding: 2px; }
-.html-modal-tab { padding: 4px 12px; border: none; border-radius: 3px; background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; font-family: 'JetBrains Mono', monospace; transition: all 0.15s; }
+.html-modal-tab { padding: 4px 12px; border: none; border-radius: 3px; background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; font-family: 'Intel One Mono', monospace; transition: all 0.15s; }
 .html-modal-tab.active { background: var(--bg-panel); color: var(--accent-cyan); }
 .html-modal-tab:hover:not(.active) { color: var(--text-primary); }
 .html-modal-close { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
@@ -705,12 +707,12 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .html-modal-preview { width: 100%; height: 100%; border: none; background: #fff; }
 .html-modal-source { width: 100%; height: 100%; overflow: auto; padding: 12px; }
 .md-modal-preview { width: 100%; height: 100%; overflow: auto; padding: 24px 32px; background: var(--bg-root); color: var(--text-primary); font-size: 14px; line-height: 1.8; }
-.md-modal-preview h1,.md-modal-preview h2,.md-modal-preview h3,.md-modal-preview h4 { color: var(--text-primary); margin: 16px 0 8px; font-family: 'Inter', sans-serif; }
+.md-modal-preview h1,.md-modal-preview h2,.md-modal-preview h3,.md-modal-preview h4 { color: var(--text-primary); margin: 16px 0 8px; font-family: 'Intel One Mono', sans-serif; }
 .md-modal-preview h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
 .md-modal-preview h2 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .md-modal-preview h3 { font-size: 15px; }
 .md-modal-preview p { margin: 8px 0; }
-.md-modal-preview code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg-card); padding: 1px 5px; border-radius: 3px; }
+.md-modal-preview code { font-family: 'Intel One Mono', monospace; font-size: 12px; background: var(--bg-card); padding: 1px 5px; border-radius: 3px; }
 .md-modal-preview pre { margin: 10px 0; border-radius: 6px; overflow-x: auto; }
 .md-modal-preview pre code { display: block; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); }
 .md-modal-preview ul,.md-modal-preview ol { padding-left: 20px; margin: 6px 0; }
@@ -736,26 +738,26 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .tool-card.streaming { border-left-color: var(--accent-orange); opacity: 0.85; }
 .tool-header { display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; user-select: none; }
 .tool-header:hover { background: var(--bg-hover); }
-.tool-name { font-weight: 600; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.tool-name { font-weight: 600; color: var(--accent-cyan); font-family: 'Intel One Mono', monospace; font-size: 11px; }
 .tool-summary { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-size: 11px; }
 .tool-arrow { color: var(--text-dim); font-size: 9px; transition: transform 0.2s; }
 .tool-arrow.open { transform: rotate(180deg); }
 .tool-body { display: none; border-top: 1px solid var(--border); }
 .tool-body.show { display: block; }
-.tool-toggle-btn { border: 1px solid var(--border); background: transparent; color: var(--text-dim); border-radius: 4px; padding: 2px 8px; font-size: 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.tool-toggle-btn { border: 1px solid var(--border); background: transparent; color: var(--text-dim); border-radius: 4px; padding: 2px 8px; font-size: 10px; font-family: 'Intel One Mono', monospace; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
 .tool-toggle-btn:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
 .tool-input,.tool-output { padding: 6px 10px; }
 .tool-input { border-bottom: 1px solid var(--border); }
-.tool-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; font-family: 'JetBrains Mono', monospace; }
-.tool-pre { font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: var(--text-secondary); max-height: 250px; overflow-y: auto; }
+.tool-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; font-family: 'Intel One Mono', monospace; }
+.tool-pre { font-family: 'Intel One Mono', monospace; font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: var(--text-secondary); max-height: 250px; overflow-y: auto; }
 .streaming-cursor { display: inline-block; width: 7px; height: 14px; background: var(--accent-orange); animation: blink 0.8s infinite; margin-left: 2px; vertical-align: middle; }
 @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
 .reasoning-card { background: var(--reasoning-bg); border: 1px dashed var(--reasoning-border); border-left: 3px solid var(--accent-yellow); border-radius: 6px; width: min(100%, 820px); max-width: 100%; overflow: hidden; }
-.reasoning-header { display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; user-select: none; color: var(--text-secondary); font: 600 11px 'JetBrains Mono', monospace; }
+.reasoning-header { display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; user-select: none; color: var(--text-secondary); font: 600 11px 'Intel One Mono', monospace; }
 .reasoning-header:hover { background: var(--bg-hover); }
 .reasoning-title { color: var(--accent-yellow); }
 .reasoning-summary { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
-.reasoning-body { display: none; padding: 8px 10px 10px; border-top: 1px solid var(--overlay-med); font: 12px/1.6 'JetBrains Mono', monospace; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto; }
+.reasoning-body { display: none; padding: 8px 10px 10px; border-top: 1px solid var(--overlay-med); font: 12px/1.6 'Intel One Mono', monospace; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto; }
 .reasoning-card.show .reasoning-body { display: block; }
 
 /* Pretext block rendering */
@@ -769,21 +771,21 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .pt-frag-body { font-size: 13px; color: var(--text-primary); }
 .pt-frag-h1 { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
 .pt-frag-h2 { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.pt-frag-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--code-bg); border: 1px solid var(--overlay-med); padding: 1px 5px; border-radius: 4px; color: var(--code-text); }
+.pt-frag-code { font-family: 'Intel One Mono', monospace; font-size: 12px; background: var(--code-bg); border: 1px solid var(--overlay-med); padding: 1px 5px; border-radius: 4px; color: var(--code-text); }
 .pt-frag-chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; background: var(--overlay-med); border: 1px solid var(--overlay-strong); padding: 2px 6px; border-radius: 999px; color: var(--text-secondary); }
 .pt-frag.is-link { color: var(--accent-blue); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .pt-frag.is-em { font-style: italic; }
 .pt-frag.is-strong { font-weight: 700; }
 .pt-frag.is-del { text-decoration: line-through; }
 .pt-code-box { background: var(--overlay-soft); border: 1px solid var(--overlay-strong); border-radius: 8px; overflow-x: auto; padding: 8px 12px; margin: 2px 0; }
-.pt-code-line { white-space: pre; font: 400 12px/18px 'JetBrains Mono', monospace; color: var(--text-secondary); }
+.pt-code-line { white-space: pre; font: 400 12px/18px 'Intel One Mono', monospace; color: var(--text-secondary); }
 .pt-code-wrap { position: relative; margin: 2px 0; }
 .pt-code-wrap .pt-code-box { margin: 0; }
 .pt-code-actions { position: absolute; right: 6px; display: flex; gap: 4px; opacity: 0.4; transition: opacity 0.15s; pointer-events: auto; }
 .pt-code-actions-top { top: 6px; }
 .pt-code-actions-bottom { bottom: 6px; }
 .pt-code-wrap:hover .pt-code-actions, .pt-code-wrap .pt-code-actions:focus-within { opacity: 1; }
-.pt-code-btn { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; font: 500 10px/1 'Inter', sans-serif; color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.12s; }
+.pt-code-btn { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; font: 500 10px/1 'Intel One Mono', sans-serif; color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.12s; }
 .pt-code-btn:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
 .pt-code-btn.ok { border-color: var(--accent-green); color: var(--accent-green); }
 .pt-code-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
@@ -796,7 +798,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .pt-quote-rail { display: inline-block; width: 3px; background: var(--overlay-line); border-radius: 2px; margin-right: 8px; align-self: stretch; }
 .pt-quote-block { display: flex; }
 .pt-quote-content { flex: 1; }
-.pt-marker { font: 600 11px 'JetBrains Mono', monospace; color: var(--text-dim); margin-right: 6px; min-width: 1.4em; flex-shrink: 0; text-align: right; }
+.pt-marker { font: 600 11px 'Intel One Mono', monospace; color: var(--text-dim); margin-right: 6px; min-width: 1.4em; flex-shrink: 0; text-align: right; }
 .pt-list-item { display: flex; align-items: baseline; }
 .pt-list-content { flex: 1; min-width: 0; }
 .pt-rule-line { height: 1px; background: var(--overlay-strong); margin: 8px 0; }
@@ -811,48 +813,48 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .chat-input-wrap { border-top: 1px solid var(--border); background: var(--bg-panel); }
 .input-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 14px 0; }
 .input-chips:empty { display: none; }
-.input-chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--accent-blue); max-width: 200px; cursor: default; animation: fadeIn 0.15s; }
+.input-chip { display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; font-family: 'Intel One Mono', monospace; color: var(--accent-blue); max-width: 200px; cursor: default; animation: fadeIn 0.15s; }
 .input-chip .chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .input-chip .chip-close { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0; }
 .input-chip .chip-close:hover { color: var(--accent-red); }
 .chat-input-area { padding: clamp(6px, 0.8vw, 10px) clamp(8px, 1.2vw, 14px); display: flex; gap: clamp(6px, 0.8vw, 8px); align-items: flex-end; }
-.chat-input-area textarea { flex: 1; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: clamp(13px, 1.1vw, 14px); padding: clamp(7px, 0.9vw, 9px) clamp(10px, 1.2vw, 12px); border-radius: 8px; resize: none; min-height: 40px; max-height: 180px; line-height: 1.5; outline: none; }
+.chat-input-area textarea { flex: 1; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-family: 'Intel One Mono', sans-serif; font-size: clamp(13px, 1.1vw, 14px); padding: clamp(7px, 0.9vw, 9px) clamp(10px, 1.2vw, 12px); border-radius: 8px; resize: none; min-height: 40px; max-height: 180px; line-height: 1.5; outline: none; }
 .chat-input-area textarea:focus { border-color: var(--accent-orange); }
-.chat-input-area.dragover textarea, .chat-input-wrap:has(.chat-input-area.dragover) textarea { border-color: var(--accent-green); box-shadow: 0 0 0 2px rgba(0,255,136,0.15); }
+.chat-input-area.dragover textarea, .chat-input-wrap:has(.chat-input-area.dragover) textarea { border-color: var(--accent-green); box-shadow: 0 0 0 2px rgba(80,250,123,0.16); }
 .attach-btn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; position: relative; }
 .attach-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 .attach-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.send-btn { width: 40px; height: 40px; border-radius: 8px; border: none; background: var(--accent-orange); color: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+.send-btn { width: 40px; height: 40px; border-radius: 8px; border: none; background: var(--accent-orange); color: #1d1e2c; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
 .send-btn:hover { filter: brightness(1.1); transform: scale(1.05); }
 .send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 .send-btn.stop { background: var(--accent-pink); }
 .send-btn.guide { background: var(--accent-cyan); }
-.media-mode-select, .media-model-select { height: 40px; max-width: 150px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font: 11px 'JetBrains Mono', monospace; padding: 0 8px; outline: none; flex-shrink: 0; }
+.media-mode-select, .media-model-select { height: 40px; max-width: 150px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font: 11px 'Intel One Mono', monospace; padding: 0 8px; outline: none; flex-shrink: 0; }
 .media-model-select { max-width: 180px; display: none; color: var(--accent-cyan); }
 .media-mode-select.active { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-.media-render-progress { width: min(100%, 760px); padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: linear-gradient(135deg, rgba(255,111,66,0.08), rgba(0,221,255,0.06)); margin: 6px 10px 10px; box-sizing: border-box; }
-.media-render-visual { height: 180px; border-radius: 6px; background: radial-gradient(circle at 25% 35%, rgba(255,255,255,0.18), transparent 18%), radial-gradient(circle at 70% 45%, rgba(0,221,255,0.18), transparent 20%), linear-gradient(120deg, rgba(255,111,66,0.16), rgba(157,78,221,0.14), rgba(0,221,255,0.12)); background-size: 160% 160%; animation: mediaShimmer 2.6s ease-in-out infinite; position: relative; overflow: hidden; }
+.media-render-progress { width: min(100%, 760px); padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: linear-gradient(135deg, rgba(255,184,108,0.10), rgba(139,233,253,0.08)); margin: 6px 10px 10px; box-sizing: border-box; }
+.media-render-visual { height: 180px; border-radius: 6px; background: radial-gradient(circle at 25% 35%, rgba(255,255,255,0.18), transparent 18%), radial-gradient(circle at 70% 45%, rgba(0,221,255,0.18), transparent 20%), linear-gradient(120deg, rgba(255,184,108,0.16), rgba(189,147,249,0.14), rgba(139,233,253,0.12)); background-size: 160% 160%; animation: mediaShimmer 2.6s ease-in-out infinite; position: relative; overflow: hidden; }
 .media-render-visual::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent); transform: translateX(-100%); animation: mediaSweep 1.8s ease-in-out infinite; }
-.media-render-title { display: flex; align-items: center; gap: 6px; font: 11px 'JetBrains Mono', monospace; color: var(--accent-orange); margin: 10px 0 0; }
+.media-render-title { display: flex; align-items: center; gap: 6px; font: 11px 'Intel One Mono', monospace; color: var(--accent-orange); margin: 10px 0 0; }
 @keyframes mediaShimmer { 0%,100%{background-position:0% 50%}50%{background-position:100% 50%} }
 @keyframes mediaSweep { 0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)} }
-.media-result-meta { font: 11px 'JetBrains Mono', monospace; color: var(--text-dim); margin-bottom: 8px; }
+.media-result-meta { font: 11px 'Intel One Mono', monospace; color: var(--text-dim); margin-bottom: 8px; }
 .media-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; max-width: min(100%, 860px); }
 .media-result-card { background: var(--bg-root); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .media-result-preview { min-height: 120px; display: flex; align-items: center; justify-content: center; background: var(--overlay-soft); }
 .media-result-preview img, .media-result-preview video { max-width: 100%; max-height: 360px; display: block; }
-.media-result-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; font: 11px 'JetBrains Mono', monospace; color: var(--text-secondary); border-top: 1px solid var(--border); }
+.media-result-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; font: 11px 'Intel One Mono', monospace; color: var(--text-secondary); border-top: 1px solid var(--border); }
 .media-result-actions button { flex-shrink: 0; }
 
 /* @ autocomplete dropdown */
 .at-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; max-height: 220px; overflow-y: auto; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); display: none; z-index: 50; margin-bottom: 4px; }
 .at-dropdown.show { display: block; }
-.at-dropdown-header { padding: 6px 10px; font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border); }
+.at-dropdown-header { padding: 6px 10px; font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Intel One Mono', monospace; border-bottom: 1px solid var(--border); }
 .at-item { display: flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer; font-size: 11px; transition: background 0.1s; }
 .at-item:hover, .at-item.selected { background: var(--bg-hover); }
 .at-item .at-icon { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
-.at-item .at-path { color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
-.at-item .at-size { color: var(--text-dim); font-size: 9px; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.at-item .at-path { color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Intel One Mono', monospace; }
+.at-item .at-size { color: var(--text-dim); font-size: 9px; font-family: 'Intel One Mono', monospace; flex-shrink: 0; }
 
 /* ── Right Panel ── */
 .right-panel { background: var(--bg-panel); display: flex; flex-direction: column; overflow-y: auto; grid-row: 2; grid-column: 5; }
@@ -862,7 +864,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .tools-grid::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 .tg-card { padding: 8px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
 .tg-card:hover { border-color: var(--accent-pink); transform: translateY(-1px); }
-.tg-card.active { border-color: var(--accent-pink); box-shadow: 0 0 10px rgba(255,51,153,0.12); }
+.tg-card.active { border-color: var(--accent-pink); box-shadow: 0 0 10px rgba(255,121,198,0.12); }
 .tg-card.enabled .tg-badge { display: block; }
 .tg-badge { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); display: none; }
 .tg-icon { font-size: 18px; margin-bottom: 2px; }
@@ -875,22 +877,22 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 /* Memory */
 .memory-stats { display: flex; gap: 6px; margin-bottom: 6px; }
 .mem-stat { flex: 1; padding: 5px 6px; background: var(--bg-root); border-radius: 5px; text-align: center; }
-.mem-stat .val { font-size: 14px; font-weight: 700; color: var(--accent-yellow); font-family: 'JetBrains Mono', monospace; }
+.mem-stat .val { font-size: 14px; font-weight: 700; color: var(--accent-yellow); font-family: 'Intel One Mono', monospace; }
 .mem-stat .lbl { font-size: 9px; color: var(--text-secondary); }
 .memory-bar { height: 4px; background: var(--bg-root); border-radius: 2px; margin-bottom: 6px; overflow: hidden; }
 .memory-bar .fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-yellow), var(--accent-pink)); border-radius: 2px; transition: width 0.5s; }
 .memory-log { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
-.mem-entry { font-size: 10px; padding: 3px 6px; background: var(--bg-root); border-radius: 3px; color: var(--text-secondary); border-left: 2px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+.mem-entry { font-size: 10px; padding: 3px 6px; background: var(--bg-root); border-radius: 3px; color: var(--text-secondary); border-left: 2px solid var(--border); font-family: 'Intel One Mono', monospace; }
 .mem-entry.write { border-left-color: var(--accent-orange); }
 .mem-entry.read { border-left-color: var(--accent-cyan); }
 .mem-entry.compact { border-left-color: var(--accent-yellow); }
-.compact-btn { margin-top: 6px; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-secondary); padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 10px; font-family: 'Inter', sans-serif; transition: all 0.2s; width: 100%; }
+.compact-btn { margin-top: 6px; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-secondary); padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 10px; font-family: 'Intel One Mono', sans-serif; transition: all 0.2s; width: 100%; }
 .compact-btn:hover { border-color: var(--accent-yellow); color: var(--accent-yellow); }
 
 /* File viewer overlay */
 .file-viewer-overlay { position: fixed; top: 0; right: 0; width: var(--fv-w, 420px); height: 100vh; background: var(--bg-panel); border-left: 1px solid var(--border); z-index: 100; display: none; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.4); }
 .file-viewer-overlay.show { display: flex; }
-.file-viewer-overlay.image-mode { inset: 0; width: 100vw; height: 100vh; background: rgba(5,6,14,0.96); border-left: none; z-index: 260; }
+.file-viewer-overlay.image-mode { inset: 0; width: 100vw; height: 100vh; background: rgba(20,22,32,0.96); border-left: none; z-index: 260; }
 .file-viewer-overlay.image-mode .fv-resize-handle { display: none; }
 .file-viewer-overlay.image-mode .fv-content { padding: 0; overflow: hidden; }
 .image-zoom-stage { width: 100%; height: 100%; overflow: auto; cursor: zoom-in; }
@@ -904,11 +906,11 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .fv-resize-handle::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 2px; height: 32px; border-radius: 1px; background: var(--text-dim); opacity: 0; transition: opacity 0.15s; }
 .fv-resize-handle:hover::after, .fv-resize-handle.dragging::after { opacity: 0.6; background: var(--accent-orange); }
 .fv-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.fv-path { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-blue); }
+.fv-path { font-size: 11px; font-family: 'Intel One Mono', monospace; color: var(--accent-blue); }
 .fv-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; padding: 2px 6px; }
 .fv-close:hover { color: var(--accent-red); }
 .fv-content { flex: 1; overflow: auto; padding: 10px; }
-.fv-code .line { display: flex; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; }
+.fv-code .line { display: flex; font-family: 'Intel One Mono', monospace; font-size: 11px; line-height: 1.6; }
 .fv-code .line-num { min-width: 32px; text-align: right; padding-right: 10px; color: var(--text-dim); user-select: none; flex-shrink: 0; }
 .fv-code .line-content { white-space: pre-wrap; word-break: break-all; flex: 1; }
 
@@ -920,23 +922,23 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .modal-header h3 { font-size: 14px; font-weight: 600; }
 .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 18px; }
 .modal-body { padding: 18px; }
-.modal-body label { display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.5px; }
-.modal-body input,.modal-body textarea { width: 100%; padding: 8px 10px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: 'JetBrains Mono', monospace; outline: none; margin-bottom: 12px; }
+.modal-body label { display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-family: 'Intel One Mono', monospace; text-transform: uppercase; letter-spacing: 0.5px; }
+.modal-body input,.modal-body textarea { width: 100%; padding: 8px 10px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: 'Intel One Mono', monospace; outline: none; margin-bottom: 12px; }
 .modal-body input:focus,.modal-body textarea:focus { border-color: var(--accent-orange); }
 .modal-body textarea { min-height: 80px; resize: vertical; }
 .modal-tabs { display: flex; gap: 2px; margin-bottom: 14px; background: var(--bg-root); border-radius: 6px; padding: 3px; }
-.modal-tab { flex: 1; padding: 6px; border: none; border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; text-align: center; }
+.modal-tab { flex: 1; padding: 6px; border: none; border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; font-family: 'Intel One Mono', sans-serif; transition: all 0.15s; text-align: center; }
 .modal-tab.active { background: var(--bg-card); color: var(--text-primary); }
 .mp-card { display: flex; gap: 10px; align-items: flex-start; padding: 10px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 6px; transition: border-color 0.15s; }
 .mp-card:hover { border-color: var(--accent-orange); }
 .mp-icon { font-size: 20px; line-height: 1; flex: 0 0 auto; width: 24px; text-align: center; padding-top: 1px; }
 .mp-body { flex: 1; min-width: 0; }
 .mp-name { font-size: 12px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.mp-author { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.mp-author { font-size: 10px; color: var(--text-dim); font-family: 'Intel One Mono', monospace; }
 .mp-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-top: 3px; word-break: break-word; }
 .mp-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
-.mp-tag { font-size: 9px; padding: 1px 6px; border-radius: 3px; background: var(--bg-card); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
-.mp-install { flex: 0 0 auto; padding: 4px 10px; font-size: 10px; border: 1px solid var(--accent-orange); background: transparent; color: var(--accent-orange); border-radius: 4px; cursor: pointer; font-family: 'JetBrains Mono', monospace; }
+.mp-tag { font-size: 9px; padding: 1px 6px; border-radius: 3px; background: var(--bg-card); color: var(--text-dim); font-family: 'Intel One Mono', monospace; }
+.mp-install { flex: 0 0 auto; padding: 4px 10px; font-size: 10px; border: 1px solid var(--accent-orange); background: transparent; color: var(--accent-orange); border-radius: 4px; cursor: pointer; font-family: 'Intel One Mono', monospace; }
 .mp-install:hover { background: var(--accent-orange); color: white; }
 .mp-install:disabled { opacity: 0.5; cursor: default; }
 .install-progress { display:none; margin:8px 0 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg-root); color:var(--text-secondary); font-size:11px; line-height:1.4; }
@@ -946,11 +948,11 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .skill-install-btn:disabled,.modal-btn:disabled { opacity:.5; cursor:default; pointer-events:none; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
-.modal-btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
-.modal-btn.primary { background: var(--accent-orange); color: #fff; }
+.modal-btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Intel One Mono', sans-serif; transition: all 0.15s; }
+.modal-btn.primary { background: var(--accent-orange); color: #1d1e2c; }
 .modal-btn.primary:hover { filter: brightness(1.1); }
 .modal-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
-.mcp-tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); padding: 6px 10px; cursor: pointer; font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; transition: color 0.15s, border-color 0.15s; }
+.mcp-tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); padding: 6px 10px; cursor: pointer; font-size: 11px; font-family: 'Intel One Mono', sans-serif; font-weight: 600; transition: color 0.15s, border-color 0.15s; }
 .mcp-tab-btn:hover { color: var(--text-secondary); }
 .mcp-tab-btn.active { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
 .mcp-server-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px dashed var(--border); }
@@ -965,7 +967,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .mcp-server-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); font-size: 10px; padding: 2px 6px; border-radius: 3px; cursor: pointer; flex-shrink: 0; }
 .mcp-server-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 .mcp-server-btn.danger:hover { border-color: var(--accent-red); color: var(--accent-red); }
-.modal-select { background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font: 11px 'Inter',sans-serif; padding: 6px 8px; border-radius: 4px; outline: none; }
+.modal-select { background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font: 11px 'Intel One Mono',sans-serif; padding: 6px 8px; border-radius: 4px; outline: none; }
 /* Plan modal markdown: keep list markers inside the padded container */
 #planModalBody { padding: 14px 16px; line-height: 1.65; color: var(--text-primary); word-break: break-word; overflow-wrap: anywhere; }
 #planModalBody > :first-child { margin-top: 0; }
@@ -980,7 +982,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 #planModalBody ul ul, #planModalBody ol ol, #planModalBody ul ol, #planModalBody ol ul { margin: 2px 0; }
 #planModalBody li { margin: 2px 0; }
 #planModalBody li::marker { color: var(--text-secondary); }
-#planModalBody code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--code-bg); border: 1px solid var(--overlay-med); padding: 1px 5px; border-radius: 3px; color: var(--code-text); }
+#planModalBody code { font-family: 'Intel One Mono', monospace; font-size: 11px; background: var(--code-bg); border: 1px solid var(--overlay-med); padding: 1px 5px; border-radius: 3px; color: var(--code-text); }
 #planModalBody pre { margin: 8px 0; padding: 8px 12px; background: var(--overlay-soft); border: 1px solid var(--overlay-strong); border-radius: 6px; overflow-x: auto; }
 #planModalBody pre code { background: transparent; border: none; padding: 0; font-size: 11px; line-height: 1.55; color: var(--text-primary); }
 #planModalBody blockquote { margin: 6px 0; padding: 4px 10px; border-left: 3px solid var(--overlay-line); color: var(--text-secondary); background: var(--overlay-soft); border-radius: 0 4px 4px 0; }
@@ -1012,57 +1014,57 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .conv-search-box { flex: 1; display: flex; align-items: center; gap: 5px; min-width: 0; height: 24px; padding: 0 6px; background: var(--bg-root); border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); transition: border-color 0.15s, background 0.15s; }
 .conv-search-box:focus-within { border-color: var(--accent-orange); background: var(--bg-panel); }
 .conv-search-box .ui-icon { width: 11px; height: 11px; flex-shrink: 0; opacity: 0.75; }
-.conv-search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 0; }
+.conv-search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font-size: 10px; font-family: 'Intel One Mono', monospace; padding: 0; }
 .conv-search-box input::placeholder { color: var(--text-dim); }
 .conv-search-clear { width: 16px; height: 16px; flex: none; display: none; align-items: center; justify-content: center; border: 0; border-radius: 4px; background: transparent; color: var(--text-dim); cursor: pointer; font-size: 12px; line-height: 1; padding: 0; }
 .conv-search-clear.show { display: inline-flex; }
-.conv-search-clear:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
-.conv-list-meta { display: flex; justify-content: space-between; align-items: center; min-height: 14px; margin: -2px 1px 5px; font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.conv-search-clear:hover { color: var(--accent-red); background: rgba(255,85,85,0.12); }
+.conv-list-meta { display: flex; justify-content: space-between; align-items: center; min-height: 14px; margin: -2px 1px 5px; font-size: 9px; color: var(--text-dim); font-family: 'Intel One Mono', monospace; }
 .conv-list-meta .hot { color: var(--accent-orange); }
 .conv-list { display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow-y: auto; border-radius: 4px; }
-.conv-list.drop-target { background: rgba(91,138,245,0.08); outline: 1px dashed var(--accent-blue); }
+.conv-list.drop-target { background: rgba(98,114,164,0.14); outline: 1px dashed var(--accent-blue); }
 .conv-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
 .conv-item:hover { background: var(--bg-hover); }
 .conv-item.active { background: var(--bg-card); border-color: var(--accent-orange); color: var(--accent-orange); }
-.conv-item.running { border-color: rgba(0,255,136,0.35); }
-.conv-item.running .c-run { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px rgba(0,255,136,0.7); flex: none; }
+.conv-item.running { border-color: rgba(80,250,123,0.35); }
+.conv-item.running .c-run { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px rgba(80,250,123,0.7); flex: none; }
 .conv-item.dragging { opacity: 0.45; }
 .conv-item .c-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.conv-item .c-time { font-size: 9px; color: var(--text-dim); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+.conv-item .c-time { font-size: 9px; color: var(--text-dim); white-space: nowrap; font-family: 'Intel One Mono', monospace; }
 .conv-item .c-del { font-size: 10px; color: var(--text-dim); padding: 1px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.15s; cursor: pointer; }
 .conv-item:hover .c-del { opacity: 1; }
-.conv-item .c-del:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
+.conv-item .c-del:hover { color: var(--accent-red); background: rgba(255,85,85,0.12); }
 .conv-item.in-folder { padding-left: 22px; }
 .conv-folder { display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: background 0.12s; color: var(--text-secondary); user-select: none; }
 .conv-folder:hover { background: var(--bg-hover); }
-.conv-folder.drop-target { background: rgba(91,138,245,0.15); outline: 1px dashed var(--accent-blue); }
+.conv-folder.drop-target { background: rgba(98,114,164,0.22); outline: 1px dashed var(--accent-blue); }
 .conv-folder .cf-arrow { width: 10px; font-size: 9px; color: var(--text-dim); transition: transform 0.15s; flex-shrink: 0; text-align: center; }
 .conv-folder.open .cf-arrow { transform: rotate(90deg); }
 .conv-folder .cf-icon { flex-shrink: 0; color: var(--accent-yellow); }
 .conv-folder .cf-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.conv-folder .cf-count { font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.conv-folder .cf-count { font-size: 9px; color: var(--text-dim); font-family: 'Intel One Mono', monospace; }
 .conv-folder .cf-add { font-size: 10px; color: var(--text-dim); padding: 1px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s; cursor: pointer; flex-shrink: 0; }
 .conv-folder:hover .cf-add { opacity: 1; }
-.conv-folder .cf-add:hover { color: var(--accent-green); background: rgba(0,255,136,0.1); }
-.conv-list-more { margin: 4px 1px 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-secondary); background: transparent; font-size: 10px; cursor: pointer; font-family: 'JetBrains Mono', monospace; }
+.conv-folder .cf-add:hover { color: var(--accent-green); background: rgba(80,250,123,0.12); }
+.conv-list-more { margin: 4px 1px 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-secondary); background: transparent; font-size: 10px; cursor: pointer; font-family: 'Intel One Mono', monospace; }
 .conv-list-more:hover { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255,107,53,0.06); }
 .conv-list-empty { font-size: 10px; color: var(--text-dim); padding: 6px 8px; border: 1px dashed var(--border); border-radius: 5px; text-align: center; }
 
 /* Web Search */
 .ws-config { display: flex; flex-direction: column; gap: 6px; }
 .ws-row { display: flex; gap: 4px; align-items: center; }
-.ws-input { flex: 1; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 5px 8px; border-radius: 4px; outline: none; min-width: 0; }
+.ws-input { flex: 1; background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-family: 'Intel One Mono', monospace; font-size: 11px; padding: 5px 8px; border-radius: 4px; outline: none; min-width: 0; }
 .ws-input:focus { border-color: var(--accent-cyan); }
-.ws-select { background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-size: 10px; padding: 4px 6px; border-radius: 4px; outline: none; font-family: 'JetBrains Mono', monospace; cursor: pointer; }
-.ws-btn { padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 10px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.ws-select { background: var(--bg-root); border: 1px solid var(--border); color: var(--text-primary); font-size: 10px; padding: 4px 6px; border-radius: 4px; outline: none; font-family: 'Intel One Mono', monospace; cursor: pointer; }
+.ws-btn { padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 10px; cursor: pointer; font-family: 'Intel One Mono', sans-serif; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .ws-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 .ws-btn.save { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-.ws-status { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+.ws-status { font-size: 10px; color: var(--text-dim); font-family: 'Intel One Mono', monospace; white-space: nowrap; }
 .ws-status.ok { color: var(--accent-green); }
 .ws-status.err { color: var(--accent-red); }
 .ws-results { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
 .ws-result-item { font-size: 10px; padding: 4px 6px; background: var(--bg-root); border-radius: 4px; border-left: 2px solid var(--accent-cyan); }
-.ws-result-item a { color: var(--accent-cyan); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', monospace; }
+.ws-result-item a { color: var(--accent-cyan); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Intel One Mono', monospace; }
 .ws-result-item a:hover { text-decoration: underline; }
 .ws-snippet { color: var(--text-dim); font-size: 9px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 
@@ -1132,7 +1134,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
   var t = localStorage.getItem('ba_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', t);
   var hl = document.getElementById('hljsTheme');
-  if (hl && t === 'light') hl.href = 'vendor/github.min.css';
+  if (hl && t === 'light') hl.href = 'vendor/hljs-dracula-light.css';
 })();
 function toggleTheme() {
   var cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1140,7 +1142,7 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   try { localStorage.setItem('ba_theme', next); } catch {}
   var hl = document.getElementById('hljsTheme');
-  if (hl) hl.href = 'vendor/github' + (next === 'light' ? '' : '-dark') + '.min.css';
+  if (hl) hl.href = 'vendor/hljs-dracula' + (next === 'light' ? '-light' : '') + '.css';
   updateThemeLabel(next);
 }
 function updateThemeLabel(theme) {
@@ -1231,28 +1233,28 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <path d="M15 3 V7 H19" stroke="url(#op-bd)" stroke-width="1.1" fill="none" stroke-linejoin="round"/>
         <!-- Neural spark / agent core -->
         <circle cx="11.5" cy="13" r="2.6" fill="url(#op-core)"/>
-        <circle cx="7"  cy="10" r="0.9" fill="#ff6b35"/>
-        <circle cx="16" cy="11" r="0.9" fill="#00d4ff"/>
-        <circle cx="8"  cy="17" r="0.9" fill="#aa66ff"/>
-        <circle cx="15" cy="17" r="0.9" fill="#00ff88"/>
+        <circle cx="7"  cy="10" r="0.9" fill="#ffb86c"/>
+        <circle cx="16" cy="11" r="0.9" fill="#8be9fd"/>
+        <circle cx="8"  cy="17" r="0.9" fill="#bd93f9"/>
+        <circle cx="15" cy="17" r="0.9" fill="#50fa7b"/>
         <path d="M7 10 L11.5 13 L16 11 M8 17 L11.5 13 L15 17"
               stroke="url(#op-ln)" stroke-width="0.9" stroke-linecap="round" fill="none" opacity="0.85"/>
         <defs>
           <linearGradient id="op-pg" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#ff6b35" stop-opacity="0.14"/>
-            <stop offset="1" stop-color="#ff3399" stop-opacity="0.05"/>
+            <stop stop-color="#ffb86c" stop-opacity="0.14"/>
+            <stop offset="1" stop-color="#ff79c6" stop-opacity="0.05"/>
           </linearGradient>
           <linearGradient id="op-bd" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#ff8040"/>
-            <stop offset="1" stop-color="#ff3399"/>
+            <stop stop-color="#ffb86c"/>
+            <stop offset="1" stop-color="#ff79c6"/>
           </linearGradient>
           <linearGradient id="op-ln" x1="7" y1="10" x2="16" y2="17" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#ff8040" stop-opacity="0.9"/>
-            <stop offset="1" stop-color="#aa66ff" stop-opacity="0.9"/>
+            <stop stop-color="#ffb86c" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#bd93f9" stop-opacity="0.9"/>
           </linearGradient>
           <radialGradient id="op-core" cx="40%" cy="35%">
-            <stop stop-color="#ffb070"/>
-            <stop offset="1" stop-color="#cc1f77"/>
+            <stop stop-color="#ffb86c"/>
+            <stop offset="1" stop-color="#ff79c6"/>
           </radialGradient>
         </defs>
       </svg>
@@ -1581,7 +1583,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <input type="text" id="mcpCorsProxy" placeholder="https://your-proxy.workers.dev/ or https://proxy.example.com/?url={url}" onchange="onMcpCorsProxyChange(this.value)">
         <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 8px;line-height:1.4" data-i18n="mcpModal.corsHint">Most MCP servers don't send CORS headers for browsers. If a direct connection fails with a CORS error, set a proxy URL here — it's prepended to the target URL (use {url} for query-param style). A 20-line Cloudflare Worker is enough.</div>
         <label data-i18n="mcpModal.importJsonLabel">Paste <code>mcpServers</code> JSON config</label>
-        <textarea id="mcpServerJson" style="min-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px" placeholder='{&#10;  "mcpServers": {&#10;    "example": {&#10;      "type": "streamable_http",&#10;      "url": "https://mcp.example.com/mcp",&#10;      "token": "optional-bearer-token"&#10;    }&#10;  }&#10;}'></textarea>
+        <textarea id="mcpServerJson" style="min-height:120px;font-family:'Intel One Mono',monospace;font-size:11px" placeholder='{&#10;  "mcpServers": {&#10;    "example": {&#10;      "type": "streamable_http",&#10;      "url": "https://mcp.example.com/mcp",&#10;      "token": "optional-bearer-token"&#10;    }&#10;  }&#10;}'></textarea>
         <div style="display:flex;gap:8px;margin-top:6px">
           <button class="modal-btn primary" onclick="onImportMcpServersClick()" style="flex:1">&#x2B07; <span data-i18n="mcpModal.importServer">Import &amp; Connect</span></button>
         </div>
@@ -1642,16 +1644,16 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     <div class="modal-body">
       <label data-i18n="settings.providerProfiles">Provider Profiles</label>
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
-        <select id="setProviderProfile" aria-label="Provider profile" onchange="onProviderProfileSelect()" style="flex:1;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px">
+        <select id="setProviderProfile" aria-label="Provider profile" onchange="onProviderProfileSelect()" style="flex:1;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:12px">
           <option value="">loading...</option>
         </select>
         <button type="button" class="modal-btn secondary" onclick="newProviderProfile()" style="padding:6px 10px;font-size:11px">+ <span data-i18n="settings.newProvider">New</span></button>
-        <button type="button" class="modal-btn secondary" onclick="deleteCurrentProviderProfile()" style="padding:6px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,107,107,.35)">&times; <span data-i18n="settings.deleteProvider">Delete</span></button>
+        <button type="button" class="modal-btn secondary" onclick="deleteCurrentProviderProfile()" style="padding:6px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,85,85,.35)">&times; <span data-i18n="settings.deleteProvider">Delete</span></button>
       </div>
       <label data-i18n="settings.providerName">Provider Name</label>
       <input type="text" id="setProviderName" placeholder="My gateway / OpenAI / Anthropic compat" style="margin-bottom:12px">
       <label data-i18n="settings.providerType">Provider Type</label>
-      <select id="setProvider" aria-label="Provider type" onchange="onProviderTypeChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:12px">
+      <select id="setProvider" aria-label="Provider type" onchange="onProviderTypeChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:12px;margin-bottom:12px">
         <option value="anthropic_compat">anthropic-compatible</option>
         <option value="openai_compat">openai-compatible</option>
       </select>
@@ -1663,7 +1665,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <span><span data-i18n="settings.availableModels">Available Models</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.availableModelsHint">(from API; hold Ctrl/Cmd to multi-select)</span></span>
         <button type="button" class="modal-btn secondary" onclick="fetchModelsIntoSettings()" style="padding:2px 10px;font-size:10px">&#x21BB; <span data-i18n="settings.fetchFromApi">Fetch from API</span></button>
       </label>
-      <select id="setAvailableModels" aria-label="Available models" multiple size="6" style="width:100%;padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:6px"></select>
+      <select id="setAvailableModels" aria-label="Available models" multiple size="6" style="width:100%;padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:11px;margin-bottom:6px"></select>
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <input type="text" id="setCustomModel" placeholder="custom-model-id" data-i18n-placeholder="settings.customModelPh" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomModelToList();}" style="flex:1;margin-bottom:0">
         <button type="button" class="modal-btn secondary" onclick="addCustomModelToList()" style="padding:4px 10px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.addModel">Add</span></button>
@@ -1714,7 +1716,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <div class="rc-add-row">
         <input type="text" id="setRcNewModel" placeholder="model id" data-i18n-placeholder="settings.mcModelPh" list="setRcModelList" onkeydown="if(event.key==='Enter'){event.preventDefault();addReasoningContentModelFromInputs();}">
         <datalist id="setRcModelList"></datalist>
-        <select id="setRcNewMode" aria-label="Reasoning content mode" style="width:92px;padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:0">
+        <select id="setRcNewMode" aria-label="Reasoning content mode" style="width:92px;padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:11px;margin-bottom:0">
           <option value="auto">Auto</option>
           <option value="on">On</option>
           <option value="off">Off</option>
@@ -1729,7 +1731,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where Python/JS/Bash tools run)</span></label>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setSandboxEnabled" onchange="onSandboxProviderChange()" style="width:auto;margin:0"> <span data-i18n="settings.sandboxEnable">ENABLE_SANDBOX — Enable sandbox environment for running code</span></label>
       <label data-i18n="settings.sandboxPlatform">SANDBOX_PLATFORM</label>
-      <select id="setSandboxPlatform" aria-label="Sandbox platform" onchange="onSandboxProviderChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:10px">
+      <select id="setSandboxPlatform" aria-label="Sandbox platform" onchange="onSandboxProviderChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:12px;margin-bottom:10px">
         <option value="daytona">daytona</option>
       </select>
       <div id="setSandboxDaytonaBox" style="display:none;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg-root)">
@@ -1867,7 +1869,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
       <label style="font-weight:600;color:var(--accent-red);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-alert-triangle"></use></svg> <span data-i18n="settings.dangerHeader">Danger Zone</span></label>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.clearAllDesc">Delete all local settings, conversations, memories, skills, files, sync config, and cached data on this device.</div>
-      <button type="button" class="modal-btn secondary" onclick="clearAllAppData()" style="width:100%;padding:8px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,107,107,.35)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg> <span data-i18n="settings.clearAllBtn">Clear all local data</span></button>
+      <button type="button" class="modal-btn secondary" onclick="clearAllAppData()" style="width:100%;padding:8px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,85,85,.35)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg> <span data-i18n="settings.clearAllBtn">Clear all local data</span></button>
 
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="modal-btn primary" onclick="saveSettings()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
@@ -1937,7 +1939,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
       <label><span data-i18n="cronModal.cron">Cron expression</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="cronModal.cronHint">(minute hour day-of-month month day-of-week, local time)</span></label>
       <div style="display:flex;gap:6px;margin-bottom:4px">
-        <input type="text" id="cronTaskCron" placeholder="3 9 * * *" style="flex:1;margin-bottom:0;font-family:'JetBrains Mono',monospace">
+        <input type="text" id="cronTaskCron" placeholder="3 9 * * *" style="flex:1;margin-bottom:0;font-family:'Intel One Mono',monospace">
         <select id="cronTaskPreset" aria-label="Scheduled task preset" onchange="_onCronPresetChange()" style="flex:0 0 auto;padding:4px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-size:11px">
           <option value="" data-i18n="cronModal.preset">Preset…</option>
           <option value="7 * * * *">Every hour</option>
@@ -1988,7 +1990,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <label data-i18n="hookModal.name">Name</label>
       <input type="text" id="hookName" placeholder="log-all-tools" data-i18n-placeholder="hookModal.namePh">
       <label data-i18n="hookModal.event">Event</label>
-      <select id="hookEvent" aria-label="Hook event" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:12px">
+      <select id="hookEvent" aria-label="Hook event" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:12px;margin-bottom:12px">
         <option value="pre_tool">pre_tool &mdash; before a tool runs (can block / modify input)</option>
         <option value="post_tool">post_tool &mdash; after a tool runs (can modify output)</option>
         <option value="on_error">on_error &mdash; tool returned an error (can recover)</option>
@@ -2001,7 +2003,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <option value="post_cron_fire">post_cron_fire &mdash; after a scheduled task fires (audit)</option>
       </select>
       <label><span data-i18n="hookModal.handler">Handler</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="hookModal.handlerHint">(JS body; receives <code>ctx</code>; see hints below)</span></label>
-      <textarea id="hookCode" spellcheck="false" style="min-height:160px;font-family:'JetBrains Mono',monospace" placeholder="// ctx has { name, input, output, toolUseId, isError, error, text, content, loopCount, totalTokens } depending on event.
+      <textarea id="hookCode" spellcheck="false" style="min-height:160px;font-family:'Intel One Mono',monospace" placeholder="// ctx has { name, input, output, toolUseId, isError, error, text, content, loopCount, totalTokens } depending on event.
 // Return values:
 //   { note: 'msg' }           -> logged to Memory panel
 //   { block: true, reason }   -> block the tool / user submit
@@ -2038,7 +2040,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <label data-i18n="swarmRoleModal.description">Description</label>
       <input type="text" id="swarmRoleDescription" placeholder="One-line summary of what this role is good at">
       <label data-i18n="swarmRoleModal.systemPrompt">System prompt (role guidance)</label>
-      <textarea id="swarmRoleSystemPrompt" spellcheck="false" style="min-height:140px;font-family:'JetBrains Mono',monospace" placeholder="You are a focused worker for ... Use tools X / Y. Stop when ..."></textarea>
+      <textarea id="swarmRoleSystemPrompt" spellcheck="false" style="min-height:140px;font-family:'Intel One Mono',monospace" placeholder="You are a focused worker for ... Use tools X / Y. Stop when ..."></textarea>
       <label><span data-i18n="swarmRoleModal.allowedTools">Allowed base tools</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.allowedToolsHint">(SwarmSpawn / RunSubAgent are blocked to prevent recursion; bb_*, SwarmHandoff, memory tools auto-grant)</span></label>
       <div id="swarmRoleToolsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;margin-bottom:8px;max-height:180px;overflow-y:auto"></div>
       <label><span data-i18n="swarmRoleModal.bindSkills">Bind skills</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.bindSkillsHint">(adds each skill's tools to this worker; skill.active is irrelevant)</span></label>
@@ -2078,7 +2080,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     <div class="modal-body">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <input type="text" id="memSearchInput" placeholder="Search content, tags, type\u2026" data-i18n-placeholder="memoryModal.searchPh" oninput="renderMemoryList()" style="flex:1;min-width:160px;margin-bottom:0">
-        <select id="memFilterType" aria-label="Filter memories by type" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+        <select id="memFilterType" aria-label="Filter memories by type" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:11px">
           <option value="">all types</option>
           <option value="fact">fact</option>
           <option value="preference">preference</option>
@@ -2086,7 +2088,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
           <option value="skill">skill</option>
           <option value="note">note</option>
         </select>
-        <select id="memFilterSource" aria-label="Filter memories by source" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+        <select id="memFilterSource" aria-label="Filter memories by source" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:11px">
           <option value="">any source</option>
           <option value="auto">auto</option>
           <option value="tool">tool</option>
@@ -2103,7 +2105,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <textarea id="memAddContent" placeholder="e.g. User prefers pytest over unittest for new Python projects." style="min-height:60px"></textarea>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <input type="text" id="memAddTags" placeholder="tags: python, testing" style="flex:1;min-width:160px;margin-bottom:0">
-          <select id="memAddType" aria-label="New memory type" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+          <select id="memAddType" aria-label="New memory type" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'Intel One Mono',monospace;font-size:11px">
             <option value="fact">fact</option>
             <option value="preference">preference</option>
             <option value="event">event</option>
@@ -8376,7 +8378,7 @@ function renderTodos() {
   if (counts) counts.textContent = done + '/' + todos.length;
   el.innerHTML = todos.map(t => {
     const icon = t.status === 'completed' ? '<svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg>' : t.status === 'in_progress' ? '&#x25B6;' : '&#x25CB;';
-    const color = t.status === 'completed' ? 'var(--accent-green,#00ff88)' : t.status === 'in_progress' ? 'var(--accent-orange)' : 'var(--text-dim)';
+    const color = t.status === 'completed' ? 'var(--accent-green,#50fa7b)' : t.status === 'in_progress' ? 'var(--accent-orange)' : 'var(--text-dim)';
     const textStyle = t.status === 'completed' ? 'text-decoration:line-through;color:var(--text-dim)' : t.status === 'in_progress' ? 'color:var(--text-primary);font-weight:600' : 'color:var(--text-secondary)';
     const label = t.status === 'in_progress' ? (t.activeForm || t.content) : t.content;
     return `<div class="todo-item" style="display:flex;align-items:flex-start;gap:6px;padding:4px 6px;font-size:11px;border-bottom:1px solid var(--border)">
@@ -8394,7 +8396,7 @@ function renderSubAgents() {
   // Blackboard one-line summary (only when swarm enabled and there's something to show)
   const bb = _bbGet();
   const bbBanner = (swarmSettings.enabled && bb && bb.entries.length)
-    ? `<div style="font-size:10px;color:var(--accent-blue,#5b8af5);padding:4px 6px;border-bottom:1px solid var(--border)">Blackboard: ${bb.entries.length} entries (` + ['note','result','task'].map(t => `${t}=${bb.entries.filter(e=>e.type===t).length}`).join(', ') + ')</div>'
+    ? `<div style="font-size:10px;color:var(--accent-blue,#6272a4);padding:4px 6px;border-bottom:1px solid var(--border)">Blackboard: ${bb.entries.length} entries (` + ['note','result','task'].map(t => `${t}=${bb.entries.filter(e=>e.type===t).length}`).join(', ') + ')</div>'
     : '';
   if (!subAgentRuns || !subAgentRuns.length) {
     el.innerHTML = bbBanner + '<div style="font-size:10px;color:var(--text-dim);padding:6px">No sub-agent runs yet.</div>';
@@ -8404,11 +8406,11 @@ function renderSubAgents() {
   const running = subAgentRuns.filter(r => r.status === 'running').length;
   if (counts) counts.textContent = running ? `${running} running` : String(subAgentRuns.length);
   el.innerHTML = bbBanner + subAgentRuns.slice(-8).reverse().map(r => {
-    const color = r.status === 'completed' ? 'var(--accent-green,#00ff88)' : r.status === 'error' ? 'var(--accent-red)' : r.status === 'aborted' ? 'var(--text-dim)' : r.status === 'handoff' ? 'var(--accent-blue,#5b8af5)' : 'var(--accent-orange)';
+    const color = r.status === 'completed' ? 'var(--accent-green,#50fa7b)' : r.status === 'error' ? 'var(--accent-red)' : r.status === 'aborted' ? 'var(--text-dim)' : r.status === 'handoff' ? 'var(--accent-blue,#6272a4)' : 'var(--accent-orange)';
     const task = truncateMiddleText(r.task || 'Sub-agent', 80).replace(/\s+/g, ' ').trim();
     const result = truncateMiddleText(r.resultPreview || r.error || '', 120).replace(/\s+/g, ' ').trim();
     const badge = r.kind === 'swarm' ? `<span style="background:var(--accent-orange);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">${esc(r.role || 'worker')}</span>` : '';
-    const chainBadge = r.kind === 'swarm' && Array.isArray(r.chainHistory) && r.chainHistory.length ? `<span style="background:var(--accent-blue,#5b8af5);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">step ${r.chainHistory.length + 1}</span>` : '';
+    const chainBadge = r.kind === 'swarm' && Array.isArray(r.chainHistory) && r.chainHistory.length ? `<span style="background:var(--accent-blue,#6272a4);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">step ${r.chainHistory.length + 1}</span>` : '';
     return `<div class="todo-item" style="padding:5px 6px;font-size:11px;border-bottom:1px solid var(--border)">
       <div style="display:flex;gap:6px;align-items:flex-start">
         <span style="color:${color};flex:none;margin-top:1px">&#x25CF;</span>
@@ -9685,16 +9687,16 @@ async function testDaytonaSandbox() {
     const combined = (norm.stdout || '') + '\n' + (norm.stderr || '');
     const hint = _daytonaShellHint(combined);
     if (hint || norm.exitCode !== 0) {
-      status.style.color = 'var(--accent-red, #ff6b6b)';
+      status.style.color = 'var(--accent-red, #ff5555)';
       const detail = combined.trim() || '(empty response — raw: ' + JSON.stringify(exec).slice(0, 200) + ')';
       status.textContent = '❌ ' + t('settings.sandboxTestFail', 'Sandbox check failed') + ` (sandbox ${sandboxId}, state ${lastState || 'unknown'}, exit ${norm.exitCode}):\n` + hint + detail;
     } else {
-      status.style.color = 'var(--accent-green, #51cf66)';
+      status.style.color = 'var(--accent-green, #50fa7b)';
       const firstLine = (norm.stdout || '').split('\n').filter(Boolean).slice(0, 3).join('\n');
       status.textContent = '✅ ' + t('settings.sandboxTestOk', 'Sandbox OK') + ` (sandbox ${sandboxId}):\n` + firstLine;
     }
   } catch (e) {
-    status.style.color = 'var(--accent-red, #ff6b6b)';
+    status.style.color = 'var(--accent-red, #ff5555)';
     status.textContent = '❌ ' + t('settings.sandboxTestFail', 'Sandbox check failed') + (lastState ? ` (state ${lastState})` : '') + ': ' + (e?.message || e);
   } finally {
     if (sandboxId) {
@@ -11217,7 +11219,7 @@ function renderPlanButton() {
   if (!btn) return;
   if (planMode) {
     btn.style.background = 'var(--accent-orange)';
-    btn.style.color = '#fff';
+    btn.style.color = '#1d1e2c';
     btn.style.borderColor = 'var(--accent-orange)';
   } else {
     btn.style.background = '';
@@ -11245,7 +11247,7 @@ function renderRalphButton() {
   btn.title = ralphRun?.active ? `Ralph Loop running: ${ralphRun.iteration}/${ralphRun.unlimited ? '∞' : ralphRun.maxIterations}` : 'Ralph Loop: unattended continue-until-done mode';
   if (active) {
     btn.style.background = 'var(--accent-orange)';
-    btn.style.color = '#fff';
+    btn.style.color = '#1d1e2c';
     btn.style.borderColor = 'var(--accent-orange)';
   } else {
     btn.style.background = '';
@@ -12121,7 +12123,7 @@ function renderMemoryList() {
   if (tagEl) {
     const tagPool = showRetired ? _memCache : _memCache.filter(r => !r.superseded);
     const pairs = _memCollectTags(tagPool);
-    tagEl.innerHTML = pairs.map(([t, n]) => `<button type="button" onclick="memFilterByTag('${esc(t)}')" style="padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:${_memActiveTag === t ? 'var(--accent-orange)' : 'transparent'};color:${_memActiveTag === t ? '#fff' : 'var(--text-secondary)'};font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace">#${esc(t)} <span style="opacity:.6">${n}</span></button>`).join('');
+    tagEl.innerHTML = pairs.map(([t, n]) => `<button type="button" onclick="memFilterByTag('${esc(t)}')" style="padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:${_memActiveTag === t ? 'var(--accent-orange)' : 'transparent'};color:${_memActiveTag === t ? '#fff' : 'var(--text-secondary)'};font-size:10px;cursor:pointer;font-family:'Intel One Mono',monospace">#${esc(t)} <span style="opacity:.6">${n}</span></button>`).join('');
   }
 
   const retiredCount = _memCache.filter(r => r.superseded).length;
@@ -12136,9 +12138,9 @@ function renderMemoryList() {
   listEl.innerHTML = records.map(r => {
     const dateStr = _memDateLabel(r.createdAt);
     const relStr = _memRelativeLabel(r.createdAt, now);
-    const tagHtml = (r.tags || []).map(t => `<span style="padding:1px 6px;background:var(--bg-root);border-radius:8px;font-size:10px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace">#${esc(t)}</span>`).join(' ');
+    const tagHtml = (r.tags || []).map(t => `<span style="padding:1px 6px;background:var(--bg-root);border-radius:8px;font-size:10px;color:var(--text-secondary);font-family:'Intel One Mono',monospace">#${esc(t)}</span>`).join(' ');
     const srcLabel = r.source || 'manual';
-    const typeColor = r.type === 'preference' ? 'var(--accent-orange)' : r.type === 'event' ? 'var(--accent-cyan)' : r.type === 'skill' ? '#b388ff' : r.type === 'note' ? 'var(--text-dim)' : 'var(--text-secondary)';
+    const typeColor = r.type === 'preference' ? 'var(--accent-orange)' : r.type === 'event' ? 'var(--accent-cyan)' : r.type === 'skill' ? 'var(--accent-purple, #bd93f9)' : r.type === 'note' ? 'var(--text-dim)' : 'var(--text-secondary)';
     const retired = !!r.superseded;
     const replacedHint = retired && r.supersededBy ? `<span>\u00B7</span><span title="Replaced by" style="color:var(--accent-cyan)">\u21B3 ${esc(r.supersededBy.slice(0, 12))}</span>` : retired ? `<span>\u00B7</span><span style="color:var(--text-dim)">retired</span>` : '';
     const retiresHint = Array.isArray(r.supersedes) && r.supersedes.length ? `<span>\u00B7</span><span title="This memory retires ${r.supersedes.length} older one(s)">retires ${r.supersedes.length}</span>` : '';
@@ -12148,7 +12150,7 @@ function renderMemoryList() {
         <button type="button" title="${r.pinned ? 'Unpin' : 'Pin'}" onclick="memTogglePin('${r.id}')" style="background:transparent;border:none;color:${r.pinned ? 'var(--accent-orange)' : 'var(--text-dim)'};cursor:pointer;font-size:14px;padding:0 4px">${iconHtml('i:pin')}</button>
         <button type="button" title="Delete" onclick="memDeleteFromUI('${r.id}')" style="background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0 4px">${iconHtml('i:x')}</button>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;color:var(--text-dim);font-family:'Intel One Mono',monospace">
         <span style="color:${typeColor}">${esc(r.type || 'fact')}</span>
         <span>\u00B7</span>
         <span title="id">${esc(r.id.slice(0, 12))}</span>
@@ -12854,14 +12856,14 @@ function renderCronTasksList() {
     const next = t.enabled && t.nextFireAt ? esc(_formatCronTime(t.nextFireAt)) : '<span style="color:var(--text-dim)">—</span>';
     const last = t.lastFiredAt ? esc(_formatCronTime(t.lastFiredAt)) : '—';
     const badge = t.recurring ? '' : ` <span style="color:var(--accent-yellow,var(--text-dim));font-size:9px">[once]</span>`;
-    const agentBadge = t.createdBy === 'agent' ? ` <span style="color:var(--accent-blue,#5b8af5);font-size:9px">[agent]</span>` : '';
+    const agentBadge = t.createdBy === 'agent' ? ` <span style="color:var(--accent-blue,#6272a4);font-size:9px">[agent]</span>` : '';
     const opacity = t.enabled ? '1' : '0.55';
     return `
       <div class="cron-item" style="display:flex;align-items:center;gap:6px;padding:6px;border:1px solid var(--border);border-radius:5px;background:var(--bg-root);opacity:${opacity}">
         <input type="checkbox" ${t.enabled ? 'checked' : ''} onchange="_onCronTaskToggle('${idEsc}', this.checked)" title="Enable/disable" style="margin:0;cursor:pointer;flex:0 0 auto">
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nameEsc}${badge}${agentBadge}</div>
-          <div style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><code>${cronEsc}</code> &middot; <span data-i18n="cron.next">next</span>: ${next} &middot; <span data-i18n="cron.fired">fired</span> ${t.fireCount || 0}×</div>
+          <div style="font-size:9px;color:var(--text-dim);font-family:'Intel One Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><code>${cronEsc}</code> &middot; <span data-i18n="cron.next">next</span>: ${next} &middot; <span data-i18n="cron.fired">fired</span> ${t.fireCount || 0}×</div>
         </div>
         <button class="skill-install-btn" style="flex:0 0 auto;margin:0;padding:2px 6px;font-size:10px" onclick="openCronTaskModal('${idEsc}')" title="Edit"><svg class="ui-icon" aria-hidden="true"><use href="#i-pencil"></use></svg></button>
         <button class="skill-install-btn" style="flex:0 0 auto;margin:0;padding:2px 6px;font-size:10px" onclick="_onCronTaskDelete('${idEsc}')" title="Delete">&times;</button>
@@ -12910,13 +12912,13 @@ function _validateCronInput() {
   const fields = CronScheduler.parseCron(expr);
   if (!fields) {
     out.textContent = (typeof t === 'function' ? t('cron.invalidExpr', null) : null) || 'Invalid cron expression.';
-    out.style.color = 'var(--accent-red,#ff6b6b)';
+    out.style.color = 'var(--accent-red,#ff5555)';
     return;
   }
   const next = CronScheduler.nextFireTime(expr, Date.now());
   if (!next) {
     out.textContent = (typeof t === 'function' ? t('cron.noFutureMatch', null) : null) || 'No future match within 1 year.';
-    out.style.color = 'var(--accent-red,#ff6b6b)';
+    out.style.color = 'var(--accent-red,#ff5555)';
     return;
   }
   out.textContent = ((typeof t === 'function' ? t('cron.nextPreview', null) : null) || 'Next fire') + ': ' + new Date(next).toLocaleString();
@@ -13017,9 +13019,9 @@ function renderSwarmRoles() {
     if (handoffCount) meta.push(handoffCount + ' handoff' + (handoffCount > 1 ? 's' : ''));
     const metaText = meta.length ? ' · ' + meta.join(' · ') : '';
     const sourceBadge = isBuiltin
-      ? '<span style="background:var(--text-dim);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">builtin</span>'
+      ? '<span style="background:var(--text-dim);color:#f8f8f2;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">builtin</span>'
       : (isAgent
-        ? '<span style="background:var(--accent-blue,#5b8af5);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">agent</span>'
+        ? '<span style="background:var(--accent-blue,#6272a4);color:#1a1a1a;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">agent</span>'
         : '');
     const titleColor = enabled ? 'var(--text-primary)' : 'var(--text-dim)';
     const isEditableInUi = !isBuiltin && !isAgent; // agent roles are managed via the RoleManager tool, not the UI editor
@@ -15176,7 +15178,7 @@ function feEditFile(path) {
   currentViewFile = path;
   document.getElementById('fvPath').textContent = path;
   const fvContent = document.getElementById('fvContent');
-  fvContent.innerHTML = `<textarea style="width:100%;height:100%;background:var(--bg-root);color:var(--text-primary);border:none;padding:10px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;resize:none;outline:none" id="feEditArea">${esc(node.content || '')}</textarea><div style="padding:6px 10px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end"><button class="top-btn" onclick="feSaveEdit()">Save</button><button class="top-btn" onclick="openFileViewer(currentViewFile)">Cancel</button></div>`;
+  fvContent.innerHTML = `<textarea style="width:100%;height:100%;background:var(--bg-root);color:var(--text-primary);border:none;padding:10px;font-family:'Intel One Mono',monospace;font-size:12px;line-height:1.6;resize:none;outline:none" id="feEditArea">${esc(node.content || '')}</textarea><div style="padding:6px 10px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end"><button class="top-btn" onclick="feSaveEdit()">Save</button><button class="top-btn" onclick="openFileViewer(currentViewFile)">Cancel</button></div>`;
   document.getElementById('fileViewer').classList.add('show');
   document.getElementById('feEditArea').focus();
 }
@@ -15292,7 +15294,7 @@ async function openFileViewer(path) {
       const head = esc(content.slice(0, 4000));
       fvContent.innerHTML = `<div style="padding:14px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box">
         <div style="font-size:12px;color:var(--text-secondary)">${esc(name)} is ${sizeKB} KB — preview truncated to first 4 KB to keep the UI responsive. Use Download to get the full file, or Edit to open the raw text.</div>
-        <pre style="flex:1;overflow:auto;background:var(--bg-root);padding:10px;border-radius:4px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:12px;margin:0">${head}${content.length > 4000 ? '\n\n\u2026 [truncated]' : ''}</pre>
+        <pre style="flex:1;overflow:auto;background:var(--bg-root);padding:10px;border-radius:4px;white-space:pre-wrap;font-family:'Intel One Mono',monospace;font-size:12px;margin:0">${head}${content.length > 4000 ? '\n\n\u2026 [truncated]' : ''}</pre>
         <div style="display:flex;gap:6px"><button class="top-btn" onclick="downloadCurrentFile()">\u{2B07} Download</button><button class="top-btn" onclick="feEditFile(currentViewFile)">Edit raw</button></div>
       </div>`;
     } else {
@@ -17338,13 +17340,13 @@ function appendUserBubble(t, fileList, usedSkills, promptIndex = null, promptEnt
   const tags = [];
   if (usedSkills && usedSkills.length) {
     for (const sk of usedSkills) {
-      tags.push(`<span style="font-size:10px;padding:2px 6px;background:rgba(255,215,0,0.1);border:1px solid var(--accent-yellow);border-radius:3px;color:var(--accent-yellow);font-family:JetBrains Mono,monospace">${iconHtml(sk.icon || 'i:bolt')} /${esc(sk.name)}</span>`);
+      tags.push(`<span style="font-size:10px;padding:2px 6px;background:rgba(241,250,140,0.10);border:1px solid var(--accent-yellow);border-radius:3px;color:var(--accent-yellow);font-family:Intel One Mono,monospace">${iconHtml(sk.icon || 'i:bolt')} /${esc(sk.name)}</span>`);
     }
   }
   if (fileList && fileList.length) {
     for (const fp of fileList) {
       const name = fp.split('/').pop();
-      tags.push(`<span style="font-size:10px;padding:2px 6px;background:var(--bg-root);border:1px solid var(--border);border-radius:3px;color:var(--accent-blue);font-family:JetBrains Mono,monospace;cursor:pointer" onclick="openFileViewer('${esc(fp)}')" title="${esc(fp)}">${iconHtml('i:paperclip')} ${esc(name)}</span>`);
+      tags.push(`<span style="font-size:10px;padding:2px 6px;background:var(--bg-root);border:1px solid var(--border);border-radius:3px;color:var(--accent-blue);font-family:Intel One Mono,monospace;cursor:pointer" onclick="openFileViewer('${esc(fp)}')" title="${esc(fp)}">${iconHtml('i:paperclip')} ${esc(name)}</span>`);
     }
   }
   if (tags.length) chips = '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">' + tags.join('') + '</div>';

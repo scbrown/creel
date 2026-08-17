@@ -89,18 +89,18 @@
     const tabBtns = {};
     overlay = el('div', {
       id: 'creelQuipuExplorer',
-      style: 'position:fixed;inset:0;z-index:99999;background:#12121c;display:flex;flex-direction:column;color:#cfd2d6;font:13px system-ui,sans-serif;',
+      style: 'position:fixed;inset:0;z-index:99999;background:var(--bg-panel);display:flex;flex-direction:column;color:var(--text-primary);font:13px 'Intel One Mono',sans-serif;',
     });
 
-    const header = el('div', { style: 'display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid #2a2a3a;flex-wrap:wrap;' },
-      el('span', { style: 'font-weight:600;color:#8be9fd;margin-right:8px;' }, 'quipu graph — in-page store'),
+    const header = el('div', { style: 'display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;' },
+      el('span', { style: 'font-weight:600;color:var(--accent-cyan);margin-right:8px;' }, 'quipu graph — in-page store'),
       ...TABS.map((t) => (tabBtns[t] = el('button', {
-        style: 'background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:4px 12px;border-radius:5px;cursor:pointer;',
+        style: 'background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:4px 12px;border-radius:5px;cursor:pointer;',
         onclick: () => showTab(t),
       }, t))),
       el('span', { style: 'flex:1' }),
       el('button', {
-        style: 'background:#2a1d1d;border:1px solid #3a2a2a;color:#ff8080;padding:4px 12px;border-radius:5px;cursor:pointer;',
+        style: 'background:rgba(255,85,85,0.10);border:1px solid rgba(255,85,85,0.35);color:var(--accent-red);padding:4px 12px;border-radius:5px;cursor:pointer;',
         onclick: () => { overlay.remove(); overlay = null; },
       }, 'Close'),
     );
@@ -116,7 +116,7 @@
     function showTab(name) {
       for (const t of TABS) {
         panes[t].style.display = t === name ? 'block' : 'none';
-        tabBtns[t].style.background = t === name ? '#2d2d44' : '#1d1d2e';
+        tabBtns[t].style.background = t === name ? 'var(--bg-hover)' : 'var(--bg-card)';
       }
       if (name === 'Graph' && !panes.Graph.dataset.loaded) renderGraph();
       if (name !== 'Graph' && !panes[name].dataset.loaded) renderComponent(name);
@@ -157,7 +157,7 @@
         gc.setData(payload, slotOf);
 
         const stats = el('div', {
-          style: 'position:absolute;bottom:8px;right:12px;font-size:11px;color:#8892a4;background:rgba(26,26,46,.8);padding:2px 8px;border-radius:3px;',
+          style: 'position:absolute;bottom:8px;right:12px;font-size:11px;color:var(--text-secondary);background:var(--bg-card);padding:2px 8px;border-radius:3px;',
         }, `${payload.stats?.nodes ?? payload.nodes.length} nodes · ${payload.stats?.edges ?? payload.edges.length} edges — click a node for its entity view`);
         panes.Graph.appendChild(stats);
       } catch (e) {
@@ -181,7 +181,7 @@
       if (name === 'Entity' && !attrs.iri) {
         const input = el('input', {
           placeholder: 'Entity IRI — or click a node in the Graph tab',
-          style: 'width:min(640px,90%);margin:12px;background:#1d1d2e;border:1px solid #2a2a3a;color:#cfd2d6;padding:6px 10px;border-radius:5px;',
+          style: 'width:min(640px,90%);margin:12px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:6px 10px;border-radius:5px;',
           onkeydown: (ev) => {
             if (ev.key === 'Enter' && ev.target.value.trim()) {
               renderComponent('Entity', ev.target.value.trim());
@@ -204,9 +204,9 @@
       id: 'creelGraphBtn',
       title: 'Explore the in-page quipu knowledge graph',
       'aria-label': 'Knowledge graph explorer',
-      style: 'position:fixed;bottom:76px;right:16px;z-index:9999;background:#1d1d2e;color:#8be9fd;'
-        + 'border:1px solid #2a2a3a;border-radius:18px;padding:7px 14px;cursor:pointer;'
-        + 'font:12px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);',
+      style: 'position:fixed;bottom:76px;right:16px;z-index:9999;background:var(--bg-card);color:var(--accent-cyan);'
+        + 'border:1px solid var(--border);border-radius:18px;padding:7px 14px;cursor:pointer;'
+        + 'font:12px 'Intel One Mono',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);',
       onclick: openOverlay,
     }, '◉ graph');
     document.body.appendChild(btn);

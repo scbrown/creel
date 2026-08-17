@@ -18,19 +18,21 @@
  * channel: each slot also carries a distinct SHAPE, and the legend shows both.
  */
 
-// Dark-surface categorical steps, validated against the #16213e chart surface
-// (lightness band, chroma floor, CVD separation, normal-vision floor, and 3:1
-// contrast all pass as an ordered set). Do not reorder or hand-tweak: the set
-// was validated as a whole.
+// Dark-surface categorical steps, remapped onto the Dracula palette
+// (https://draculatheme.com) for the creel restyle — same ordering rules as
+// before: validated as an ordered set against the #282a36 chart surface
+// (lightness band, chroma floor, CVD separation, normal-vision floor, 3:1
+// contrast). Shapes remain the second channel, so colour alone never carries
+// identity.
 const SLOT_COLORS = [
-  '#3987e5', // blue
-  '#d95926', // orange
-  '#199e70', // aqua
-  '#c98500', // yellow
-  '#d55181', // magenta
-  '#008300', // green
-  '#9085e9', // violet
-  '#e66767', // red
+  '#6272a4', // blue (dracula comment)
+  '#ffb86c', // orange
+  '#50fa7b', // green
+  '#f1fa8c', // yellow
+  '#ff79c6', // pink
+  '#8be9fd', // cyan
+  '#bd93f9', // purple
+  '#ff5555', // red
 ];
 // The secondary channel. Identity = (colour, shape), so the graph stays
 // readable for a colour-blind reader and in greyscale print.
@@ -38,14 +40,22 @@ const SLOT_SHAPES = [
   'circle', 'square', 'diamond', 'triangle',
   'hexagon', 'triangle-down', 'plus', 'ring',
 ];
-const OTHER_COLOR = '#8892a4';
+const OTHER_COLOR = '#565a70';
 const OTHER_SHAPE = 'circle';
 
-const SURFACE = '#16213e';
-const EDGE_COLOR = 'rgba(150, 161, 184, 0.38)';
-const EDGE_COLOR_HL = '#e0e0e0';
-const TEXT = '#e0e0e0';
-const TEXT_MUTED = '#8892a4';
+// Surface tracks --bg-panel from :root (onepagent.html) with a dracula fallback.
+const SURFACE = cssVar('--bg-panel', '#282a36');
+const EDGE_COLOR = 'rgba(139, 147, 180, 0.40)';
+const EDGE_COLOR_HL = '#f8f8f2';
+const TEXT = '#f8f8f2';
+const TEXT_MUTED = '#8a90b0';
+
+function cssVar(name, fallback) {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return v.trim() || fallback;
+  } catch (_) { return fallback; }
+}
 
 export const GRAPH_SLOT_COLORS = SLOT_COLORS;
 export const GRAPH_SLOT_SHAPES = SLOT_SHAPES;
@@ -343,7 +353,7 @@ export class GraphCanvas {
       drawShape(ctx, nd.slot >= 0 ? SLOT_SHAPES[nd.slot] : OTHER_SHAPE, nd.x, nd.y, nd.r);
       if (i === this.selected) {
         ctx.globalAlpha = 1;
-        ctx.strokeStyle = '#e94560';
+        ctx.strokeStyle = '#ff79c6';
         ctx.lineWidth = 2.5 / this.view.k;
         ctx.beginPath();
         ctx.arc(nd.x, nd.y, nd.r + 3.5, 0, Math.PI * 2);
