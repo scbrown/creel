@@ -16,3 +16,7 @@ wasm/quipu-provider/target/
 
 # quipu graph export (deliberate artifact, committed to git)
 !quipu-export/quipu.db
+
+# Beads runtime artifacts (local-only)
+.beads.gate.lock
+.beads/.auto-import-issues.jsonl

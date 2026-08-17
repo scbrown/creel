@@ -91,6 +91,30 @@ complement, not compete.
    └────────────┘ └──────────────┘          └────────────────┘
 ```
 
+## The agents have hands
+
+An agent in creel can do what the operator can. Two tool servers, split by
+which side of the origin boundary they work on:
+
+- **`ui_*` — creel itself, in any tab.** Every tool takes an optional `tab`,
+  and the call is carried over a `creel-ui` BroadcastChannel to that tab and
+  run against *its* DOM. So an agent can list the live tabs, read another
+  bobbin's transcript, re-point its provider, snapshot its controls, type
+  into its chat (`ui_prompt`, indistinguishable from the human typing) or hit
+  its stop button — the same reach the operator gets by switching windows.
+  Every touch flashes a highlight ring: **orange for agent hands, cyan for
+  human**. Two refusals are permanent: no agent fills a credential field, and
+  no tab prompts itself.
+- **`browser_*` — any website.** Opt-in via the
+  [creel bridge](extension/README.md) Chrome extension: open and drive
+  cross-origin tabs, snapshot every control with a working selector, click,
+  fill, press keys, wait for content. Without the extension the surface is a
+  single `browser_status` tool — installing it *is* the grant, and the bridge
+  refuses to act on creel's own origins so an agent can never puppet its
+  harness through the privileged path.
+
+Details, and what's still missing, in [docs/hands.md](docs/hands.md).
+
 ## Status
 
 Vision stage — see [docs/VISION.md](docs/VISION.md) for the full architecture,

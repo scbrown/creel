@@ -16,19 +16,42 @@
  *
  * 3. SELF-CONFIGURATION + VISIBLE HANDS. The 'ui' in-page MCP server lets the
  *    agent drive creel's own interface from user demands — switch model,
- *    reconfigure the provider, toggle tool servers, open panels, click and
- *    fill arbitrary controls. Every input — the human's and the agent's —
- *    flashes a highlight ring, so what is being touched is always visible
- *    (agent touches glow orange, human touches cyan).
+ *    reconfigure the provider, toggle tool servers, open panels, read the
+ *    transcript, type into the chat, stop a run, click and fill arbitrary
+ *    controls. Every input — the human's and the agent's — flashes a
+ *    highlight ring, so what is being touched is always visible (agent
+ *    touches glow orange, human touches cyan).
+ *
+ * 4. THOSE HANDS REACH ACROSS TABS. Every ui_ tool takes an optional `tab`,
+ *    and a 'creel-ui' BroadcastChannel carries the call to that tab, which
+ *    runs it against its OWN DOM and answers. So an agent can do for another
+ *    bobbin exactly what the operator could do by switching to its window:
+ *    see what it is running, re-point its provider, read its transcript,
+ *    type into its chat, stop it. The parity with the human is the point —
+ *    an agent that can only touch its own tab is not a peer of the operator,
+ *    it is a guest in one window.
+ *
+ *    Two things stay deliberately out of reach: API-key fields (ui_fill
+ *    refuses credential inputs, local or remote) and a tab prompting itself
+ *    (that is a token-burning loop, not a capability).
  */
 (function () {
   'use strict';
 
   const IS_AGENT_TAB = /creel-agent=/.test(location.hash);
   const ROOT_LOCK = 'creel-root-pane';
-  const WORLD_VERSION = 'creel-world-model-v1';
+  const WORLD_VERSION = 'creel-world-model-v2';
 
-  const CreelSelf = { role: IS_AGENT_TAB ? 'bobbin' : 'standby' };
+  // A stable handle for this tab, in sessionStorage so it survives reload
+  // (a reloaded tab is the same bobbin) but never leaks to a new tab.
+  const TAB_ID = (() => {
+    let id = sessionStorage.getItem('creel_tab_id');
+    if (!id) { id = `t${Math.random().toString(36).slice(2, 8)}`; sessionStorage.setItem('creel_tab_id', id); }
+    return id;
+  })();
+  const AGENT_ID = (location.hash.match(/creel-(?:agent|worker)=([a-z0-9]+)/) || [])[1] || null;
+
+  const CreelSelf = { role: IS_AGENT_TAB ? 'bobbin' : 'standby', tabId: TAB_ID, agentId: AGENT_ID };
   window.CreelSelf = CreelSelf;
 
   // ── 1. root-pane election ────────────────────────────────────────
@@ -93,6 +116,96 @@
     if (el instanceof Element) flash(el);
   }, true);
 
+  // ── 4. cross-tab hands: the 'creel-ui' RPC bus ───────────────────
+  // Same-origin tabs can't touch each other's DOM directly, so a ui call
+  // aimed at another tab is delivered as a message and executed THERE,
+  // against that tab's own document, by the same impl functions. The wire
+  // is BroadcastChannel — the same bus the fleet already runs on.
+  const UI_BC = new BroadcastChannel('creel-ui');
+  const rpcPending = new Map();     // id → {resolve, reject, timer}
+  const rosterPending = new Map();  // id → [] collecting 'iam' replies
+  let rpcSeq = 0;
+
+  /** How this tab answers "who are you" — also the row ui_tabs returns. */
+  function identity() {
+    let running = null;
+    try { running = typeof getActiveConversationRun === 'function' ? !!getActiveConversationRun()?.active : null; } catch { /* harness not ready */ }
+    return {
+      tab: TAB_ID,
+      role: CreelSelf.role,
+      agentId: AGENT_ID,
+      label: CreelSelf.label || null,
+      title: document.title.replace(/^⬢ /, ''),
+      model: typeof API_MODEL !== 'undefined' ? API_MODEL : null,
+      running,
+    };
+  }
+
+  /** Every name this tab answers to. A caller shouldn't have to know a tab's
+   *  internal id to reach the root pane or a labelled bobbin. */
+  function matchesMe(target) {
+    if (!target) return false;
+    const t = String(target);
+    if (t === TAB_ID || (AGENT_ID && t === AGENT_ID)) return true;
+    if (CreelSelf.label && t === CreelSelf.label) return true;
+    if ((t === 'root' || t === 'dashboard') && CreelSelf.role === 'root') return true;
+    return false;
+  }
+
+  function remoteCall(target, name, args, timeoutMs = 20000) {
+    return new Promise((resolve, reject) => {
+      const id = `u${++rpcSeq}`;
+      const timer = setTimeout(() => {
+        rpcPending.delete(id);
+        reject(new Error(`no creel tab answered ${JSON.stringify(target)} within ${timeoutMs}ms — call ui_tabs to see which tabs are live`));
+      }, timeoutMs);
+      rpcPending.set(id, { resolve, reject, timer });
+      UI_BC.postMessage({ t: 'call', id, target: String(target), name, args, from: TAB_ID });
+    });
+  }
+
+  UI_BC.onmessage = async ({ data: m }) => {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'who') { UI_BC.postMessage({ t: 'iam', id: m.id, tab: identity() }); return; }
+    if (m.t === 'iam') { rosterPending.get(m.id)?.push(m.tab); return; }
+    if (m.t === 'call') {
+      if (!matchesMe(m.target) || !impl[m.name]) return;   // not for us
+      try {
+        // _remote marks a call that arrived from another tab: ui_prompt uses
+        // it to refuse prompting its own tab (a loop) while still allowing a
+        // peer to prompt it.
+        const result = await impl[m.name]({ ...(m.args || {}), _remote: true });
+        UI_BC.postMessage({ t: 'ret', id: m.id, ok: true, result, from: TAB_ID });
+      } catch (e) {
+        UI_BC.postMessage({ t: 'ret', id: m.id, ok: false, error: (e && e.message) || String(e), from: TAB_ID });
+      }
+      return;
+    }
+    if (m.t === 'ret') {
+      const p = rpcPending.get(m.id);
+      if (!p) return;                       // already resolved (or timed out)
+      rpcPending.delete(m.id);
+      clearTimeout(p.timer);
+      if (!m.ok) { p.reject(new Error(m.error || 'remote ui call failed')); return; }
+      p.resolve(m.result && typeof m.result === 'object' ? { ...m.result, _tab: m.from } : m.result);
+    }
+  };
+
+  /** Ask every live creel tab to identify itself. There is no registry to go
+   *  stale: a tab that doesn't answer isn't there. */
+  async function roster(waitMs = 400) {
+    const id = `w${++rpcSeq}`;
+    const found = [];
+    rosterPending.set(id, found);
+    UI_BC.postMessage({ t: 'who', id, from: TAB_ID });
+    await new Promise((r) => setTimeout(r, waitMs));
+    rosterPending.delete(id);
+    const me = identity();
+    const seen = new Set([me.tab]);
+    const others = found.filter((t) => t && !seen.has(t.tab) && seen.add(t.tab));
+    return [{ ...me, self: true }, ...others];
+  }
+
   // ── 3b. the 'ui' server: creel configures creel ──────────────────
   function activeProfile() {
     const store = typeof _loadProviders === 'function' ? _loadProviders() : null;
@@ -103,60 +216,97 @@
     return { store, profile: arr.find((p) => p && p.id === id) || (typeof ACTIVE_PROVIDER !== 'undefined' ? ACTIVE_PROVIDER : null) };
   }
 
+  // Every tool below accepts `tab`. Omit it to act on your own tab; pass a
+  // tab id, an agent/task id, a fleet label, or "root" to act on another.
+  const TAB_ARG = { type: 'string', description: 'target creel tab: a tab id from ui_tabs, an agent/task id, a fleet label, or "root" for the dispatcher. Omit to act on your own tab.' };
+  const withTab = (props) => ({ ...props, tab: TAB_ARG });
+
   const TOOLS = [
     {
-      name: 'ui_describe',
-      description: 'Describe creel\'s own interface state: role (root pane / bobbin), provider endpoint + model, tool servers and enabled state, open panels, run state. Call before reconfiguring anything.',
+      name: 'ui_tabs',
+      description: 'List every live creel tab — its tab id, role (root pane / bobbin / standby), agent id, label, title, model and whether it is currently running. This is the map for every other ui_ tool\'s `tab` argument.',
       inputSchema: { type: 'object', properties: {}, required: [] },
     },
     {
+      name: 'ui_describe',
+      description: 'Describe a creel tab\'s interface state: role, provider endpoint + model, tool servers and enabled state, open panels, run state. Call before reconfiguring anything.',
+      inputSchema: { type: 'object', properties: withTab({}), required: [] },
+    },
+    {
+      name: 'ui_snapshot',
+      description: 'List the interactive controls of a creel tab — buttons, inputs, selects — each with a label and a CSS selector that works. Call this instead of guessing selectors for ui_click / ui_fill.',
+      inputSchema: { type: 'object', properties: withTab({ filter: { type: 'string', description: 'only controls whose label/id contains this text' }, limit: { type: 'integer', description: 'default 60' } }), required: [] },
+    },
+    {
       name: 'ui_set_model',
-      description: 'Switch the active LLM model for this tab (e.g. deepseek-chat, deepseek-reasoner).',
-      inputSchema: { type: 'object', properties: { model: { type: 'string' } }, required: ['model'] },
+      description: 'Switch the active LLM model for a tab (e.g. deepseek-chat, deepseek-reasoner).',
+      inputSchema: { type: 'object', properties: withTab({ model: { type: 'string' } }), required: ['model'] },
     },
     {
       name: 'ui_configure_provider',
-      description: 'Update the active provider profile: endpoint base URL and/or default model. (API keys are never set through chat — direct the user to Settings for those.)',
+      description: 'Update a tab\'s active provider profile: endpoint base URL and/or default model. (API keys are never set through chat — direct the user to Settings for those.)',
       inputSchema: {
         type: 'object',
-        properties: {
+        properties: withTab({
           endpoint: { type: 'string', description: 'API base URL, e.g. https://api.deepseek.com' },
           model: { type: 'string', description: 'default model for the profile' },
-        },
+        }),
         required: [],
       },
     },
     {
       name: 'ui_toggle_server',
-      description: 'Enable or disable one of the MCP tool servers by name (see ui_describe for the list).',
+      description: 'Enable or disable one of a tab\'s MCP tool servers by name (see ui_describe for the list).',
       inputSchema: {
         type: 'object',
-        properties: { name: { type: 'string' }, enabled: { type: 'boolean' } },
+        properties: withTab({ name: { type: 'string' }, enabled: { type: 'boolean' } }),
         required: ['name', 'enabled'],
       },
     },
     {
       name: 'ui_open',
-      description: 'Open one of creel\'s panels: "graph" (quipu explorer), "fleet" (agent dashboard), or "settings".',
-      inputSchema: { type: 'object', properties: { panel: { type: 'string', enum: ['graph', 'fleet', 'settings'] } }, required: ['panel'] },
+      description: 'Open one of creel\'s panels in a tab: "graph" (quipu explorer), "fleet" (agent dashboard), or "settings".',
+      inputSchema: { type: 'object', properties: withTab({ panel: { type: 'string', enum: ['graph', 'fleet', 'settings'] } }), required: ['panel'] },
+    },
+    {
+      name: 'ui_transcript',
+      description: 'Read the recent chat messages of a creel tab — what the operator asked and what that agent has been doing. Use it to check on another bobbin before deciding whether to guide or stop it.',
+      inputSchema: { type: 'object', properties: withTab({ limit: { type: 'integer', description: 'how many trailing messages (default 12)' } }), required: [] },
+    },
+    {
+      name: 'ui_prompt',
+      description: 'Type a message into another creel tab\'s chat box and send it, exactly as the operator would — a new instruction if that tab is idle, non-interrupting guidance if it is mid-run. Requires `tab`: a tab may not prompt itself. Differs from fleet_send, which marks the message as fleet traffic; this one is indistinguishable from the human typing.',
+      inputSchema: { type: 'object', properties: withTab({ text: { type: 'string' }, send: { type: 'boolean', description: 'false to type without sending (default true)' } }), required: ['text'] },
+    },
+    {
+      name: 'ui_stop',
+      description: 'Stop the running agent loop in a tab, as the operator\'s stop button does. Safe when nothing is running.',
+      inputSchema: { type: 'object', properties: withTab({}), required: [] },
     },
     {
       name: 'ui_click',
-      description: 'Click an element of creel\'s interface by CSS selector, with a visible highlight. Use ui_describe/ui_open first; prefer specific ids.',
-      inputSchema: { type: 'object', properties: { selector: { type: 'string' } }, required: ['selector'] },
+      description: 'Click an element of a creel tab\'s interface by CSS selector, with a visible highlight. Use ui_snapshot first; prefer specific ids.',
+      inputSchema: { type: 'object', properties: withTab({ selector: { type: 'string' } }), required: ['selector'] },
     },
     {
       name: 'ui_fill',
-      description: 'Fill an input/textarea of creel\'s interface by CSS selector (dispatches input+change events), with a visible highlight. Never fill API-key fields.',
-      inputSchema: { type: 'object', properties: { selector: { type: 'string' }, value: { type: 'string' } }, required: ['selector', 'value'] },
+      description: 'Fill an input/textarea of a creel tab\'s interface by CSS selector (dispatches input+change events), with a visible highlight. Refuses API-key fields.',
+      inputSchema: { type: 'object', properties: withTab({ selector: { type: 'string' }, value: { type: 'string' } }), required: ['selector', 'value'] },
     },
   ];
 
   const impl = {
+    async ui_tabs() {
+      const tabs = await roster();
+      return { count: tabs.length, tabs, hint: 'pass any tab id, agent id, label, or "root" as the `tab` argument of another ui_ tool' };
+    },
+
     async ui_describe() {
       const { profile } = activeProfile();
       return {
         build: window.CREEL_BUILD,
+        tab: TAB_ID,
+        agentId: AGENT_ID,
         role: CreelSelf.role,
         model: typeof API_MODEL !== 'undefined' ? API_MODEL : null,
         provider: profile ? { name: profile.name, type: profile.type, endpoint: profile.endpoint || profile.baseUrl, hasKey: !!(profile.apiKey || profile.api_key) } : null,
@@ -172,6 +322,106 @@
         running: typeof getActiveConversationRun === 'function' ? !!getActiveConversationRun()?.active : null,
         worldModel: 'query the quipu graph for the creel world model (search_nodes "creel world model")',
       };
+    },
+
+    /** creel's own controls, with selectors that work — the same service
+     *  browser_snapshot performs for a foreign page, done in-origin. */
+    async ui_snapshot(args) {
+      const filter = (args.filter || '').toLowerCase();
+      const limit = args.limit || 60;
+      const visible = (el) => {
+        const r = el.getBoundingClientRect();
+        if (!r.width && !r.height) return false;
+        const cs = getComputedStyle(el);
+        return cs.visibility !== 'hidden' && cs.display !== 'none';
+      };
+      const uniq = (s) => { try { return document.querySelectorAll(s).length === 1; } catch { return false; } };
+      const selectorFor = (el) => {
+        if (el.id && uniq(`#${CSS.escape(el.id)}`)) return `#${CSS.escape(el.id)}`;
+        const parts = [];
+        for (let n = el; n && n.nodeType === 1 && parts.length < 5; n = n.parentElement) {
+          if (n.id && uniq(`#${CSS.escape(n.id)}`)) { parts.unshift(`#${CSS.escape(n.id)}`); break; }
+          let part = n.tagName.toLowerCase();
+          const sibs = n.parentElement ? Array.from(n.parentElement.children).filter((c) => c.tagName === n.tagName) : [];
+          if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(n) + 1})`;
+          parts.unshift(part);
+        }
+        return parts.join(' > ');
+      };
+      const labelOf = (el) => (
+        el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('title')
+        || (el.labels && el.labels[0] && el.labels[0].innerText) || (el.innerText || '').trim() || el.id || ''
+      ).replace(/\s+/g, ' ').slice(0, 70);
+
+      const out = [];
+      for (const el of document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [onclick]')) {
+        if (out.length >= limit) break;
+        if (el.type === 'hidden' || !visible(el)) continue;
+        const label = labelOf(el);
+        if (filter && !`${label} ${el.id || ''}`.toLowerCase().includes(filter)) continue;
+        const tag = el.tagName.toLowerCase();
+        const credential = /key|token|secret|passphrase/i.test(`${el.id || ''} ${el.name || ''} ${el.placeholder || ''}`);
+        out.push({
+          kind: tag === 'select' ? 'select' : (tag === 'input' || tag === 'textarea') ? `input:${el.type || 'text'}` : tag === 'a' ? 'link' : 'button',
+          label,
+          selector: selectorFor(el),
+          value: credential ? '«credential — ui_fill refuses this field»'
+            : (tag === 'input' || tag === 'textarea') ? String(el.value || '').slice(0, 60) : undefined,
+          options: tag === 'select' ? Array.from(el.options).slice(0, 20).map((o) => o.value) : undefined,
+          disabled: el.disabled || undefined,
+        });
+      }
+      return { tab: TAB_ID, role: CreelSelf.role, count: out.length, controls: out };
+    },
+
+    /** What this tab has been saying — the operator reads it by looking at
+     *  the window; an agent reads it with this. */
+    async ui_transcript(args) {
+      const limit = Math.min(args.limit || 12, 50);
+      const nodes = Array.from(document.querySelectorAll('#chatMessages .msg')).slice(-limit);
+      const messages = nodes.map((el) => ({
+        role: (el.className.match(/msg-([a-z]+)/) || [])[1] || 'unknown',
+        text: (el.innerText || '').replace(/\s+\n/g, '\n').trim().slice(0, 1500),
+      })).filter((m) => m.text);
+      return { tab: TAB_ID, role: CreelSelf.role, running: identity().running, count: messages.length, messages };
+    },
+
+    /** Type into a tab's chat and send — the operator's own move. The
+     *  harness routes it as a new task when idle and as non-interrupting
+     *  guidance mid-run, which is exactly what a human typing gets. */
+    async ui_prompt(args) {
+      if (!args._remote) {
+        throw new Error('refusing to prompt your own tab — that is a loop, not a capability. Pass `tab` to prompt another creel tab (see ui_tabs), or just keep working.');
+      }
+      const text = String(args.text || '').trim();
+      if (!text) throw new Error('empty text');
+      const inp = document.getElementById('userInput');
+      if (!inp) throw new Error('this tab has no chat input');
+      const wasRunning = identity().running;
+      flash(inp, true);
+      inp.value = text;
+      if (typeof handleInputChange === 'function') handleInputChange(inp);
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      if (args.send === false) return { ok: true, tab: TAB_ID, typed: true, sent: false };
+      if (typeof handleSend !== 'function') throw new Error('this tab cannot send (harness not ready)');
+      await handleSend();
+      return {
+        ok: true,
+        tab: TAB_ID,
+        sent: true,
+        delivered: wasRunning ? 'queued as guidance for the run already in flight' : 'started a new turn in that tab',
+      };
+    },
+
+    async ui_stop() {
+      if (typeof getActiveConversationRun !== 'function' || typeof stopConversationRun !== 'function') {
+        throw new Error('run controls unavailable in this tab');
+      }
+      const run = getActiveConversationRun();
+      if (!run || !run.active) return { ok: true, tab: TAB_ID, stopped: false, note: 'nothing was running' };
+      if (run.state?.ralphRun?.active) run.state.ralphRun.cancelled = true;
+      stopConversationRun(run.convId);
+      return { ok: true, tab: TAB_ID, stopped: true, conversation: run.convId };
     },
 
     async ui_set_model(args) {
@@ -262,7 +512,12 @@
           case 'tools/call': {
             const { name, arguments: args } = body.params || {};
             if (!impl[name]) return fail(`unknown tool: ${name}`);
-            return reply({ content: [{ type: 'text', text: JSON.stringify(await impl[name](args || {})) }] });
+            // `tab` is routing, not an argument: strip it, and if it names
+            // someone else, run the call in THAT tab instead of this one.
+            const { tab: target, ...rest } = args || {};
+            const remote = target && !matchesMe(target) && name !== 'ui_tabs';
+            const result = remote ? await remoteCall(target, name, rest) : await impl[name](rest);
+            return reply({ content: [{ type: 'text', text: JSON.stringify(result) }] });
           }
           default: return fail(`method not supported in-page: ${body.method}`);
         }
@@ -305,7 +560,8 @@
           github: 'repo checkout into FILES and push back over the GitHub API (github_checkout/push/open_pr)',
           local: 'sync a real local folder in/out of FILES (desktop Chrome/Edge)',
           fleet: 'spawn agent tabs, message them (fleet_send/inbox), collect results (fleet_status/report)',
-          ui: 'drive creel\'s own interface: describe state, switch model/provider, toggle servers, open panels, click/fill controls',
+          ui: 'operate creel itself, in ANY tab: ui_tabs lists the live tabs; every other ui_ tool takes `tab` to act on one of them — describe, snapshot controls, switch model/provider, toggle servers, open panels, read the transcript, prompt the chat, stop the run, click/fill',
+          browser: 'drive cross-origin websites through the creel bridge extension: open/navigate/close tabs, snapshot the page\'s controls, read, click, fill, select, press keys, scroll, wait. Absent the extension only browser_status exists',
         }[s.name] || 'in-page tool server',
       }));
 
@@ -317,8 +573,15 @@
           + 'world model, and synthesizes results. Bobbins work one task, coordinate via fleet_send, and MUST '
           + 'finish by calling fleet_report. All tabs share one quipu store (leader-elected OPFS host) — '
           + 'knowledge written anywhere is instantly visible everywhere; record durable findings as quipu episodes. '
-          + 'The interface itself is operable through the ui tools; every click and input flashes a highlight '
-          + '(orange = agent hands, cyan = human hands). Query this graph, not documentation, to understand the world.',
+          + 'creel is operable by its agents to the same depth as by its operator. The ui tools drive the interface '
+          + 'of ANY creel tab, not just your own: ui_tabs lists the live tabs, and every other ui_ tool takes a `tab` '
+          + 'argument (tab id, agent id, label, or "root") — so you can inspect a peer bobbin, read its transcript, '
+          + 're-point its provider, type into its chat (ui_prompt) or stop it, exactly as the human could by '
+          + 'switching windows. Beyond creel, the browser tools drive real cross-origin websites when the creel '
+          + 'bridge extension is installed (browser_status says whether it is). Every click and input flashes a '
+          + 'highlight (orange = agent hands, cyan = human hands), so nothing an agent touches is invisible. '
+          + 'Two limits are deliberate and permanent: API-key fields are never fillable by an agent, and a tab '
+          + 'cannot prompt itself. Query this graph, not documentation, to understand the world.',
         source: 'creel-self',
         nodes: [
           { name: WORLD_VERSION, type: 'WorldModel', description: 'versioned self-description marker; re-seeded only when the version bumps' },
@@ -328,10 +591,15 @@
           { name: 'files-panel', type: 'Surface', description: 'the VFS workspace agents edit; github/local servers move it to durable storage' },
           { name: 'graph-explorer', type: 'Surface', description: '◉ graph button: visual view of this very store (force layout, SPARQL, entity history)' },
           { name: 'fleet-dashboard', type: 'Surface', description: '🧺 fleet button: live agent list, results, comms log, manual spawn' },
+          { name: 'cross-tab-hands', type: 'Capability', description: 'the ui_ tools take a `tab` argument and route over the creel-ui BroadcastChannel, so any tab can operate any other tab\'s interface — parity with the operator, who could just switch windows' },
+          { name: 'web-hands', type: 'Capability', description: 'the browser_ tools drive cross-origin websites via the creel bridge Chrome extension (MV3). Opt-in: without the extension only browser_status exists. The bridge refuses to act on creel\'s own origins — that is the ui server\'s job' },
           ...serverNodes,
         ],
         edges: [
           { source: 'root-pane', target: 'bobbin', relation: 'dispatches' },
+          { source: 'bobbin', target: 'cross-tab-hands', relation: 'wields' },
+          { source: 'root-pane', target: 'cross-tab-hands', relation: 'wields' },
+          { source: 'bobbin', target: 'web-hands', relation: 'wields' },
           { source: 'root-pane', target: WORLD_VERSION, relation: 'maintains' },
           { source: 'bobbin', target: 'shared-brain', relation: 'grounds_in' },
           { source: 'root-pane', target: 'shared-brain', relation: 'grounds_in' },

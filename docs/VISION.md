@@ -111,8 +111,13 @@ threads; a frontier model is a per-thread choice, not an architecture change.
   outlive a human's attention belongs to a durable harness (e.g.
   [shantytown](https://github.com/scbrown/shantytown)). creel and a durable
   fleet complement; they do not compete.
-- **Not agent-drivable.** It is a human-in-the-loop tool. Headless agents
-  cannot and should not puppet it.
+- **Not drivable from outside.** It is a human-in-the-loop tool: there is no
+  API by which an external headless agent can puppet a creel session, and
+  nothing runs unattended. This is *not* a claim that creel's own agents are
+  spectators — as of 2026-08-17 they operate the interface to full parity with
+  the operator, across tabs (`ui_*`, see [hands.md](hands.md)). The boundary
+  is the session, not the agents inside it: a burst does what its agents
+  decide, while a human is present and watching every highlighted click.
 - **Not a second knowledge store.** quipu-wasm is a read replica; writes go
   through the graph server's authenticated path with its schema enforcement.
 - **Not multi-user-stateful.** Projects live in the operator's own browser

@@ -8,10 +8,21 @@ serve port="8420":
 proxy port="8421":
     python3 proxy/local-proxy.py {{port}}
 
-# Syntax-check the creel-authored JS and the shell
+# Syntax-check every creel-authored JS file and the proxy
 check:
-    node --check app/quipu-backend.js
-    node --check app/sw.js
-    node --check proxy/deepseek-cors-worker.js
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # onepagent.html is the vendored OnePagent fork, not creel-authored, and
+    # its scripts are inline — everything else here creel owns and must parse.
+    for f in app/*.js extension/*.js proxy/*.js tests/*.js; do
+        node --check "$f"
+    done
     python3 -m py_compile proxy/local-proxy.py
-    @echo "check ok"
+    python3 -c "import json;json.load(open('extension/manifest.json'))"
+    echo "check ok"
+
+# The seams that reading one file cannot verify: cross-tab ui calls and the
+# page↔extension bridge handshake. No dependencies, no browser.
+test: check
+    node tests/test-ui-crosstab.js
+    node tests/test-bridge.js

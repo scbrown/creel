@@ -161,7 +161,7 @@
       + ' inbox instead. Check fleet_inbox for broadcasts and anything received'
       + ' while you were busy. fleet_status lists the other agents.'
       + '\nYour world is described IN the shared quipu graph, not in docs:'
-      + ' start with quipu_cord {"name": "creel-world-model-v1"} to learn the'
+      + ' start with quipu_cord {"name": "creel-world-model-v2"} to learn the'
       + ' roles (the root pane dispatches, bobbins like you execute), the tool'
       + ' servers, and the conventions; quipu_query answers anything deeper.'
       + ' Record durable findings as quipu episodes — every tab sees them'
@@ -181,6 +181,11 @@
   const inbox = [];
   const commsLog = [];
   const myLabelPromise = MY_TASK_ID ? getTask(MY_TASK_ID).then((t) => t?.label || MY_TASK_ID) : null;
+  // Publish the label to the self-model so the cross-tab ui_ tools can be
+  // addressed by the human-readable name the operator already uses, not just
+  // by task id. creel-self.js loads after this file, so this is set on
+  // resolution rather than at load.
+  if (myLabelPromise) myLabelPromise.then((label) => { if (window.CreelSelf) window.CreelSelf.label = label; }).catch(() => {});
 
   function logComms(m) {
     commsLog.push(m);
