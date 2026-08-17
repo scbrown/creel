@@ -271,7 +271,7 @@
       + ' inbox instead. Check fleet_inbox for broadcasts and anything received'
       + ' while you were busy. fleet_status lists the other agents.'
       + '\nYour world is described IN the shared quipu graph, not in docs:'
-      + ' start with quipu_cord {"name": "creel-world-model-v3"} to learn the'
+      + ' start with quipu_cord {"name": "creel-world-model-v4"} to learn the'
       + ' roles (the root pane dispatches, bobbins like you execute), the tool'
       + ' servers, and the conventions; quipu_query answers anything deeper.'
       + ' Record durable findings as quipu episodes — every tab sees them'

@@ -51,7 +51,7 @@
 
   const IS_AGENT_TAB = /creel-agent=/.test(location.hash);
   const ROOT_LOCK = 'creel-root-pane';
-  const WORLD_VERSION = 'creel-world-model-v3';
+  const WORLD_VERSION = 'creel-world-model-v4';
 
   // A stable handle for this tab, in sessionStorage so it survives reload
   // (a reloaded tab is the same bobbin) but never leaks to a new tab.
@@ -714,6 +714,9 @@
           fleet: 'spawn agent tabs, message them (fleet_send/inbox), collect results (fleet_status/report)',
           ui: 'operate creel itself, in ANY tab: ui_tabs lists the live tabs; every other ui_ tool takes `tab` to act on one of them. Locate controls the Playwright way — {ref} from ui_snapshot, or {role,name} — and every action auto-waits for its target. Describe, snapshot, switch model/provider, toggle servers, open panels, read the transcript, prompt the chat, stop the run, click/fill/type/press/hover/check/select',
           browser: 'drive cross-origin websites through the creel bridge extension, with the SAME locator vocabulary the ui tools use — the bridge injects the same engine into the far page. Absent the extension only browser_status exists',
+          state: 'creel\'s own durable state in a private GitHub repo the operator owns: state_push writes config, conversations, skills, memory and the quipu .db as ONE commit (content-addressed, only what changed); state_pull restores them. Refuses a public repo; carries API keys only on an explicit opt-in WITH a passphrase',
+          bd: 'the issue tracker, byte-compatible with the .beads/ JSONL tracker in the repo (bd_ready/list/show/create/update/close)',
+          measurement: 'the grounding measurement suite: does local knowledge make a cheap model a viable agent (bench_tasks/grade/record/report)',
         }[s.name] || 'in-page tool server',
       }));
 
@@ -751,6 +754,8 @@
           { name: 'fleet-dashboard', type: 'Surface', description: '🧺 fleet button: live agent list, results, comms log, manual spawn' },
           { name: 'cross-tab-hands', type: 'Capability', description: 'the ui_ tools take a `tab` argument and route over the creel-ui BroadcastChannel, so any tab can operate any other tab\'s interface — parity with the operator, who could just switch windows' },
           { name: 'locator-engine', type: 'Subsystem', description: 'creel-locator.js: Playwright\'s model in the page — ARIA roles, accessible names, [ref] handles, strict resolution (ambiguity is an error), and auto-waiting on every action. The same file is injected into cross-origin pages by the bridge, so one vocabulary drives both' },
+          { name: 'durability', type: 'Policy', description: 'NOTHING in creel is durable by default. The VFS, conversations and this very graph live in browser storage, which is evictable and exists on no other machine. Work leaves by exactly three doors: github_push for code, state_push for creel\'s own state (one commit to a private repo the operator owns — config, conversations, skills, memory, and this graph as .db bytes), and quipu episodes for durable facts. A result that went through none of them is not saved, however finished it looks' },
+          { name: 'state-repo', type: 'Subsystem', description: 'the durable home: a PRIVATE GitHub repo (default <login>/creel-state) holding a manifest plus content-addressed objects and blobs. Reuses the v2 sync engine — hash dedup, AES-GCM envelope — over a GitHub transport that stages writes and flushes them as one commit. Refuses a repo GitHub reports as public, re-checked on every push, because this data can include keys' },
           { name: 'credential-asymmetry', type: 'Policy', description: 'an agent may WRITE a credential the operator hands it (ui_fill, ui_set_credential) and may never READ one: snapshots mark such fields write-only, results report a length not a value, ui_describe reports only whether a key exists' },
           { name: 'device-awareness', type: 'Capability', description: 'the harness classifies the device (creel-device.js) and caps concurrent agent tabs at 3 mobile / 4 tablet / 8 desktop — mobile browsers evict background tabs; fleet_device reports the class and free slots, fleet_spawn/fleet_spawn_workers clamp to free slots and report the rest `capped`, the 🧺 fleet dashboard shows a live `📱 mobile · 2/3 tabs` chip' },
           { name: 'fleet-visibility', type: 'Capability', description: 'every fleet transition (claimed/done/failed/requeued/aborted) is appended to a shared work log (meta:digest) and the main tab automatically receives a batched 🧺 FLEET DIGEST message in its conversation; fleet_digest returns the full log, fleet_status rows carry task text + heartbeat age — all fleet work is visible to the operator\'s agent without polling' },
@@ -765,6 +770,11 @@
           { source: 'cross-tab-hands', target: 'locator-engine', relation: 'built_on' },
           { source: 'web-hands', target: 'locator-engine', relation: 'built_on' },
           { source: 'locator-engine', target: 'credential-asymmetry', relation: 'enforces' },
+          { source: 'state-repo', target: 'durability', relation: 'enforces' },
+          { source: 'shared-brain', target: 'state-repo', relation: 'persists_to' },
+          { source: 'files-panel', target: 'state-repo', relation: 'persists_to' },
+          { source: 'bobbin', target: 'durability', relation: 'bound_by' },
+          { source: 'root-pane', target: 'durability', relation: 'bound_by' },
           { source: 'root-pane', target: WORLD_VERSION, relation: 'maintains' },
           ...priorVersions.map((label) => ({ source: WORLD_VERSION, target: label, relation: 'supersedes' })),
           { source: 'bobbin', target: 'shared-brain', relation: 'grounds_in' },

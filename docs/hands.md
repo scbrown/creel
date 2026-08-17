@@ -1,8 +1,8 @@
 # creel's hands
 
 *2026-08-17. Status: implemented — `app/creel-locator.js`, `app/creel-self.js`,
-`app/browser-backend.js`, `extension/`. Verified by `just test` (68 assertions,
-29 + 13 of them against real Chromium).*
+`app/browser-backend.js`, `app/state-backend.js`, `extension/`. Verified by
+`just test` (143 assertions, 74 of them against real Chromium).*
 
 An agent harness is defined less by what its agents can *think* than by what
 they can *touch*. creel gives its agents two sets of hands, split by which side
@@ -156,6 +156,33 @@ Two things are worth repeating here:
   actions descend into open shadow roots and same-origin iframes, so a control
   inside a widget's shadow tree or a site's own frame is located and driven
   like any top-level element. Cross-origin frames stay opaque by design.
+
+## What the hands cannot do: keep anything
+
+The hands reach a long way, and none of that reach is durable. A tab's VFS,
+its conversation and the shared quipu store all live in browser storage —
+evictable under pressure, invisible to any other machine, gone when the profile
+is. An agent that finishes a task and stops has, by default, saved nothing.
+
+Work leaves creel by exactly three doors:
+
+| door | carries | lands in |
+|---|---|---|
+| `github_push` | code the agent wrote in FILES | the repo it checked out |
+| `state_push` | creel's own state — config, conversations, skills, memory, and the quipu store as `.db` bytes | a **private** repo the operator owns (`<login>/creel-state` by default) |
+| `quipu_cord` / `quipu_knot` | a durable fact | the graph — which itself only survives via the door above |
+
+`state_push` is one commit per push however many objects it carries, because
+the history is meant to be read. It refuses a repository GitHub reports as
+public, re-checked on every push rather than trusted from setup, since this
+data can include credentials. It carries API keys only when the operator has
+both opted in *and* set a passphrase; opting in without one does not silently
+half-work — the keys stay local and `state_status` says why.
+
+That last rule is the credential asymmetry again, seen from the other side.
+An agent may be handed a key and asked to set it up, may never read one back,
+and the one path by which a key legitimately leaves the browser is encrypted,
+opt-in, and pointed at a repository the operator administers.
 
 ## What is still missing
 

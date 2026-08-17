@@ -86,6 +86,21 @@ const scriptSrcs = (page) => page.evaluate(
     assert.match(prompt, /no Python runtime/i, 'the prompt should say so plainly instead of staying silent');
   });
 
+  await check('the system prompt describes the surface creel actually has', async () => {
+    const prompt = await off.evaluate(() => DEFAULT_SYSTEM);
+    // Every family the harness registers should be named, or an agent has to
+    // discover its own harness by trial and error.
+    for (const fam of ['ui_*', 'fleet_*', 'browser_*', 'github_*', 'state_*', 'quipu_*', 'bd_*']) {
+      assert.ok(prompt.includes(fam), `${fam} is not named in the system prompt`);
+    }
+    assert.match(prompt, /state_push/, 'the prompt never tells the agent how state is saved');
+    assert.match(prompt, /evictable/i, 'the prompt never says browser storage is not durable');
+    // It is a prompt, not a manual: the cost of every extra word is paid on
+    // every single turn.
+    const words = prompt.split(/\s+/).filter(Boolean).length;
+    assert.ok(words <= 560, `system prompt has grown to ${words} words`);
+  });
+
   await off.close();
 
   // ── the same page with the flag on ───────────────────────────────

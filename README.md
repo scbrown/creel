@@ -33,7 +33,8 @@ those problems are already solved:
   adversarially hardened runtime in existence. Worst-case blast radius: one tab.
 - **There is nothing to operate** — the harness is a directory of static files.
 - **There are no secrets anywhere you administer** — bring your own API key, held in
-  localStorage, never in the served bundle.
+  localStorage, never in the served bundle. It can follow you to another browser, but
+  only the long way round: encrypted, opt-in, into a private repo that is yours.
 
 ## The bet: cheap agents + local knowledge
 
@@ -91,6 +92,31 @@ complement, not compete.
    └────────────┘ └──────────────┘          └────────────────┘
 ```
 
+## Nothing here is durable — so there is a door
+
+The browser gives creel its sandbox for free and takes durability away in the same
+breath. The VFS, the conversations and the quipu graph live in localStorage,
+IndexedDB and OPFS: evictable under storage pressure, invisible to every other
+machine, gone with the profile. A harness that pretends otherwise loses your work
+eventually and blames the browser.
+
+So state has an explicit door rather than an implied guarantee. `state_push` writes
+config, conversations, skills, memory and the knowledge graph — as the same `.db`
+bytes the quipu CLI opens — into **a private GitHub repo you own**, as one commit
+per push however many objects it carries, uploading only what changed. `state_pull`
+brings it back in a fresh browser.
+
+It reuses the harness's existing sync engine (a manifest over content-addressed
+objects and blobs, AES-GCM at rest) and swaps only the transport, so the same state
+tree is readable whether it went to S3 or to git. creel refuses to push state to a
+repository GitHub reports as public — re-checked every push, not trusted from setup
+— and carries API keys only when you have both opted in *and* set a passphrase.
+Opting in without one doesn't silently half-work: the keys stay local and
+`state_status` tells you why.
+
+Point it at your own repo in Settings → State Repo; the layout is specified in
+[creel-state](https://github.com/scbrown/creel-state).
+
 ## The agents have hands
 
 An agent in creel can do what the operator can, and names things the way a
@@ -126,9 +152,9 @@ Details, and what's still missing, in [docs/hands.md](docs/hands.md).
 
 ## Tests
 
-`just test` — 68 assertions, no dependencies and no `node_modules`. The fast
-half runs creel's logic against a DOM stub; the other half drives the **real
-page and the real extension in real headless Chromium**, over CDP through
+`just test` — 143 assertions, no dependencies and no `node_modules`. The fast
+half (69) runs creel's logic against a DOM stub; the other half (74) drives the
+**real page and the real extension in real headless Chromium**, over CDP through
 Node's built-in WebSocket (`tests/browser.js`). Nothing in the browser tests
 reaches into internals to make an assertion pass that an agent could not also
 reach. `just test-unit` skips the browser; `just test-ui` runs only it.
