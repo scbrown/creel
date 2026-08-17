@@ -1835,6 +1835,38 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.memDesc">Memory = Information + Time Label + Searchable Relationships. Records live in IndexedDB and sync via the cloud-sync layer below when configured.</div>
 
       <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
+      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg> <span data-i18n="settings.stateHeader">State Repo</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.stateHeaderHint">(a private GitHub repo you own)</span></label>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.stateDesc">Config, conversations, skills, memory and the quipu knowledge graph, pushed to a private repo as one commit. Uses the same GitHub token as the github_* tools. The repo must be private \u2014 creel refuses to push state to a public one.</div>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setStateEnabled" style="width:auto;margin:0"> <span data-i18n="settings.stateEnable">Use the state repo as this browser's sync destination</span></label>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label data-i18n="settings.stateOwner">Owner</label>
+          <input type="text" id="setStateOwner" placeholder="(your GitHub login)" data-i18n-placeholder="settings.stateOwnerPh">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="settings.stateRepo">Repository</label>
+          <input type="text" id="setStateRepo" placeholder="creel-state">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label data-i18n="settings.stateBranch">Branch</label>
+          <input type="text" id="setStateBranch" placeholder="main">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="settings.statePrefix">Path prefix</label>
+          <input type="text" id="setStatePrefix" placeholder="state">
+        </div>
+      </div>
+      <label><span data-i18n="settings.statePassphrase">Encryption Passphrase</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.statePassphraseHint">(optional; losing it = losing the state)</span></label>
+      <input type="password" id="setStatePassphrase">
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setStateSecrets" style="width:auto;margin:0"> <span data-i18n="settings.stateSecrets">Also sync API keys (requires a passphrase)</span></label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button type="button" class="modal-btn secondary" onclick="testStateRepo()" style="flex:1;padding:6px 10px;font-size:11px" data-i18n="settings.stateTest">Check repo</button>
+      </div>
+      <div id="stateRepoStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+
+      <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
       <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg> <span data-i18n="settings.cloudHeader">Cloud Sync</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cloudHeaderHint">(S3-compatible \u2014 AWS, R2, MinIO, B2)</span></label>
       <label><span data-i18n="settings.s3Endpoint">Endpoint</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.s3EndpointHint">(e.g. https://s3.us-east-1.amazonaws.com)</span></label>
       <input type="text" id="setS3Endpoint" placeholder="https://s3.us-east-1.amazonaws.com">
@@ -2354,6 +2386,19 @@ const I18N = {
     'settings.memAutoExtract': 'Auto-extract facts after each assistant turn (adds one lightweight LLM call)',
     'settings.memTopN': 'Top-N memories to recall',
     'settings.memDesc': 'Memory = Information + Time Label + Searchable Relationships. Records live in IndexedDB and sync via the cloud-sync layer below when configured.',
+    'settings.stateHeader': 'State Repo',
+    'settings.stateHeaderHint': '(a private GitHub repo you own)',
+    'settings.stateDesc': 'Config, conversations, skills, memory and the quipu knowledge graph, pushed to a private repo as one commit. Uses the same GitHub token as the github_* tools. The repo must be private \u2014 creel refuses to push state to a public one.',
+    'settings.stateEnable': "Use the state repo as this browser's sync destination",
+    'settings.stateOwner': 'Owner',
+    'settings.stateOwnerPh': '(your GitHub login)',
+    'settings.stateRepo': 'Repository',
+    'settings.stateBranch': 'Branch',
+    'settings.statePrefix': 'Path prefix',
+    'settings.statePassphrase': 'Encryption Passphrase',
+    'settings.statePassphraseHint': '(optional; losing it = losing the state)',
+    'settings.stateSecrets': 'Also sync API keys (requires a passphrase)',
+    'settings.stateTest': 'Check repo',
     'settings.cloudHeader': 'Cloud Sync',
     'settings.cloudHeaderHint': '(S3-compatible \u2014 AWS, R2, MinIO, B2)',
     'settings.s3Endpoint': 'Endpoint',
@@ -2817,6 +2862,19 @@ const I18N = {
     'settings.memAutoExtract': '每轮助手回复后自动抽取事实（新增一次轻量 LLM 调用）',
     'settings.memTopN': '回忆 Top-N 条',
     'settings.memDesc': '记忆 = 信息 + 时间标签 + 可搜索关系。数据保存在 IndexedDB，并可通过下方的云端同步模块同步。',
+    'settings.stateHeader': '状态仓库',
+    'settings.stateHeaderHint': '（你自己的私有 GitHub 仓库）',
+    'settings.stateDesc': '配置、会话、技能、记忆以及 quipu 知识图谱，以单次提交推送到私有仓库。使用与 github_* 工具相同的令牌。仓库必须是私有的 \u2014 creel 拒绝把状态推送到公开仓库。',
+    'settings.stateEnable': '将状态仓库作为本浏览器的同步目标',
+    'settings.stateOwner': '所有者',
+    'settings.stateOwnerPh': '（你的 GitHub 登录名）',
+    'settings.stateRepo': '仓库',
+    'settings.stateBranch': '分支',
+    'settings.statePrefix': '路径前缀',
+    'settings.statePassphrase': '加密口令',
+    'settings.statePassphraseHint': '（可选；丢失即丢失状态）',
+    'settings.stateSecrets': '同时同步 API 密钥（需要设置口令）',
+    'settings.stateTest': '检查仓库',
     'settings.cloudHeader': '云端同步',
     'settings.cloudHeaderHint': '（S3 兼容 \u2014 AWS / R2 / MinIO / B2）',
     'settings.s3Endpoint': '端点',
@@ -9616,6 +9674,15 @@ function openSettingsModal() {
   document.getElementById('setMemEnabled').checked = !!mem.enabled;
   document.getElementById('setMemAutoExtract').checked = !!mem.autoExtract;
   document.getElementById('setMemMaxRecall').value = String(Math.max(0, mem.maxRecall | 0) || MEM_DEFAULTS.maxRecall);
+  const st = (typeof CreelState !== 'undefined' ? CreelState.loadCfg() : null) || {};
+  document.getElementById('setStateEnabled').checked = !!st.enabled;
+  document.getElementById('setStateOwner').value = st.owner || '';
+  document.getElementById('setStateRepo').value = st.repo || 'creel-state';
+  document.getElementById('setStateBranch').value = st.branch || 'main';
+  document.getElementById('setStatePrefix').value = st.prefix || 'state';
+  document.getElementById('setStatePassphrase').value = st.passphrase || '';
+  document.getElementById('setStateSecrets').checked = !!st.includeSecrets;
+  document.getElementById('stateRepoStatus').textContent = '';
   const s3 = _loadS3Cfg() || {};
   document.getElementById('setS3Endpoint').value = s3.endpoint || '';
   document.getElementById('setS3Region').value = s3.region || 'us-east-1';
@@ -10156,6 +10223,7 @@ async function saveSettings() {
   updateWsStatus();
 
   _saveS3CfgFromModal();
+  _saveStateCfgFromModal();
   // Sandbox config
   const prevSandbox = getSandboxConfig();
   const _numOr = (id, def) => { const v = parseFloat(document.getElementById(id).value); return Number.isFinite(v) ? v : def; };
@@ -10320,6 +10388,44 @@ async function _s3Head(cfg, key) {
   }
   return { lastModified: resp.headers.get('Last-Modified'), etag: resp.headers.get('ETag') };
 }
+/* ── Transport seam (creel-3ru) ───────────────────────────────────
+ *
+ * Everything below the manifest is already backend-agnostic: content-addressed
+ * objects and blobs, hash dedup, an encryption envelope. Only getting bytes to
+ * and from a remote was S3-shaped. These four functions are that seam, so a
+ * second backend is a transport rather than a second sync engine.
+ *
+ * A backend is { get, put, head, commit }. `commit` exists because the two
+ * remotes disagree about what a write IS: to S3 each PUT is final, while a git
+ * remote wants one commit for the whole push — so `put` may stage and `commit`
+ * flushes. S3's commit is a no-op; the GitHub backend's is the actual commit.
+ */
+function _syncCfg() {
+  // The state repo wins when it is configured and selected — an operator who
+  // set one up is telling us where their state lives.
+  if (typeof CreelState !== 'undefined' && CreelState.isActive?.()) return CreelState.syncConfig();
+  const cfg = _loadS3Cfg();
+  return cfg ? { ...cfg, backend: 's3' } : null;
+}
+function _syncConfigured(cfg) {
+  const c = cfg || _syncCfg();
+  if (!c) return false;
+  if (c.backend === 'github') return !!(typeof CreelState !== 'undefined' && CreelState.isConfigured());
+  return _s3Configured(c);
+}
+function _syncBackend(cfg) {
+  if (cfg && cfg.backend === 'github') return CreelState.transport(cfg);
+  return {
+    get: (key) => _s3Get(cfg, key),
+    put: (key, body, contentType) => _s3Put(cfg, key, body, contentType),
+    head: (key) => _s3Head(cfg, key),
+    commit: async () => null,
+  };
+}
+const _syncGet = (cfg, key) => _syncBackend(cfg).get(key);
+const _syncPut = (cfg, key, body, ct) => _syncBackend(cfg).put(key, body, ct);
+const _syncCommit = (cfg, message) => _syncBackend(cfg).commit(message);
+
 function _s3ErrHint(status, text) {
   if (/RequestTimeTooSkewed/i.test(text)) return '\u2014 system clock is off by >15min; please sync it.';
   if (status === 403) return '\u2014 check access key / secret / bucket permissions.';
@@ -10492,7 +10598,7 @@ async function _getManifest(cfg) {
   const keys = cfg.passphrase ? [_manifestKey(cfg), _manifestKey({ ...cfg, passphrase: '' })]
                               : [_manifestKey(cfg), _manifestKey({ ...cfg, passphrase: 'x' })];
   for (const k of keys) {
-    const bytes = await _s3Get(cfg, k);
+    const bytes = await _syncGet(cfg, k);
     if (!bytes) continue;
     let jsonStr;
     if (_s3LooksEncrypted(bytes)) {
@@ -10509,38 +10615,51 @@ async function _putManifest(cfg, manifest) {
   const jsonStr = JSON.stringify(manifest);
   const body = cfg.passphrase ? await _s3Encrypt(jsonStr, cfg.passphrase) : _s3TE.encode(jsonStr);
   const contentType = cfg.passphrase ? 'application/octet-stream' : 'application/json';
-  await _s3Put(cfg, _manifestKey(cfg), body, contentType);
+  await _syncPut(cfg, _manifestKey(cfg), body, contentType);
 }
 async function _putJsonObject(cfg, hash, jsonStr) {
   const body = cfg.passphrase ? await _s3Encrypt(jsonStr, cfg.passphrase) : _s3TE.encode(jsonStr);
   const contentType = cfg.passphrase ? 'application/octet-stream' : 'application/json';
-  await _s3Put(cfg, _objKey(cfg, hash), body, contentType);
+  await _syncPut(cfg, _objKey(cfg, hash), body, contentType);
 }
 async function _getJsonObject(cfg, hash) {
-  const bytes = await _s3Get(cfg, _objKey(cfg, hash));
+  const bytes = await _syncGet(cfg, _objKey(cfg, hash));
   if (!bytes) return null;
   const jsonStr = _s3LooksEncrypted(bytes) ? await _s3Decrypt(bytes, cfg.passphrase) : _s3TD.decode(bytes);
   return JSON.parse(jsonStr);
 }
 async function _putBlob(cfg, hash, bytes) {
   const body = cfg.passphrase ? await _s3EncryptBytes(bytes, cfg.passphrase) : bytes;
-  await _s3Put(cfg, _blobKey(cfg, hash), body, 'application/octet-stream');
+  await _syncPut(cfg, _blobKey(cfg, hash), body, 'application/octet-stream');
 }
 async function _getBlob(cfg, hash) {
-  const bytes = await _s3Get(cfg, _blobKey(cfg, hash));
+  const bytes = await _syncGet(cfg, _blobKey(cfg, hash));
   if (!bytes) return null;
   return _s3LooksEncrypted(bytes) ? _s3DecryptBytes(bytes, cfg.passphrase) : bytes;
 }
 
 // ── Build local state for v2 sync ─────────────────────────────────
 // Returns { manifest, objects: Map<hash,jsonStr>, blobs: Map<hash,Uint8Array> }.
-function _syncSafeProviders() {
+/* Whether this sync may carry credentials.
+ *
+ * Two conditions, both required, neither inferable. The operator must have
+ * asked for it (a key leaving the browser is a decision, never a default), and
+ * a passphrase must be set (the destination is a repo — private today, one
+ * settings change from not). Absent either, keys stay local and everything
+ * else still syncs; that is the S3 behaviour and it remains the default. */
+function _syncCarriesSecrets(cfg) {
+  const c = cfg || _syncCfg();
+  return !!(c && c.includeSecrets && c.passphrase);
+}
+
+function _syncSafeProviders(cfg) {
   const raw = _loadProviders();
   const out = { providers: {} };
   const providers = raw?.providers || {};
+  const withKeys = _syncCarriesSecrets(cfg);
   for (const [id, p] of Object.entries(providers)) {
     const { apiKey, ...safe } = p || {};
-    out.providers[id] = safe;
+    out.providers[id] = withKeys && apiKey ? { ...safe, apiKey } : safe;
   }
   return out;
 }
@@ -10549,7 +10668,11 @@ function _applySyncedProviders(incoming) {
   const local = getProvidersMap();
   const merged = { providers: {} };
   for (const [id, p] of Object.entries(incoming.providers)) {
-    merged.providers[id] = { ...(p || {}), apiKey: local[id]?.apiKey || '' };
+    // The local key wins when there is one: a machine that already works must
+    // not be broken by a pull carrying an older or rotated key. A synced key
+    // only fills a slot that is empty — which is the case this feature exists
+    // for, a fresh browser adopting the operator's setup.
+    merged.providers[id] = { ...(p || {}), apiKey: local[id]?.apiKey || (p && p.apiKey) || '' };
   }
   for (const [id, p] of Object.entries(local)) {
     if (!merged.providers[id]) merged.providers[id] = p;
@@ -10557,7 +10680,7 @@ function _applySyncedProviders(incoming) {
   _saveProviders(merged);
 }
 async function _buildLocalState() {
-  const cfg = _loadS3Cfg() || {};
+  const cfg = _syncCfg() || {};
   const convMeta = (await loadConvMetaFromDB()) || [];
   const convFolderEntries = await loadConvFoldersFromDB();
   const objects = new Map();
@@ -10609,11 +10732,13 @@ async function _buildLocalState() {
   }
 
   const baseSettings = { ...(loadSettings() || {}) };
-  delete baseSettings.api_key;
-  delete baseSettings.tavily_api_key;
+  if (!_syncCarriesSecrets(cfg)) {
+    delete baseSettings.api_key;
+    delete baseSettings.tavily_api_key;
+  }
   const settingsObj = {
     settings: baseSettings,
-    providers: _syncSafeProviders(),
+    providers: _syncSafeProviders(cfg),
     activeProviderId: getActiveProviderId(),
     mcpTools: Array.isArray(mcpTools) ? mcpTools.filter(t => !t.serverId) : [],
     mcpServers: Array.isArray(mcpServers) ? mcpServers.map(s => ({ id: s.id, name: s.name, type: s.type, url: s.url, token: s.token, enabled: s.enabled !== false, corsProxy: s.corsProxy || '' })) : [],
@@ -10649,6 +10774,23 @@ async function _buildLocalState() {
     }
   } catch (e) { console.warn('memory sync build failed', e); }
 
+  // The quipu store, as the same .db bytes the CLI and quipu-server open.
+  // Only when the graph is already booted in this tab: pushing state is not a
+  // reason to spin up a wasm runtime the operator never asked for, and a tab
+  // that never touched the graph has nothing of its own to contribute.
+  let quipuEntry = null;
+  try {
+    if (typeof CreelQuipu !== 'undefined' && typeof CreelQuipu.exportDb === 'function') {
+      const raw = await CreelQuipu.exportDb();
+      const bytes = raw instanceof Uint8Array ? raw : (raw ? new Uint8Array(raw) : null);
+      if (bytes && bytes.length) {
+        const quipuHash = await _hashBytes(bytes);
+        if (!blobs.has(quipuHash)) blobs.set(quipuHash, bytes);
+        quipuEntry = { hash: quipuHash, size: bytes.length };
+      }
+    }
+  } catch (e) { console.warn('quipu state sync build failed', e); }
+
   const manifest = {
     version: 2,
     updatedAt: Date.now(),
@@ -10658,6 +10800,7 @@ async function _buildLocalState() {
     skills: skillEntries,
     settings: { hash: settingsHash },
     memories: memoriesEntry,
+    quipu: quipuEntry,
     blobs: [...blobs.keys()].sort()
   };
   return { manifest, objects, blobs };
@@ -10809,6 +10952,25 @@ async function _applyRemoteState(remote, objs, blobMap) {
     }
   }
 
+  // 3c. The quipu store — replace the local graph with the pulled one.
+  //
+  // Wholesale, like every other section of a pull: the .db is one artefact and
+  // there is no merge for a bitemporal graph that would not silently invent
+  // history. Only when the graph is booted in this tab — a tab that never
+  // opened the store has nothing to replace, and booting one mid-pull to
+  // overwrite it immediately helps nobody.
+  if (remote.quipu?.hash) {
+    const bytes = blobMap.get(remote.quipu.hash);
+    if (bytes && typeof CreelQuipu !== 'undefined' && typeof CreelQuipu.importDb === 'function') {
+      try {
+        await CreelQuipu.importDb(bytes);
+      } catch (e) {
+        console.warn('quipu state apply failed', e);
+        appendSystemMsg('Pull: the knowledge graph could not be restored — ' + (e?.message || e));
+      }
+    }
+  }
+
   // 4. Reload in-memory UI state from the freshly-written stores.
   skills = [];
   await loadSkills();
@@ -10828,7 +10990,7 @@ async function _tryPullV1(cfg) {
     ? [_v1SnapshotKey(cfg, true), _v1SnapshotKey(cfg, false)]
     : [_v1SnapshotKey(cfg, false), _v1SnapshotKey(cfg, true)];
   for (const k of keys) {
-    const bytes = await _s3Get(cfg, k);
+    const bytes = await _syncGet(cfg, k);
     if (!bytes) continue;
     const jsonStr = _s3LooksEncrypted(bytes) ? await _s3Decrypt(bytes, cfg.passphrase) : _s3TD.decode(bytes);
     return JSON.parse(jsonStr);
@@ -10886,8 +11048,12 @@ async function _applyV1Snapshot(snap) {
 
 // ── Push (v2 incremental, hash-dedup, progress) ───────────────────
 async function pushSnapshotToS3(silent) {
-  const cfg = _loadS3Cfg();
-  if (!_s3Configured(cfg)) throw new Error('Cloud sync not configured \u2014 open Settings.');
+  const cfg = _syncCfg();
+  if (!_syncConfigured(cfg)) throw new Error('State sync not configured \u2014 open Settings.');
+  // Start from a fresh view of the remote: a staging transport left over from
+  // the previous operation would answer reads from a repo state that has since
+  // moved, and stage writes onto a base tree that is no longer the head.
+  if (cfg.backend === 'github') CreelState.reset();
   if (_s3OpActive) throw new Error('A sync operation is already in progress.');
   _s3PushInFlight = true;
   try {
@@ -10951,7 +11117,13 @@ async function pushSnapshotToS3(silent) {
 
     _setProgress('Updating manifest', 0, 1, '');
     await _putManifest(cfg, manifest);
-    _setProgress('Updating manifest', 1, 1, '');
+    // One push, one remote write: backends that stage (the state repo) flush
+    // here, so the history reads as one entry per push rather than one per
+    // object. S3 has already written and does nothing.
+    _setProgress('Committing', 0, 1, '');
+    const committed = await _syncCommit(cfg,
+      `creel state: ${objectsToUpload.length} object(s), ${blobsToUpload.length} blob(s)`);
+    _setProgress('Committing', 1, 1, committed ? String(committed).slice(0, 12) : '');
 
     try { localStorage.setItem(S3_LAST_SYNC_KEY, String(Date.now())); } catch {}
     try { localStorage.setItem(S3_LAST_PASS_HASH_KEY, passHash); } catch {}
@@ -10978,8 +11150,12 @@ async function pushSnapshotToS3(silent) {
 
 // ── Pull (v2 incremental, hash-dedup, progress; v1 fallback) ──────
 async function pullSnapshotFromS3() {
-  const cfg = _loadS3Cfg();
-  if (!_s3Configured(cfg)) throw new Error('Cloud sync not configured \u2014 open Settings.');
+  const cfg = _syncCfg();
+  if (!_syncConfigured(cfg)) throw new Error('State sync not configured \u2014 open Settings.');
+  // Start from a fresh view of the remote: a staging transport left over from
+  // the previous operation would answer reads from a repo state that has since
+  // moved, and stage writes onto a base tree that is no longer the head.
+  if (cfg.backend === 'github') CreelState.reset();
   if (_s3OpActive) throw new Error('A sync operation is already in progress.');
   try {
     _setProgress('Fetching manifest', 0, 1, '');
@@ -11009,8 +11185,9 @@ async function pullSnapshotFromS3() {
     if (!confirm(
       'Pull snapshot from ' + date + '?\n\n' +
       '  \u2022 ' + (remote.conversations || []).length + ' conversation(s)\n' +
-      '  \u2022 ' + (remote.skills || []).length + ' skill(s)\n\n' +
-      'Local changes not yet pushed will be lost. LLM / Tavily keys are preserved.'
+      '  \u2022 ' + (remote.skills || []).length + ' skill(s)\n' +
+      (remote.quipu ? '  \u2022 the quipu knowledge graph (' + (remote.quipu.size / 1024).toFixed(0) + ' KB) \u2014 REPLACES the local one\n' : '') +
+      '\nLocal changes not yet pushed will be lost. LLM / Tavily keys are preserved.'
     )) { _clearProgress(); return; }
 
     // Build local state to figure out which objects/blobs we already have (dedup on pull too).
@@ -11058,6 +11235,16 @@ async function pullSnapshotFromS3() {
         done++;
         _setProgress('Downloading blobs', done, blobsNeeded.length, h.slice(0, 12) + '\u2026 (' + (b ? (b.length / 1024).toFixed(1) + ' KB' : '?') + ')');
       });
+    }
+
+    // The quipu store is referenced by the manifest itself rather than by any
+    // synced object, so _collectBlobRefs never sees it — fetch it by name.
+    if (remote.quipu?.hash && !blobMap.has(remote.quipu.hash)) {
+      _setProgress('Downloading knowledge graph', 0, 1,
+        ((remote.quipu.size || 0) / 1024).toFixed(1) + ' KB');
+      const qb = local.blobs.get(remote.quipu.hash) || await _getBlob(cfg, remote.quipu.hash);
+      if (qb) blobMap.set(remote.quipu.hash, qb);
+      _setProgress('Downloading knowledge graph', 1, 1, '');
     }
 
     _setProgress('Applying changes', 0, 1, '');
@@ -11134,6 +11321,58 @@ function _saveS3CfgFromModal() {
   // Only called if the section exists in the DOM.
   if (!document.getElementById('setS3Endpoint')) return;
   _writeS3Cfg(_readS3CfgFromModal());
+}
+
+function _readStateCfgFromModal() {
+  const g = id => (document.getElementById(id)?.value || '').trim();
+  const gc = id => !!document.getElementById(id)?.checked;
+  const prev = (typeof CreelState !== 'undefined' ? CreelState.loadCfg() : null) || {};
+  return {
+    ...prev,
+    owner: g('setStateOwner'),
+    repo: g('setStateRepo') || 'creel-state',
+    branch: g('setStateBranch') || 'main',
+    prefix: g('setStatePrefix') || 'state',
+    passphrase: g('setStatePassphrase'),
+    includeSecrets: gc('setStateSecrets'),
+    enabled: gc('setStateEnabled'),
+  };
+}
+function _saveStateCfgFromModal() {
+  if (typeof CreelState === 'undefined' || !document.getElementById('setStateOwner')) return;
+  const cfg = _readStateCfgFromModal();
+  // An owner is the one field with no sensible default (the login is only
+  // known once GitHub answers), so an empty one means "not set up yet" rather
+  // than "set up wrongly" — leave any existing config alone.
+  if (!cfg.owner && !cfg.enabled) { CreelState.saveCfg(cfg.repo || cfg.passphrase ? cfg : null); CreelState.reset(); return; }
+  CreelState.saveCfg(cfg);
+  CreelState.reset();
+}
+
+/** Settings' "Check repo" button: prove the destination is reachable, ours,
+ *  and private BEFORE the operator trusts it with anything. */
+async function testStateRepo() {
+  const el = document.getElementById('stateRepoStatus');
+  const say = (msg, color) => { if (el) { el.textContent = msg; el.style.color = color || 'var(--text-dim)'; } };
+  try {
+    _saveStateCfgFromModal();
+    const cfg = _readStateCfgFromModal();
+    if (!cfg.owner) {
+      // Fill the owner in for them rather than refusing over a blank field.
+      const me = await CreelState.verifyLogin();
+      cfg.owner = me;
+      document.getElementById('setStateOwner').value = me;
+      CreelState.saveCfg(cfg);
+    }
+    say('Checking ' + cfg.owner + '/' + cfg.repo + '\u2026');
+    const facts = await CreelState.verifyRepo(cfg);
+    const secrets = cfg.includeSecrets && cfg.passphrase
+      ? ' \u2014 API keys included, encrypted'
+      : (cfg.includeSecrets ? ' \u2014 API keys NOT included (no passphrase set)' : '');
+    say('OK: ' + facts.slug + ' is private and pushable' + secrets, 'var(--accent-green, var(--text-dim))');
+  } catch (e) {
+    say(String(e?.message || e), 'var(--accent-red)');
+  }
 }
 
 // ── Sync button UI ────────────────────────────────────────────────
@@ -18879,6 +19118,7 @@ try {
 </script>
 <script src="quipu-backend.js"></script>
 <script src="github-backend.js"></script>
+<script src="state-backend.js"></script>
 <script src="beads-store.js"></script>
 <script src="beads-backend.js"></script>
 <script src="local-backend.js"></script>
