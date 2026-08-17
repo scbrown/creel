@@ -12,13 +12,16 @@ proxy port="8421":
 check:
     #!/usr/bin/env bash
     set -euo pipefail
-    for f in app/*.js extension/*.js proxy/*.js tests/*.js tools/*.js; do
+    for f in app/*.js app/harness/*.js extension/*.js proxy/*.js tests/*.js tools/*.js; do
         node --check "$f"
     done
     # onepagent.html began as a vendored fork, but creel edits it constantly
     # and its scripts are inline — so they get parsed too, or a syntax error
     # in 16k lines only shows up as a blank page.
     node tools/check-html.js app/onepagent.html extension/popup.html
+    # The harness is a stack of ordered parts; a part the service worker does
+    # not know about works for whoever added it and breaks offline for everyone.
+    node tools/check-shell.js
     python3 -m py_compile proxy/local-proxy.py
     python3 -c "import json;json.load(open('extension/manifest.json'))"
     # The extension injects the app's locator engine into foreign pages, so

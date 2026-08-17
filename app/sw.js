@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v18';
+const CACHE_VERSION = 'creel-v19';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -40,6 +40,39 @@ const APP_SHELL = [
   './vendor/highlight.min.js',
   './vendor/github.min.css',
   './vendor/github-dark.min.css',
+  './harness.css',
+  './harness/01-i18n.js',
+  './harness/02-config.js',
+  './harness/03-sandbox-daytona.js',
+  './harness/04-swarm.js',
+  './harness/05-blob-store.js',
+  './harness/06-conversation-store.js',
+  './harness/07-skills.js',
+  './harness/08-runtimes-node.js',
+  './harness/09-tools-remote.js',
+  './harness/10-skills-import.js',
+  './harness/11-mcp-servers.js',
+  './harness/12-provider-ui.js',
+  './harness/13-sync-core.js',
+  './harness/14-sync-push-pull.js',
+  './harness/15-memory-store.js',
+  './harness/16-hooks-cron.js',
+  './harness/17-swarm-role-editor.js',
+  './harness/18-tool-impl.js',
+  './harness/19-role-manager.js',
+  './harness/20-file-explorer.js',
+  './harness/21-html-preview.js',
+  './harness/22-memory-ui.js',
+  './harness/23-sse-parsers.js',
+  './harness/24-chat-ui.js',
+  './harness/25-input.js',
+  './harness/26-layout.js',
+  './creel-features.js',
+  './state-backend.js',
+  './beads-store.js',
+  './beads-backend.js',
+  './creel-device.js',
+  './creel-locator.js',
 ];
 
 const CDN_PREFETCH = [];
@@ -56,6 +89,38 @@ const NETWORK_FIRST = [
   './quipu-worker.js',
   './quipu-store-core.js',
   './wasm/pkg/creel_quipu_provider.js',
+  './harness/01-i18n.js',
+  './harness/02-config.js',
+  './harness/03-sandbox-daytona.js',
+  './harness/04-swarm.js',
+  './harness/05-blob-store.js',
+  './harness/06-conversation-store.js',
+  './harness/07-skills.js',
+  './harness/08-runtimes-node.js',
+  './harness/09-tools-remote.js',
+  './harness/10-skills-import.js',
+  './harness/11-mcp-servers.js',
+  './harness/12-provider-ui.js',
+  './harness/13-sync-core.js',
+  './harness/14-sync-push-pull.js',
+  './harness/15-memory-store.js',
+  './harness/16-hooks-cron.js',
+  './harness/17-swarm-role-editor.js',
+  './harness/18-tool-impl.js',
+  './harness/19-role-manager.js',
+  './harness/20-file-explorer.js',
+  './harness/21-html-preview.js',
+  './harness/22-memory-ui.js',
+  './harness/23-sse-parsers.js',
+  './harness/24-chat-ui.js',
+  './harness/25-input.js',
+  './harness/26-layout.js',
+  './creel-features.js',
+  './state-backend.js',
+  './beads-store.js',
+  './beads-backend.js',
+  './creel-device.js',
+  './creel-locator.js',
 ];
 const NETWORK_FIRST_URLS = new Set(NETWORK_FIRST.map((p) => new URL(p, self.location.href).href));
 const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));

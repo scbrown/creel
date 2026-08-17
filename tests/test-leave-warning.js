@@ -2,9 +2,14 @@
  *
  * The predicate runs inside the unload path, so it must be pure and
  * synchronous, and the page's copy is the single source of truth — this test
- * extracts the fenced function verbatim from app/onepagent.html and evaluates
- * it in a stubbed window. If the fence markers move, the test fails loudly
- * instead of silently testing a stale copy.
+ * extracts the fenced function verbatim from the harness and evaluates it in a
+ * stubbed window. If the fence markers move, the test fails loudly instead of
+ * silently testing a stale copy.
+ *
+ * The fence is searched for across the whole harness rather than in one named
+ * file: the page's script was split into app/harness/ parts (creel-yny), and a
+ * test that pins which part a function lives in would break on every later
+ * move without ever telling you anything about the behaviour.
  *
  * Run: node tests/test-leave-warning.js   (or `just test-unit`)
  */
@@ -15,10 +20,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert');
 
-const HTML = fs.readFileSync(path.join(__dirname, '..', 'app', 'onepagent.html'), 'utf8');
+const APP = path.join(__dirname, '..', 'app');
+const HARNESS = path.join(APP, 'harness');
+const SOURCES = [
+  path.join(APP, 'onepagent.html'),
+  ...fs.readdirSync(HARNESS).filter((f) => f.endsWith('.js')).sort().map((f) => path.join(HARNESS, f)),
+];
+const HTML = SOURCES.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
 
 const m = HTML.match(/\/\/ BEGIN creelShouldWarnOnLeave\n([\s\S]*?)\n\/\/ END creelShouldWarnOnLeave/);
-assert.ok(m, 'fenced creelShouldWarnOnLeave must exist in app/onepagent.html');
+assert.ok(m, 'fenced creelShouldWarnOnLeave must exist somewhere in app/ (page or harness parts)');
 
 // The fence body is `window.creelShouldWarnOnLeave = function ... };` —
 // strip the assignment so it can be eval'd as a plain function expression.
