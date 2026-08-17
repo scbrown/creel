@@ -5392,6 +5392,12 @@ async function saveConvFoldersToDB() {
   try { const db = await openConvDB(); const tx = db.transaction(CONV_META_STORE, 'readwrite'); tx.objectStore(CONV_META_STORE).put(convFolders, CONV_FOLDERS_KEY); } catch (e) { console.warn('Conv folders DB save error:', e); }
 }
 
+// Fleet agent/worker tabs (spawned via #creel-agent=/#creel-worker=) must NOT
+// inherit the operator's active conversation — burst agents need isolated
+// context, not the orchestrator's thread. loadConvHistory and newConversation
+// both branch on this.
+const IS_FLEET_TAB = /creel-(?:agent|worker)=/.test(location.hash);
+
 async function loadConvHistory() {
   // Primary source: IndexedDB meta store (no localStorage size limit)
   const fromDB = await loadConvMetaFromDB();
@@ -5415,7 +5421,7 @@ async function loadConvHistory() {
   for (const c of convHistory) {
     if (c.folderId && !folderIds.has(c.folderId)) delete c.folderId;
   }
-  if (convHistory.length) {
+  if (convHistory.length && !IS_FLEET_TAB) {
     const lastId = localStorage.getItem('ba_active_conv') || convHistory[0].id;
     const found = convHistory.find(c => c.id === lastId);
     visibleConvId = found ? found.id : convHistory[0].id;
@@ -5696,7 +5702,10 @@ function newConversation(skipSave, folderId) {
   document.getElementById('memoryLog').innerHTML = '';
   closeFileViewer(true);
   visibleConversationState = captureConversationState(chatEl.innerHTML);
-  try { localStorage.setItem('ba_active_conv', id); } catch {}
+  // Fleet tabs keep their active-conv pointer tab-local (never written to the
+  // shared per-origin localStorage) so a worker can never clobber the
+  // operator's active conversation; they always boot fresh anyway.
+  if (!IS_FLEET_TAB) { try { localStorage.setItem('ba_active_conv', id); } catch {} }
   syncLegacyRunFlags();
   updateButtons();
   setStatus('ready', t('status.ready'));
@@ -18828,6 +18837,8 @@ try {
 </script>
 <script src="quipu-backend.js"></script>
 <script src="github-backend.js"></script>
+<script src="beads-store.js"></script>
+<script src="beads-backend.js"></script>
 <script src="local-backend.js"></script>
 <script src="quipu-explorer.js"></script>
 <script src="creel-fleet.js"></script>

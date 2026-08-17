@@ -14,7 +14,7 @@ check:
     set -euo pipefail
     # onepagent.html is the vendored OnePagent fork, not creel-authored, and
     # its scripts are inline — everything else here creel owns and must parse.
-    for f in app/*.js extension/*.js proxy/*.js tests/*.js; do
+    for f in app/*.js extension/*.js proxy/*.js tests/*.js tools/*.js; do
         node --check "$f"
     done
     python3 -m py_compile proxy/local-proxy.py
@@ -36,13 +36,16 @@ sync-locator:
 
 # Everything: fast logic tests, then the real page in real Chromium.
 test: check
+    node tests/test-beads.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
-# Just the fast ones — routing and the bridge handshake, against a DOM stub.
+# Just the fast ones — routing, the bridge handshake, and the beads store,
+# against a DOM stub / temp dir.
 test-unit: check
+    node tests/test-beads.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
 

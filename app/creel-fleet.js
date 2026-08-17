@@ -851,9 +851,22 @@
     if (e.data?.type === 'msg') onFleetMsg(e.data);
   });
 
+  // Burst isolation: fleet tabs must never carry the operator's conversation
+  // (or any other tab's) into a task. The harness boots fleet tabs fresh
+  // (onepagent.html loadConvHistory / IS_FLEET_TAB), but guard here too so a
+  // stale harness build still starts clean — newConversation(true) resets
+  // in-memory state and (since IS_FLEET_TAB) never touches ba_active_conv.
+  function isolateContext() {
+    if (!MY_TASK_ID && !MY_WORKER_ID) return;
+    if (typeof newConversation === 'function' && typeof conversation !== 'undefined' && conversation.length) {
+      newConversation(true);
+    }
+  }
+
   function start() {
     CreelFleet.registerDefaults();
     injectButton();
+    isolateContext();
     if (MY_TASK_ID) agentBoot();
     if (MY_WORKER_ID) workerBoot();
   }
