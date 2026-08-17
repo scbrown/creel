@@ -334,8 +334,11 @@ const ops = {
   async list_origins() {
     return {
       version: VERSION,
+      // Both lists sorted, by the same rule: a caller comparing `origins` to
+      // `defaults` to decide whether an override is in effect must not see a
+      // difference that is only declaration order.
       origins: [...creelOrigins].sort(),
-      defaults: DEFAULT_CREEL_ORIGINS,
+      defaults: [...DEFAULT_CREEL_ORIGINS].sort(),
       pagesPrefix: PAGES_PREFIX,
       storageKey: 'creelOrigins',
     };
@@ -355,6 +358,9 @@ const ops = {
       return u.origin;
     });
     if (new Set(normalized).size !== normalized.length) throw new Error('duplicate origins in list');
+    // Persist in the same canonical order the reads return, so the stored
+    // boundary and the reported one are the same list.
+    normalized.sort();
     if (!normalized.length) {
       await chrome.storage.local.remove('creelOrigins');
       applyOrigins([]);

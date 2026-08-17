@@ -303,6 +303,7 @@ const check = async (name, fn) => {
   await check('the popup-edited boundary gates both directions, exactly, port included', async () => {
     // First make the boundary interesting: trust exactly one dev port.
     await worker.send('set_origins', { origins: ['http://localhost:3000'] }, POPUP);
+    const TRUSTED = 'http://localhost:3000/x';
     // Trust: a sender on the added origin may command the bridge now…
     const trusted = await worker.send('list_tabs', {}, 'http://localhost:3000/x');
     assert.ok(trusted.ok, 'an added origin is trusted: ' + trusted.error);
@@ -311,11 +312,14 @@ const check = async (name, fn) => {
     assert.strictEqual(stranger.ok, false);
     assert.match(stranger.error, /unauthorized/);
     // Action: the bridge now refuses to open/navigate the added origin…
-    const open = await worker.send('open_tab', { url: 'http://localhost:3000/x', wait: false });
+    // Sent FROM the trusted origin: the boundary was just narrowed to exactly
+    // localhost:3000, so the harness's default sender is no longer on it, and
+    // sending from there would prove the sender gate rather than the target one.
+    const open = await worker.send('open_tab', { url: 'http://localhost:3000/x', wait: false }, TRUSTED);
     assert.strictEqual(open.ok, false, 'an added creel origin is refused as a target');
     assert.match(open.error, /refusing/);
     // …while its port-neighbour stays drivable.
-    const openNeighbour = await worker.send('open_tab', { url: 'http://localhost:3001/x', wait: false });
+    const openNeighbour = await worker.send('open_tab', { url: 'http://localhost:3001/x', wait: false }, TRUSTED);
     assert.ok(openNeighbour.ok, openNeighbour.error);
   });
 

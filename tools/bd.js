@@ -35,6 +35,19 @@ function findRepoDir(start) {
   }
 }
 
+/* The id prefix is the tracker's identity, not the checkout's name: a clone
+ * into creel-fork must keep minting creel-xxx ids or it forks the id space of
+ * a tracker it still shares. .beads/metadata.json is where that identity
+ * lives; the directory name is only the last resort. */
+function issuePrefix(repoDir) {
+  try {
+    const meta = JSON.parse(fs.readFileSync(path.join(repoDir, '.beads/metadata.json'), 'utf8'));
+    const named = meta.issue_prefix || meta.dolt_database;
+    if (named && typeof named === 'string') return named;
+  } catch { /* no metadata, or unreadable — fall through */ }
+  return path.basename(repoDir);
+}
+
 function parseArgs(argv) {
   const flags = {};
   const positional = [];
@@ -68,7 +81,7 @@ async function main() {
   const actor = flags.actor || process.env.BEADS_ACTOR || 'Claude';
   const store = await new BeadsStore({
     adapter: BeadsStore.nodeAdapter(repoDir),
-    prefix: path.basename(repoDir),
+    prefix: issuePrefix(repoDir),
     actor,
   }).load();
   const json = !!flags.json;

@@ -33,9 +33,15 @@ async function main() {
     assert(store.ready().some((i) => i.id === a.id), 'ready sees the new issue');
     ok('get + ready');
 
-    const bad = await store.create({ title: 'high', priority: 1 }).catch((e) => e);
-    assert(bad instanceof Error && /priority/.test(bad.message), 'priority validation');
-    const bad2 = await store.create({ title: 'no title' }).catch((e) => e);
+    // The store's rule is 1..3 inclusive — P1 is a real priority the tracker
+    // uses, so the boundaries are what must be rejected.
+    for (const p of [0, 4]) {
+      const bad = await store.create({ title: 'out of range', priority: p }).catch((e) => e);
+      assert(bad instanceof Error && /priority/.test(bad.message), `priority ${p} rejected`);
+    }
+    const p1 = await store.create({ title: 'high', priority: 1, actor: 'tester' });
+    assert.strictEqual(p1.priority, 1, 'priority 1 accepted');
+    const bad2 = await store.create({ title: '' }).catch((e) => e);
     assert(bad2 instanceof Error && /title/.test(bad2.message), 'title validation');
     ok('input validation');
 
@@ -66,6 +72,10 @@ async function main() {
   // ── real fs adapter + reload + JSONL byte-compat ────────────────────
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'beads-test-'));
   fs.mkdirSync(path.join(dir, '.beads'), { recursive: true });
+  // The CLI takes its id prefix from the tracker's identity, not the checkout
+  // directory — so the temp dir is deliberately named nothing like 'creel'.
+  fs.writeFileSync(path.join(dir, '.beads/metadata.json'),
+    JSON.stringify({ dolt_database: 'creel', project_id: 'test-project' }));
   {
     const store = await new BeadsStore({ adapter: BeadsStore.nodeAdapter(dir) }).load();
     const a = await store.create({ title: 'On disk', priority: 3, actor: 'disk' });

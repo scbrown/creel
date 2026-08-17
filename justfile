@@ -12,11 +12,13 @@ proxy port="8421":
 check:
     #!/usr/bin/env bash
     set -euo pipefail
-    # onepagent.html is the vendored OnePagent fork, not creel-authored, and
-    # its scripts are inline — everything else here creel owns and must parse.
     for f in app/*.js extension/*.js proxy/*.js tests/*.js tools/*.js; do
         node --check "$f"
     done
+    # onepagent.html began as a vendored fork, but creel edits it constantly
+    # and its scripts are inline — so they get parsed too, or a syntax error
+    # in 16k lines only shows up as a blank page.
+    node tools/check-html.js app/onepagent.html extension/popup.html
     python3 -m py_compile proxy/local-proxy.py
     python3 -c "import json;json.load(open('extension/manifest.json'))"
     # The extension injects the app's locator engine into foreign pages, so
@@ -41,6 +43,7 @@ test: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
+    node tests/test-features.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
@@ -58,5 +61,6 @@ test-unit: check
 # WebSocket speaking CDP (tests/browser.js). Skips cleanly when no Chromium is
 # installed; CHROME_PATH overrides discovery.
 test-ui: check
+    node tests/test-features.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js

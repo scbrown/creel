@@ -1726,7 +1726,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <div id="setStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
 
       <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
-      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where Python/JS/Bash tools run)</span></label>
+      <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where code-execution tools run)</span></label>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setSandboxEnabled" onchange="onSandboxProviderChange()" style="width:auto;margin:0"> <span data-i18n="settings.sandboxEnable">ENABLE_SANDBOX — Enable sandbox environment for running code</span></label>
       <label data-i18n="settings.sandboxPlatform">SANDBOX_PLATFORM</label>
       <select id="setSandboxPlatform" aria-label="Sandbox platform" onchange="onSandboxProviderChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:10px">
@@ -1761,7 +1761,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
             <input type="number" id="setDaytonaAutoDelete" min="0" placeholder="1440">
           </div>
         </div>
-        <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:4px" data-i18n="settings.sandboxNote">When remote sandbox is active, only Bash is exposed and it runs inside a Daytona Linux container. PythonExec / JSExec / NodeExec / Pyodide tools are hidden — invoke python3, node, pip, etc. via Bash. Read/Write/Edit target Daytona first; /foo.js and /home/daytona/foo.js refer to the same sandbox file. Files already mirrored from VFS are synced both ways after Bash; new sandbox files are imported only from /home/daytona/outputs. Put final results there.</div>
+        <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:4px" data-i18n="settings.sandboxNote">When remote sandbox is active, only Bash is exposed and it runs inside a Daytona Linux container. The in-page execution tools are hidden — invoke python3, node, pip, etc. via Bash. Read/Write/Edit target Daytona first; /foo.js and /home/daytona/foo.js refer to the same sandbox file. Files already mirrored from VFS are synced both ways after Bash; new sandbox files are imported only from /home/daytona/outputs. Put final results there.</div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
           <button type="button" class="modal-btn secondary" id="setSandboxTestBtn" onclick="testDaytonaSandbox()" style="padding:6px 10px;font-size:11px" data-i18n="settings.sandboxTest">Test sandbox</button>
           <div id="setSandboxTestStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;flex:1;white-space:pre-wrap;word-break:break-word"></div>
@@ -2147,6 +2147,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   </div>
 </div>
 
+<!-- Feature flags first: the harness script below reads CREEL_FEATURES while
+     defining its tool lists, so this must already have run. -->
+<script src="creel-features.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // I18N — lightweight language system (EN / ZH)
@@ -2374,7 +2377,7 @@ const I18N = {
     'settings.clearAllConfirm2': 'Final confirmation: this will permanently erase settings, conversations, memories, skills, local files, sync config, and cached blobs. Continue?',
     'settings.clearAllFailed': 'Failed to clear local data: ',
     'settings.sandboxHeader': 'Code Sandbox',
-    'settings.sandboxHeaderHint': '(where Python/JS/Bash tools run)',
+    'settings.sandboxHeaderHint': '(where code-execution tools run)',
     'settings.sandboxEnable': 'ENABLE_SANDBOX — Enable sandbox environment for running code',
     'settings.sandboxPlatform': 'SANDBOX_PLATFORM',
     'settings.daytonaApiKey': 'DAYTONA_API_KEY',
@@ -2388,7 +2391,7 @@ const I18N = {
     'settings.daytonaAutoArchive': 'DAYTONA_AUTO_ARCHIVE_INTERVAL',
     'settings.daytonaAutoDelete': 'DAYTONA_AUTO_DELETE_INTERVAL',
     'settings.daytonaMinutes': '(min)',
-    'settings.sandboxNote': 'When remote sandbox is active, only Bash is exposed and it runs inside a Daytona Linux container. PythonExec / JSExec / NodeExec / Pyodide tools are hidden — invoke python3, node, pip, etc. via Bash. Read/Write/Edit target Daytona first; /foo.js and /home/daytona/foo.js refer to the same sandbox file. Files already mirrored from VFS are synced both ways after Bash; new sandbox files are imported only from /home/daytona/outputs. Put final results there.',
+    'settings.sandboxNote': 'When remote sandbox is active, only Bash is exposed and it runs inside a Daytona Linux container. The in-page execution tools are hidden — invoke python3, node, pip, etc. via Bash. Read/Write/Edit target Daytona first; /foo.js and /home/daytona/foo.js refer to the same sandbox file. Files already mirrored from VFS are synced both ways after Bash; new sandbox files are imported only from /home/daytona/outputs. Put final results there.',
     'settings.sandboxTest': 'Test sandbox',
     'settings.sandboxTestRunning': 'Creating sandbox and running echo + uname …',
     'settings.sandboxTestOk': 'Sandbox OK',
@@ -2837,7 +2840,7 @@ const I18N = {
     'settings.clearAllConfirm2': '最后确认：这会永久清除设置、对话、记忆、本地文件、技能、同步配置和缓存 Blob。是否继续？',
     'settings.clearAllFailed': '清除本地数据失败：',
     'settings.sandboxHeader': '代码沙箱',
-    'settings.sandboxHeaderHint': '（Python/JS/Bash 工具的执行环境）',
+    'settings.sandboxHeaderHint': '（代码执行工具的运行环境）',
     'settings.sandboxEnable': 'ENABLE_SANDBOX — 启用沙箱环境运行代码',
     'settings.sandboxPlatform': 'SANDBOX_PLATFORM — 沙箱平台',
     'settings.daytonaApiKey': 'DAYTONA_API_KEY — Daytona API 密钥',
@@ -2851,7 +2854,7 @@ const I18N = {
     'settings.daytonaAutoArchive': 'DAYTONA_AUTO_ARCHIVE_INTERVAL — 自动归档间隔',
     'settings.daytonaAutoDelete': 'DAYTONA_AUTO_DELETE_INTERVAL — 自动删除间隔（归档后）',
     'settings.daytonaMinutes': '（分钟）',
-    'settings.sandboxNote': '启用远程沙箱后，仅暴露 Bash，运行在 Daytona Linux 容器内；PythonExec / JSExec / NodeExec / Pyodide 工具会被隐藏 —— 通过 Bash 调用 python3 / node / pip 等。Read/Write/Edit 优先操作 Daytona；/foo.js 与 /home/daytona/foo.js 指向同一个沙箱文件。已从 VFS 镜像到沙箱的文件会在 Bash 后双向同步；沙箱新建文件仍只从 /home/daytona/outputs 导入。最终结果请输出到该目录。',
+    'settings.sandboxNote': '启用远程沙箱后，仅暴露 Bash，运行在 Daytona Linux 容器内；页内执行工具会被隐藏 —— 通过 Bash 调用 python3 / node / pip 等。Read/Write/Edit 优先操作 Daytona；/foo.js 与 /home/daytona/foo.js 指向同一个沙箱文件。已从 VFS 镜像到沙箱的文件会在 Bash 后双向同步；沙箱新建文件仍只从 /home/daytona/outputs 导入。最终结果请输出到该目录。',
     'settings.sandboxTest': '测试沙箱',
     'settings.sandboxTestRunning': '正在创建沙箱并运行 echo + uname …',
     'settings.sandboxTestOk': '沙箱可用',
@@ -4411,13 +4414,18 @@ function flushRender(el) {
   _renderPendingMap.clear();
 }
 
+// The Python paragraph is composed, not written inline: with the python flag
+// off there is no PythonExec to describe, and a prompt that describes a tool
+// the model cannot call spends context teaching it a dead path.
+const PYTHON_EXEC_SEMANTICS = `- PythonExec runs Python in-browser (Pyodide WASM) against the shared filesystem — use normal paths directly (open(), pathlib, glob). For binary data use workspacefs.read_bytes/write_bytes. Only libraries that require a real native /tmp path need workspacefs.materialize_to_tmp(...) and workspacefs.persist_tmp_file(...). micropip installs pure-Python packages only. A helper module workspace_cli (and /__internal__/workspace_cli.py) covers higher-level file operations. Writes target the shared filesystem directly — there is no separate project copy to sync later.
+`;
+
 const DEFAULT_SYSTEM = `You are a powerful agentic AI coding assistant running in a browser-based virtual sandbox.
 
 EXECUTION SEMANTICS (sandbox-specific behavior the schemas do not tell you):
-- PythonExec runs Python in-browser (Pyodide WASM) against the shared filesystem — use normal paths directly (open(), pathlib, glob). For binary data use workspacefs.read_bytes/write_bytes. Only libraries that require a real native /tmp path need workspacefs.materialize_to_tmp(...) and workspacefs.persist_tmp_file(...). micropip installs pure-Python packages only. A helper module workspace_cli (and /__internal__/workspace_cli.py) covers higher-level file operations. Writes target the shared filesystem directly — there is no separate project copy to sync later.
-- JSExec is browser JavaScript, NOT Node: vfsRead/vfsWrite (text), vfsReadBinary/vfsWriteBinary (binary), vfsStat, console.log(), fetch(). Node APIs and package scripts belong in NodeExec.
+${CREEL_FEATURES.python ? PYTHON_EXEC_SEMANTICS : '- There is no Python runtime in this harness. PythonExec does not exist — do not plan around it.\n'}- JSExec is browser JavaScript, NOT Node: vfsRead/vfsWrite (text), vfsReadBinary/vfsWriteBinary (binary), vfsStat, console.log(), fetch(). Node APIs and package scripts belong in NodeExec.
 - NodeExec is a separate Node WebContainer that does not see VFS files: pass explicit sync_in paths to copy files in and sync_out paths to copy results back. Defaults to ESM (import); module_type "commonjs" only when you need require(). Do not assume npm dependencies exist — sync the project files and install inside NodeExec first. For long installs/builds set timeout_ms explicitly (up to 1200000).
-- Tool routing: PythonExec for data processing, file generation and automation; JSExec for light browser-side scripts; NodeExec for Node APIs and package scripts; Read/Write/Edit/Glob/Grep for file work; Bash only when a real shell is exposed. For larger tasks keep reusable scripts as files (e.g. under /outputs/scripts) instead of long inline one-offs.
+- Tool routing: ${CREEL_FEATURES.python ? 'PythonExec for data processing, file generation and automation; ' : ''}JSExec for data processing and light browser-side scripts; NodeExec for Node APIs and package scripts; Read/Write/Edit/Glob/Grep for file work; Bash only when a real shell is exposed. For larger tasks keep reusable scripts as files (e.g. under /outputs/scripts) instead of long inline one-offs.
 - Filesystem: shared paths (/src, /outputs, /skills/<name>) are the single source of truth. Read is for text files — a binary file returns placeholder text, not real content. Grep skips binaries; Bash may inspect names and sizes. Keep ad-hoc scripts out of /skills/... — skills directories are reserved for installed skill assets.
 
 YOUR HARNESS — creel: a static browser page running parallel agent loops. Every in-page MCP server is live in your tool list; the families are:
@@ -6313,6 +6321,9 @@ async function ensurePyodideLoaders(withTimeout, initRun) {
 }
 
 async function ensurePyodide() {
+  // Refuse before the loader is injected — a disabled runtime must cost zero
+  // network, not a cancelled 10MB download.
+  if (!CREEL_FEATURES.python) throw new Error(featureDisabledError('PythonExec'));
   // Capture the run that triggered this load up front; all progress updates route
   // to it so the bar stays in the initiating conversation across the long awaits.
   const initRun = currentRunContext;
@@ -13309,7 +13320,13 @@ function rebuildToolDefs(headId = activeEntryId, options = {}) {
   // Runtime gating happens inside each tool handler (executeTool returns an Error
   // string when the tool is unavailable). The toolsGrid UI applies its own visibility
   // filter so the user only sees cards for currently-usable tools.
-  allToolsAnthropic = [...BASE_TOOLS_ANTHROPIC, ...PYODIDE_NATIVE_TOOLS];
+  // Feature-flagged tools are dropped here rather than gated per-call: a tool
+  // in the array is a tool the model will try. The flag cannot change during a
+  // session, so the array stays byte-stable for prompt caching either way.
+  allToolsAnthropic = [
+    ...BASE_TOOLS_ANTHROPIC.filter(t => featureAllowsTool(t.name)),
+    ...(CREEL_FEATURES.python ? PYODIDE_NATIVE_TOOLS : []),
+  ];
   skillToolHandlers = {};
   for (const st of getAllSkillTools()) {
     if (st.handler) skillToolHandlers[st.name] = st.handler;
@@ -13339,6 +13356,7 @@ function isToolVisibleInUi(toolName) {
   if (toolName === 'SwarmSpawn' || toolName === 'SwarmStatus' || toolName === 'SwarmAbort' || toolName === 'SwarmHandoff') return !!swarmSettings.enabled;
   if (toolName === 'RoleManager') return !!swarmSettings.enabled && !!swarmSettings.roleManagerEnabled;
   if (toolName === 'bb_write' || toolName === 'bb_read' || toolName === 'bb_list' || toolName === 'bb_post_task' || toolName === 'bb_claim') return !!swarmSettings.enabled;
+  if (!featureAllowsTool(toolName)) return false;
   const _remote = isRemoteSandbox();
   if (toolName === 'Bash') return _remote;
   if (_remote && (toolName === 'PythonExec' || toolName === 'JSExec' || toolName === 'NodeExec')) return false;
@@ -13380,6 +13398,11 @@ async function executeTool(name, input) {
     }
     logMemEntry('read', `Tool: ${name}`);
     flashTool(name, run);
+    // A flagged-off tool is not in the schema list, so reaching here means the
+    // model invented the call (or replayed it from older history). Answer with
+    // the reason and the alternatives rather than dispatching into a runtime
+    // that is not there.
+    if (!featureAllowsTool(name)) return featureDisabledError(name);
     switch (name) {
       case 'Read': return await toolRead(input);
       case 'Write': { const r = await toolWrite(input); if (input?.file_path) markVfsTouched(input.file_path); return r; }
