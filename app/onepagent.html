@@ -5291,7 +5291,30 @@ function openConvDB() {
 }
 
 async function saveConvDataToDB(id, data) {
-  try { const db = await openConvDB(); const tx = db.transaction(CONV_STORE, 'readwrite'); tx.objectStore(CONV_STORE).put(data, id); await new Promise((r, j) => { tx.oncomplete = r; tx.onerror = j; }); } catch (e) { console.warn('Conv DB save error:', e); }
+  const _put = async (payload) => {
+    const db = await openConvDB();
+    const tx = db.transaction(CONV_STORE, 'readwrite');
+    tx.objectStore(CONV_STORE).put(payload, id);
+    await new Promise((r, j) => { tx.oncomplete = r; tx.onerror = j; });
+  };
+  try {
+    await _put(data);
+    return true;
+  } catch (e) {
+    // Non-cloneable members (functions, DOM refs, exotic classes) make the
+    // structured clone inside IDB put throw DataCloneError — which would
+    // silently kill EVERY save. Retry once with a JSON-safe strip so the
+    // plain parts (messages, tokens, vfs tree) still persist.
+    try {
+      const safe = JSON.parse(JSON.stringify(data));
+      await _put(safe);
+      console.warn('Conv DB save: non-cloneable state stripped before persisting:', e.message);
+      return true;
+    } catch (e2) {
+      console.error('Conv DB save error (conversation will NOT persist):', e2);
+      return false;
+    }
+  }
 }
 
 async function loadConvDataFromDB(id) {
@@ -5532,7 +5555,7 @@ async function saveConversationState(convId, state, options = {}) {
   // v4: only persist agent-tier roles per-conversation when the user explicitly opted in.
   // `undefined` is dropped by structured clone, so disabling perConv stops polluting historical convs.
   const swarmAgentRoles = (swarmSettings.agentRolesPersist && swarmSettings.agentRolesPerConv) ? (state.agentSwarmRoles || []) : undefined;
-  await saveConvDataToDB(convId, {
+  const ok = await saveConvDataToDB(convId, {
     conversation: conv,
     sessionEntries: state.sessionEntries || [],
     activeEntryId: state.activeEntryId || null,
@@ -5553,8 +5576,25 @@ async function saveConversationState(convId, state, options = {}) {
     ralphModeEnabled: !!state.ralphModeEnabled,
     swarmAgentRoles
   });
+  if (ok) _convSaveFailures = 0;
+  else _noteConvSaveFailure(convId);
   if (options.andRenderList) renderConvList();
   if (typeof schedulePush === 'function') schedulePush();
+}
+
+// Failed saves are usually invisible (the old code swallowed them) — track
+// them and surface a one-time warning so "conversations aren't getting saved"
+// is never a silent data-loss mystery again.
+let _convSaveFailures = 0;
+let _convSaveWarned = false;
+function _noteConvSaveFailure(convId) {
+  _convSaveFailures++;
+  if (_convSaveFailures >= 2 && !_convSaveWarned) {
+    _convSaveWarned = true;
+    try {
+      appendSystemMsg('⚠️ Conversations are NOT being saved in this browser — IndexedDB writes are failing (see console). Reloading will lose this session. Export the conversation, or open creel in a normal browser tab with storage enabled.');
+    } catch {}
+  }
 }
 
 async function saveCurrentConv(andRenderList) {
@@ -5663,7 +5703,9 @@ async function switchConversation(id, skipSave) {
   activeConvId = id;
   visibleConvId = id;
   currentRunContext = null;
-  try { localStorage.setItem('ba_active_conv', id); } catch {}
+  // Fleet tabs keep their own active-conversation pointer; only the operator's
+  // root tab may claim ba_active_conv (mirrors the guard in newConversation).
+  if (!IS_FLEET_TAB) { try { localStorage.setItem('ba_active_conv', id); } catch {} }
   // Update UI immediately (mark active in list)
   renderConvList();
   const targetRun = conversationRuns.get(id);
@@ -18700,6 +18742,18 @@ async function _migrateVfsTree(node) {
 marked.setOptions({ gfm: true, breaks: true });
 (async function init() {
   applyI18n();
+  // Ask the browser to make this origin's storage non-evictable: on mobile
+  // especially, IndexedDB/OPFS can be purged under storage pressure, which
+  // looks exactly like "conversations aren't getting saved". No-op when
+  // unsupported or denied — saves still work, just evictable.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch {}
+  // Autosave while any agent run is active: mobile browsers rarely fire
+  // beforeunload when they evict a background tab, so a long run used to be
+  // recoverable only from the last run-completion save. Now the worst case is
+  // losing the last 20 seconds, not the whole session.
+  setInterval(() => {
+    if (conversationRuns.size > 0 || currentRunContext) saveCurrentConv();
+  }, 20000);
   updateLangButton();
   initThinkingControl();
   initMediaGenerationControls();
@@ -18759,8 +18813,10 @@ marked.setOptions({ gfm: true, breaks: true });
   }
 })();
 
-// Auto-save on page unload
+// Auto-save on page unload (pagehide fires more reliably than beforeunload on
+// mobile tab eviction; the double listener is idempotent — same state saved).
 window.addEventListener('beforeunload', () => { saveCurrentConv(); });
+window.addEventListener('pagehide', () => { saveCurrentConv(); });
 
 // Boot the cron scheduler (tab-only — clears on unload)
 try {
