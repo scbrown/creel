@@ -48,7 +48,15 @@
     return new Promise((resolve, reject) => {
       const t = db.transaction('tasks', mode);
       const out = fn(t.objectStore('tasks'));
-      t.oncomplete = () => resolve(out && out.result !== undefined ? out.result : out);
+      // Unwrap by TYPE, not by whether the result happens to be undefined.
+      // The old test — `out.result !== undefined ? out.result : out` — could
+      // not tell "this fn returned a plain value" from "this get MISSED", and
+      // returned the IDBRequest itself for a miss. Callers then read a truthy
+      // object where they expected undefined: `(await getTask(id)) || {...}`
+      // never took its fallback, and storing that object threw DataCloneError
+      // into a promise nobody awaited. A miss must resolve undefined.
+      const isRequest = typeof IDBRequest !== 'undefined' && out instanceof IDBRequest;
+      t.oncomplete = () => resolve(isRequest ? out.result : out);
       t.onerror = () => reject(t.error);
     });
   }
@@ -526,7 +534,10 @@
 
     async fleet_digest(args) {
       const d = await getTask(DIGEST_ID);
-      const entries = d ? d.entries.slice(-(args.limit || 30)).reverse() : [];
+      // Belt and braces after the tx() miss bug above: its two siblings guard
+      // `d.entries` and this one did not, which is why a read-only status call
+      // was the thing that threw rather than the write that was actually wrong.
+      const entries = (d && d.entries ? d.entries : []).slice(-(args.limit || 30)).reverse();
       return {
         count: entries.length,
         hint: 'every fleet transition (claimed/done/failed/requeued/aborted) is logged here; the main tab also receives an automatic digest when work changes',

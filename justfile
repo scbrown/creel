@@ -48,6 +48,7 @@ test: check
     node tests/test-leave-warning.js
     node tests/test-features.js
     node tests/test-state.js
+    node tests/test-fleet.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
@@ -67,5 +68,6 @@ test-unit: check
 test-ui: check
     node tests/test-features.js
     node tests/test-state.js
+    node tests/test-fleet.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
