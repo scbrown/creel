@@ -153,6 +153,9 @@
       title: document.title.replace(/^⬢ /, ''),
       model: typeof API_MODEL !== 'undefined' ? API_MODEL : null,
       running,
+      device: (typeof window !== 'undefined' && window.CreelDevice)
+        ? { kind: window.CreelDevice.info().kind, tabCap: window.CreelDevice.tabCap() }
+        : null,
     };
   }
 
@@ -430,6 +433,9 @@
           settings: !!document.querySelector('#settingsModal.show'),
         },
         running: typeof getActiveConversationRun === 'function' ? !!getActiveConversationRun()?.active : null,
+        device: (typeof window !== 'undefined' && window.CreelDevice)
+          ? { kind: window.CreelDevice.info().kind, cap: window.CreelDevice.tabCap() }
+          : null,
         worldModel: 'query the quipu graph for the creel world model (search_nodes "creel world model")',
       };
     },
@@ -747,6 +753,7 @@
           { name: 'cross-tab-hands', type: 'Capability', description: 'the ui_ tools take a `tab` argument and route over the creel-ui BroadcastChannel, so any tab can operate any other tab\'s interface — parity with the operator, who could just switch windows' },
           { name: 'locator-engine', type: 'Subsystem', description: 'creel-locator.js: Playwright\'s model in the page — ARIA roles, accessible names, [ref] handles, strict resolution (ambiguity is an error), and auto-waiting on every action. The same file is injected into cross-origin pages by the bridge, so one vocabulary drives both' },
           { name: 'credential-asymmetry', type: 'Policy', description: 'an agent may WRITE a credential the operator hands it (ui_fill, ui_set_credential) and may never READ one: snapshots mark such fields write-only, results report a length not a value, ui_describe reports only whether a key exists' },
+          { name: 'device-awareness', type: 'Capability', description: 'the harness classifies the device (creel-device.js) and caps concurrent agent tabs at 3 mobile / 4 tablet / 8 desktop — mobile browsers evict background tabs; fleet_device reports the class and free slots, fleet_spawn/fleet_spawn_workers clamp to free slots and report the rest `capped`, the 🧺 fleet dashboard shows a live `📱 mobile · 2/3 tabs` chip' },
           { name: 'web-hands', type: 'Capability', description: 'the browser_ tools drive cross-origin websites via the creel bridge Chrome extension (MV3). Opt-in: without the extension only browser_status exists. The bridge refuses to act on creel\'s own origins — that is the ui server\'s job' },
           ...serverNodes,
         ],

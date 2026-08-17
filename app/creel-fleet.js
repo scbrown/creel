@@ -103,6 +103,37 @@
       });
   }
 
+  // ── device-aware concurrency caps (creel-piv) ─────────────────────
+  // Mobile browsers throttle and evict background tabs, so concurrent
+  // agent tabs are capped by device class: 3 on phones, 4 on tablets,
+  // 8 on desktop (maxConcurrent overrides 1..24). Every spawn path
+  // consults the cap; the device is surfaced via fleet_device and the
+  // dashboard chip.
+  function deviceInfo() {
+    const d = (typeof window !== 'undefined' && window.CreelDevice) ? window.CreelDevice : null;
+    return d ? d.info() : { kind: 'desktop', isMobile: false, touch: false, width: 0, ua: '' };
+  }
+  function tabCap(override) {
+    const d = (typeof window !== 'undefined' && window.CreelDevice) ? window.CreelDevice : null;
+    return d ? d.tabCap(override) : 8;
+  }
+  async function runningCount() {
+    const tasks = await allTasks();
+    const locks = await heldTaskLocks();
+    let running = 0;
+    for (const t of tasks) {
+      if (t.kind === 'lease' && t.status === 'running') running++;            // lease workers
+      else if (t.kind !== 'lease' && t.status === 'running' && locks.has(t.id)) running++; // spawned agents
+    }
+    return running;
+  }
+  async function resolveCaps(override) {
+    const d = deviceInfo();
+    const cap = tabCap(override);
+    const running = await runningCount();
+    return { device: d.kind, cap, running, free: Math.max(0, cap - running) };
+  }
+
   function spawnWindow(id, kind = 'agent') {
     const w = window.open(`onepagent.html#creel-${kind}=${id}`, '_blank');
     return !!w;
@@ -163,6 +194,9 @@
       + ' complete, call the fleet_report tool with a concise result summary in the'
       + ' `result` argument. If you cannot complete it, call fleet_report with a'
       + ' result starting "FAILED:" explaining why.'
+      + `\nDevice-aware cap: ${tabCap()} concurrent agent tabs on ${deviceInfo().kind}`
+      + ' — keep background tabs productive (record findings, push branches, let'
+      + ' the burst merge).'
       + '\nFleet comms: fleet_send({to, message}) delivers a message INTO another'
       + ' agent\'s conversation (to = task id or label, or "dashboard" for the'
       + ' operator tab); fleet_send({message}) without `to` broadcasts to every'
@@ -238,8 +272,18 @@
           task: { type: 'string', description: 'the task for the spawned agent(s)' },
           label: { type: 'string', description: 'short label shown in the dashboard and tab title' },
           count: { type: 'integer', description: 'number of agent tabs (default 1)' },
+          maxConcurrent: { type: 'integer', description: 'optional 1..24 override of the device tab cap (default: 3 mobile / 4 tablet / 8 desktop)' },
         },
         required: ['task'],
+      },
+    },
+    {
+      name: 'fleet_device',
+      description: 'Report the current device class (mobile/tablet/desktop) and the concurrent agent-tab cap it implies — mobile browsers evict background tabs, so bursts on phones are capped at 3 tabs, tablets 4, desktop 8 — plus how many of those slots are currently in use. Check this before planning a burst.',
+      inputSchema: {
+        type: 'object',
+        properties: { maxConcurrent: { type: 'integer', description: 'optional 1..24 override to evaluate' } },
+        required: [],
       },
     },
     {
@@ -358,26 +402,36 @@
 
   const impl = {
     async fleet_spawn(args) {
-      const count = Math.max(1, Math.min(8, args.count || 1));
+      const caps = await resolveCaps(args.maxConcurrent);
+      const want = Math.max(1, Math.min(8, args.count || 1));
+      // Device-aware cap: on a 3-tab phone with 2 already running, a burst
+      // of 4 spawns only the 1 free slot; the rest are reported `capped`
+      // (status stays queued — launchable from the dashboard once slots free).
+      const count = Math.max(0, Math.min(want, caps.free));
       const spawned = [];
       const queued = [];
-      for (let i = 0; i < count; i++) {
+      const capped = [];
+      for (let i = 0; i < want; i++) {
         const id = genId();
-        const label = (args.label || 'agent') + (count > 1 ? `-${i + 1}` : '');
+        const label = (args.label || 'agent') + (want > 1 ? `-${i + 1}` : '');
         const t = {
           id, label, task: args.task, status: 'queued',
           createdAt: Date.now(), result: null,
         };
         await putTask(t);
+        if (i >= count) { capped.push({ id, label }); continue; }
         if (spawnWindow(id)) { t.status = 'spawned'; await putTask(t); spawned.push({ id, label }); }
         else queued.push({ id, label });
       }
       notify();
       return {
-        spawned, queued,
-        hint: queued.length
-          ? 'popup blocked — the user can launch queued agents from the 🧺 fleet dashboard, or allow popups for this site'
-          : undefined,
+        spawned, queued, capped,
+        device: caps.device, cap: caps.cap,
+        hint: capped.length
+          ? `capped at ${caps.cap} concurrent agent tabs on ${caps.device} — ${caps.free} free; the rest stay queued until a slot frees`
+          : queued.length
+            ? 'popup blocked — the user can launch queued agents from the 🧺 fleet dashboard, or allow popups for this site'
+            : undefined,
       };
     },
 
@@ -436,7 +490,9 @@
     },
 
     async fleet_spawn_workers(args) {
-      const count = Math.max(1, Math.min(8, args.count || 2));
+      const caps = await resolveCaps(args.maxConcurrent);
+      const want = Math.max(1, Math.min(8, args.count || 2));
+      const count = Math.max(0, Math.min(want, caps.free));
       const spawned = [];
       const blocked = [];
       for (let i = 0; i < count; i++) {
@@ -446,7 +502,24 @@
       return {
         spawned: spawned.length,
         blocked: blocked.length,
-        hint: blocked.length ? 'popup blocked — allow popups for this site, or spawn workers from the 🧺 fleet dashboard' : undefined,
+        device: caps.device, cap: caps.cap,
+        hint: want > count
+          ? `capped at ${caps.cap} concurrent agent tabs on ${caps.device} (${caps.free} free) — spawned ${count} of ${want}`
+          : blocked.length
+            ? 'popup blocked — allow popups for this site, or spawn workers from the 🧺 fleet dashboard'
+            : undefined,
+      };
+    },
+
+    async fleet_device(args) {
+      const caps = await resolveCaps(args.maxConcurrent);
+      return {
+        ...caps,
+        tab_caps: (typeof window !== 'undefined' && window.CreelDevice && window.CreelDevice.TAB_CAPS)
+          || { mobile: 3, tablet: 4, desktop: 8 },
+        note: caps.free > 0
+          ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device}`
+          : `at the ${caps.cap}-tab cap on ${caps.device} — further spawns stay queued`,
       };
     },
 
@@ -772,6 +845,23 @@
     if (!overlay) return;
     const list = overlay.querySelector('#creelFleetList');
     const report = await statusReport();
+    const chip = overlay.querySelector('#creelFleetChip');
+    if (chip) {
+      const caps = await resolveCaps();
+      const atCap = caps.running >= caps.cap;
+      chip.textContent = `${caps.device === 'mobile' ? '📱' : caps.device === 'tablet' ? '📟' : '🖥️'} ${caps.device} · ${caps.running}/${caps.cap} tabs`;
+      chip.style.cssText = 'font-size:11px;border:1px solid ' + (atCap ? '#8a6a2a' : '#2a2a3a')
+        + ';border-radius:10px;padding:2px 8px;color:' + (atCap ? '#e0af68' : '#8892a4') + ';';
+      chip.title = `concurrent agent tabs capped at ${caps.cap} on ${caps.device} — ${caps.free} free`;
+    }
+    const capnote = overlay.querySelector('#creelFleetCapNote');
+    if (capnote) {
+      const caps = await resolveCaps();
+      capnote.textContent = caps.free > 0
+        ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device} (cap ${caps.cap})`
+        : `at the ${caps.cap}-tab cap on ${caps.device} — spawns stay queued until a slot frees`;
+      capnote.style.color = caps.free > 0 ? '#8892a4' : '#e0af68';
+    }
     list.textContent = '';
     if (!report.length) {
       list.appendChild(h('div', 'color:#8892a4;padding:14px;', 'No fleet tasks. Spawn below, or ask the agent to use fleet_spawn.'));
@@ -833,7 +923,9 @@
     clear.onclick = () => impl.fleet_clear().then(renderDashboard);
     const close = h('button', 'background:#2a1d1d;border:1px solid #3a2a2a;color:#ff8080;padding:3px 10px;border-radius:4px;cursor:pointer;', 'Close');
     close.onclick = () => { overlay.remove(); overlay = null; };
-    head.append(h('span', 'font-weight:600;color:#e0af68;', '🧺 fleet'), h('span', 'flex:1', ''), weft, clear, close);
+    const chip = h('span', 'font-size:11px;color:#8892a4;border:1px solid #2a2a3a;border-radius:10px;padding:2px 8px;', '…');
+    chip.id = 'creelFleetChip';
+    head.append(h('span', 'font-weight:600;color:#e0af68;', '🧺 fleet'), chip, h('span', 'flex:1', ''), weft, clear, close);
     overlay.appendChild(head);
 
     const list = h('div', 'flex:1;overflow:auto;padding:6px 12px;');
@@ -860,6 +952,9 @@
       renderDashboard();
     };
     form.append(label, task, spawn);
+    const capnote = h('div', 'font-size:11px;color:#8892a4;', '');
+    capnote.id = 'creelFleetCapNote';
+    form.appendChild(capnote);
     overlay.appendChild(form);
 
     document.body.appendChild(overlay);

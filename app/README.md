@@ -56,7 +56,14 @@ and BYO-key storage in localStorage.
   `fleet_abort` / `fleet_clear` round it out, and the 🧺 fleet button
   opens a dashboard (live agent list, results, manual spawn — also the
   user-gesture path when the popup blocker holds agent-initiated spawns;
-  or allow popups for this origin once). **The fleet shares one brain**:
+  or allow popups for this origin once). **Device-aware caps**
+  (`creel-device.js`): concurrent agent tabs are capped by device class —
+  3 on phones, 4 on tablets, 8 on desktop (`maxConcurrent` overrides
+  1..24) — because mobile browsers evict background tabs; spawns beyond
+  the cap stay queued until a slot frees, `fleet_spawn` reports the cap
+  in its result, `fleet_device` reports it on demand, and the dashboard
+  shows a live `📱 mobile · 2/3 tabs` chip that flips amber at the cap.
+  **The fleet shares one brain**:
   Web Locks elect a leader tab whose dedicated worker owns the single
   OPFS quipu store (sync access handles don't exist in SharedWorkers);
   every other tab RPCs to it over BroadcastChannel — an episode written

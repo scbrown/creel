@@ -37,15 +37,17 @@ sync-locator:
 # Everything: fast logic tests, then the real page in real Chromium.
 test: check
     node tests/test-beads.js
+    node tests/test-device.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
-# Just the fast ones — routing, the bridge handshake, and the beads store,
-# against a DOM stub / temp dir.
+# Just the fast ones — routing, the bridge handshake, the beads store, and
+# device classification, against a DOM stub / temp dir.
 test-unit: check
     node tests/test-beads.js
+    node tests/test-device.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
 
