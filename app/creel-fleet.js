@@ -839,6 +839,9 @@
       + 'font:12px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);', '🧺 fleet');
     btn.id = 'creelFleetBtn';
     btn.title = 'Fleet dashboard — agents in tabs';
+    // An emoji-prefixed label is a poor name to locate by; aria-label wins
+    // over content, so {role:'button', name:'Fleet dashboard'} finds it.
+    btn.setAttribute('aria-label', 'Fleet dashboard');
     btn.onclick = openDashboard;
     document.body.appendChild(btn);
   }

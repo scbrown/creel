@@ -106,6 +106,10 @@
     setTimeout(() => el.classList.remove(cls), 1000);
   }
 
+  // The locator engine flashes through this, so an action routed in from
+  // another tab lights up where it lands.
+  CreelSelf.flash = flash;
+
   const INTERACTIVE = 'button, a, input, textarea, select, [onclick], [role="button"]';
   document.addEventListener('click', (e) => {
     const el = e.composedPath().find((n) => n instanceof Element && n.matches?.(INTERACTIVE));
@@ -221,6 +225,36 @@
   const TAB_ARG = { type: 'string', description: 'target creel tab: a tab id from ui_tabs, an agent/task id, a fleet label, or "root" for the dispatcher. Omit to act on your own tab.' };
   const withTab = (props) => ({ ...props, tab: TAB_ARG });
 
+  // How every action tool names its target — Playwright's locator model.
+  // Give ONE of ref / role+name / text / label / placeholder / testId /
+  // selector. An ambiguous locator is an error rather than a coin flip; add
+  // `nth` or a more specific name to resolve it.
+  const LOCATOR = {
+    ref: { type: 'string', description: 'a [ref] handle from the last ui_snapshot — the most reliable target' },
+    role: { type: 'string', description: 'ARIA role: button, link, textbox, checkbox, combobox, heading, tab, dialog…' },
+    name: { type: 'string', description: 'accessible name, matched case-insensitively as a substring (pair with role)' },
+    text: { type: 'string', description: 'visible text of the element that most directly contains it' },
+    label: { type: 'string', description: 'the label of a form field' },
+    placeholder: { type: 'string', description: 'a field\'s placeholder text' },
+    testId: { type: 'string', description: 'data-testid value' },
+    selector: { type: 'string', description: 'CSS escape hatch — prefer role+name, which survives restyling' },
+    exact: { type: 'boolean', description: 'require an exact name match instead of a substring' },
+    nth: { type: 'integer', description: '0-based index when the locator legitimately matches several' },
+    timeout: { type: 'integer', description: 'milliseconds to auto-wait for the element, default 5000' },
+  };
+  const LOCATOR_KEYS = ['ref', 'role', 'name', 'text', 'label', 'placeholder', 'testId', 'selector', 'exact', 'nth'];
+
+  /** Split an action tool's arguments into a locator and the rest. */
+  function locatorOf(args) {
+    const loc = {};
+    for (const k of LOCATOR_KEYS) if (args[k] !== undefined) loc[k] = args[k];
+    return loc;
+  }
+  const L = () => {
+    if (!window.CreelLocator) throw new Error('the locator engine is not loaded in this tab (app/creel-locator.js)');
+    return window.CreelLocator;
+  };
+
   const TOOLS = [
     {
       name: 'ui_tabs',
@@ -234,8 +268,17 @@
     },
     {
       name: 'ui_snapshot',
-      description: 'List the interactive controls of a creel tab — buttons, inputs, selects — each with a label and a CSS selector that works. Call this instead of guessing selectors for ui_click / ui_fill.',
-      inputSchema: { type: 'object', properties: withTab({ filter: { type: 'string', description: 'only controls whose label/id contains this text' }, limit: { type: 'integer', description: 'default 60' } }), required: [] },
+      description: 'The accessibility tree of a creel tab: every interactive control as role + accessible name + a [ref] handle, with values, checked state and disabled state. This is the map — take a snapshot, then act by {ref} or by {role, name}. Refs stay valid until the element leaves the page.',
+      inputSchema: {
+        type: 'object',
+        properties: withTab({
+          filter: { type: 'string', description: 'only nodes whose role/name/id contains this text' },
+          all: { type: 'boolean', description: 'include landmarks, headings and text structure, not just interactive controls' },
+          limit: { type: 'integer', description: 'default 200' },
+          format: { type: 'string', enum: ['text', 'json'], description: 'indented text (default, far cheaper) or structured nodes' },
+        }),
+        required: [],
+      },
     },
     {
       name: 'ui_set_model',
@@ -285,13 +328,69 @@
     },
     {
       name: 'ui_click',
-      description: 'Click an element of a creel tab\'s interface by CSS selector, with a visible highlight. Use ui_snapshot first; prefer specific ids.',
-      inputSchema: { type: 'object', properties: withTab({ selector: { type: 'string' } }), required: ['selector'] },
+      description: 'Click a control in a creel tab. Auto-waits for it to be visible and enabled first, so there is never a reason to sleep before clicking.',
+      inputSchema: { type: 'object', properties: withTab(LOCATOR), required: [] },
     },
     {
       name: 'ui_fill',
-      description: 'Fill an input/textarea of a creel tab\'s interface by CSS selector (dispatches input+change events), with a visible highlight. Refuses API-key fields.',
-      inputSchema: { type: 'object', properties: withTab({ selector: { type: 'string' }, value: { type: 'string' } }), required: ['selector', 'value'] },
+      description: 'Set the value of a textbox in a creel tab (clears it, then writes, firing input+change so frameworks observe it). Auto-waits. Credential fields ARE writable — this is how you store a key the operator gives you — but no tool will ever read one back, and the value is not echoed in the result.',
+      inputSchema: { type: 'object', properties: withTab({ ...LOCATOR, value: { type: 'string' } }), required: ['value'] },
+    },
+    {
+      name: 'ui_type',
+      description: 'Type into a control key by key, appending rather than replacing — for inputs that react to each keystroke (autocomplete, @-mentions). Use ui_fill for plain values.',
+      inputSchema: { type: 'object', properties: withTab({ ...LOCATOR, text: { type: 'string' } }), required: ['text'] },
+    },
+    {
+      name: 'ui_press',
+      description: 'Press a key on a control, or on whatever is focused if no locator is given. Enter submits the owning form when the page does not handle it.',
+      inputSchema: { type: 'object', properties: withTab({ ...LOCATOR, key: { type: 'string', description: 'e.g. Enter, Escape, ArrowDown, a' } }), required: [] },
+    },
+    {
+      name: 'ui_hover',
+      description: 'Hover a control — reveals menus and tooltips that only appear on pointer-over.',
+      inputSchema: { type: 'object', properties: withTab(LOCATOR), required: [] },
+    },
+    {
+      name: 'ui_check',
+      description: 'Check or uncheck a checkbox/switch, idempotently — it verifies the resulting state rather than blindly toggling.',
+      inputSchema: { type: 'object', properties: withTab({ ...LOCATOR, checked: { type: 'boolean', description: 'default true' } }), required: [] },
+    },
+    {
+      name: 'ui_select_option',
+      description: 'Choose an option in a <select>, by value or by visible label.',
+      inputSchema: { type: 'object', properties: withTab({ ...LOCATOR, value: { type: 'string' }, label: { type: 'string' } }), required: [] },
+    },
+    {
+      name: 'ui_wait_for',
+      description: 'Wait until a control reaches a state: visible (default), hidden, attached, detached, or enabled. Use after an action that triggers async work instead of guessing at a delay.',
+      inputSchema: {
+        type: 'object',
+        properties: withTab({
+          ...LOCATOR,
+          state: { type: 'string', enum: ['visible', 'hidden', 'attached', 'detached', 'enabled'] },
+          timeout: { type: 'integer', description: 'milliseconds, default 5000' },
+        }),
+        required: [],
+      },
+    },
+    {
+      name: 'ui_text',
+      description: 'Read the text of a region of a creel tab — a panel, a message, a status line. Credential values are never included.',
+      inputSchema: { type: 'object', properties: withTab(LOCATOR), required: [] },
+    },
+    {
+      name: 'ui_set_credential',
+      description: 'Store a credential the operator has given you — the active provider\'s API key, or a named settings field — into this tab\'s configuration, and persist it. WRITE-ONLY BY DESIGN: nothing returns the value, and every read path (ui_snapshot, ui_text, ui_fill results) masks it. Use when the user pastes a key and asks you to set it up.',
+      inputSchema: {
+        type: 'object',
+        properties: withTab({
+          value: { type: 'string', description: 'the secret itself' },
+          field: { type: 'string', description: 'which credential: "apiKey" (the active provider, default), or the id of a settings input such as "setDaytonaApiKey"' },
+          providerId: { type: 'string', description: 'set a specific provider profile instead of the active one' },
+        }),
+        required: ['value'],
+      },
     },
   ];
 
@@ -324,54 +423,85 @@
       };
     },
 
-    /** creel's own controls, with selectors that work — the same service
-     *  browser_snapshot performs for a foreign page, done in-origin. */
+    /** The accessibility tree, with refs — creel seen the way an agent has
+     *  to see it. Text by default: the indented form costs a fraction of the
+     *  JSON and reads the same. */
     async ui_snapshot(args) {
-      const filter = (args.filter || '').toLowerCase();
-      const limit = args.limit || 60;
-      const visible = (el) => {
-        const r = el.getBoundingClientRect();
-        if (!r.width && !r.height) return false;
-        const cs = getComputedStyle(el);
-        return cs.visibility !== 'hidden' && cs.display !== 'none';
-      };
-      const uniq = (s) => { try { return document.querySelectorAll(s).length === 1; } catch { return false; } };
-      const selectorFor = (el) => {
-        if (el.id && uniq(`#${CSS.escape(el.id)}`)) return `#${CSS.escape(el.id)}`;
-        const parts = [];
-        for (let n = el; n && n.nodeType === 1 && parts.length < 5; n = n.parentElement) {
-          if (n.id && uniq(`#${CSS.escape(n.id)}`)) { parts.unshift(`#${CSS.escape(n.id)}`); break; }
-          let part = n.tagName.toLowerCase();
-          const sibs = n.parentElement ? Array.from(n.parentElement.children).filter((c) => c.tagName === n.tagName) : [];
-          if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(n) + 1})`;
-          parts.unshift(part);
-        }
-        return parts.join(' > ');
-      };
-      const labelOf = (el) => (
-        el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('title')
-        || (el.labels && el.labels[0] && el.labels[0].innerText) || (el.innerText || '').trim() || el.id || ''
-      ).replace(/\s+/g, ' ').slice(0, 70);
-
-      const out = [];
-      for (const el of document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [onclick]')) {
-        if (out.length >= limit) break;
-        if (el.type === 'hidden' || !visible(el)) continue;
-        const label = labelOf(el);
-        if (filter && !`${label} ${el.id || ''}`.toLowerCase().includes(filter)) continue;
-        const tag = el.tagName.toLowerCase();
-        const credential = /key|token|secret|passphrase/i.test(`${el.id || ''} ${el.name || ''} ${el.placeholder || ''}`);
-        out.push({
-          kind: tag === 'select' ? 'select' : (tag === 'input' || tag === 'textarea') ? `input:${el.type || 'text'}` : tag === 'a' ? 'link' : 'button',
-          label,
-          selector: selectorFor(el),
-          value: credential ? '«credential — ui_fill refuses this field»'
-            : (tag === 'input' || tag === 'textarea') ? String(el.value || '').slice(0, 60) : undefined,
-          options: tag === 'select' ? Array.from(el.options).slice(0, 20).map((o) => o.value) : undefined,
-          disabled: el.disabled || undefined,
-        });
+      const opts = { filter: args.filter || '', all: args.all === true, limit: args.limit || 200 };
+      const head = { tab: TAB_ID, role: CreelSelf.role, title: document.title.replace(/^⬢ /, '') };
+      if (args.format === 'json') {
+        const nodes = L().snapshot(opts);
+        return { ...head, count: nodes.length, nodes };
       }
-      return { tab: TAB_ID, role: CreelSelf.role, count: out.length, controls: out };
+      const text = L().snapshotText(opts);
+      return {
+        ...head,
+        snapshot: text || '(nothing interactive is visible — try all:true, or drop the filter)',
+        hint: 'act with {ref:"e12"} or {role:"button", name:"Send"}',
+      };
+    },
+
+    // ── Playwright-shaped actions. Each auto-waits for its target to be
+    //    visible and enabled; none of them needs a sleep before it.
+    async ui_click(args) { return L().actions.click(locatorOf(args), { timeout: args.timeout }); },
+    async ui_fill(args) { return L().actions.fill(locatorOf(args), String(args.value ?? ''), { timeout: args.timeout }); },
+    async ui_type(args) { return L().actions.type(locatorOf(args), String(args.text ?? ''), { timeout: args.timeout }); },
+    async ui_hover(args) { return L().actions.hover(locatorOf(args), { timeout: args.timeout }); },
+    async ui_check(args) { return L().actions.check(locatorOf(args), args.checked !== false, { timeout: args.timeout }); },
+    async ui_select_option(args) { return L().actions.selectOption(locatorOf(args), { value: args.value, label: args.label }, { timeout: args.timeout }); },
+
+    async ui_press(args) {
+      const loc = locatorOf(args);
+      const targeted = Object.keys(loc).length > 0;
+      return L().actions.press(targeted ? loc : null, args.key || 'Enter', { timeout: args.timeout });
+    },
+
+    async ui_wait_for(args) {
+      const state = args.state || 'visible';
+      const el = await L().waitFor(locatorOf(args), { state, timeout: args.timeout || 5000 });
+      return {
+        ok: true,
+        state,
+        found: !!el,
+        role: el ? L().role(el) : undefined,
+        name: el ? L().accessibleName(el) : undefined,
+      };
+    },
+
+    async ui_text(args) { return L().text(locatorOf(args)); },
+
+    /** The write half of the credential asymmetry. There is deliberately no
+     *  matching read: the operator can hand a key to an agent, and the agent
+     *  can put it where it belongs, but it cannot be got back out of creel. */
+    async ui_set_credential(args) {
+      const value = String(args.value ?? '');
+      if (!value) throw new Error('empty credential');
+      const field = args.field || 'apiKey';
+
+      if (field === 'apiKey') {
+        const store = typeof _loadProviders === 'function' ? _loadProviders() : null;
+        const providers = store && store.providers;
+        if (!providers) throw new Error('no provider profiles exist yet — open Settings and create one first (ui_open {panel:"settings"})');
+        const id = args.providerId
+          || (typeof getActiveProviderId === 'function' && getActiveProviderId())
+          || Object.keys(providers)[0];
+        const profile = providers[id];
+        if (!profile) throw new Error(`no provider profile ${JSON.stringify(id)} — ui_describe lists the active one`);
+        profile.apiKey = value;
+        if (typeof _saveProviders === 'function') _saveProviders(store);
+        if (typeof ACTIVE_PROVIDER !== 'undefined' && ACTIVE_PROVIDER && ACTIVE_PROVIDER.id === id) ACTIVE_PROVIDER.apiKey = value;
+        return { ok: true, tab: TAB_ID, field: 'apiKey', provider: profile.name || id, length: value.length, note: 'stored and persisted; it cannot be read back through any tool' };
+      }
+
+      // A named settings input (e.g. setDaytonaApiKey): write it and let the
+      // harness's own save path persist it.
+      const el = document.getElementById(field);
+      if (!el) throw new Error(`no settings field with id ${JSON.stringify(field)} — ui_snapshot lists them`);
+      flash(el, true);
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return { ok: true, tab: TAB_ID, field, length: value.length, note: 'written into the settings field; click the settings Save control to persist it' };
     },
 
     /** What this tab has been saying — the operator reads it by looking at
@@ -472,27 +602,6 @@
       return { ok: true, panel: args.panel };
     },
 
-    async ui_click(args) {
-      const el = document.querySelector(args.selector);
-      if (!el) throw new Error(`no element matches ${JSON.stringify(args.selector)}`);
-      flash(el, true);
-      el.click();
-      return { ok: true, clicked: args.selector };
-    },
-
-    async ui_fill(args) {
-      const el = document.querySelector(args.selector);
-      if (!el) throw new Error(`no element matches ${JSON.stringify(args.selector)}`);
-      const idHint = `${el.id || ''} ${el.name || ''} ${el.placeholder || ''}`.toLowerCase();
-      if (/key|token|secret|passphrase/.test(idHint)) {
-        throw new Error('refusing to fill a credential field — the user sets those in Settings directly');
-      }
-      flash(el, true);
-      el.value = args.value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return { ok: true, filled: args.selector };
-    },
   };
 
   const CreelUi = {

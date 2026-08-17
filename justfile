@@ -21,8 +21,19 @@ check:
     python3 -c "import json;json.load(open('extension/manifest.json'))"
     echo "check ok"
 
-# The seams that reading one file cannot verify: cross-tab ui calls and the
-# page↔extension bridge handshake. No dependencies, no browser.
+# Everything: fast logic tests, then the real page in real Chromium.
 test: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
+    node tests/test-ui-browser.js
+
+# Just the fast ones — routing and the bridge handshake, against a DOM stub.
+test-unit: check
+    node tests/test-ui-crosstab.js
+    node tests/test-bridge.js
+
+# The real page, in real headless Chromium, driven only through the ui tools.
+# Zero dependencies: Node's built-in WebSocket speaking CDP (tests/browser.js).
+# Skips cleanly when no Chromium is installed; CHROME_PATH overrides discovery.
+test-ui: check
+    node tests/test-ui-browser.js

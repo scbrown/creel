@@ -5,6 +5,19 @@
  * only true if a ui_ call with `tab` leaves this tab, runs against the OTHER
  * tab's DOM, and comes back. Reading one file cannot show that; two tabs can.
  *
+ * ── What belongs here, and what belongs in the browser suite ──
+ * This file owns ROUTING: which tab executes a call, who answers a roster
+ * scan, what happens to an unaddressable target, and the semantics that are
+ * pure logic (self-prompt refusal, guidance vs new turn, stop when idle).
+ * It runs against a DOM stub, which is fast and dependency-free but will
+ * always agree with you about what the DOM contains.
+ *
+ * Anything that depends on a REAL DOM — the locator engine, accessible
+ * names, auto-waiting, visibility, credential masking — is tested in
+ * tests/test-ui-browser.js against the actual page in actual Chromium,
+ * because a stub cannot honestly answer those questions. The locator engine
+ * is stubbed here as a spy, purely to prove the ROUTE reaches the right tab.
+ *
  * Run: node tests/test-ui-crosstab.js   (or `just test`)
  */
 'use strict';
@@ -58,6 +71,29 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
   sandbox.stopConversationRun = (id) => { sandbox.stopped.push(id); sandbox.runActive = false; };
   sandbox.handleInputChange = () => {};
   sandbox.handleSend = async () => { sandbox.sent.push(document.getElementById('userInput').value); };
+
+  // A spy standing in for app/creel-locator.js. The real engine needs layout
+  // and computed styles, which a stub cannot honestly provide — it is
+  // exercised for real in tests/test-ui-browser.js. Here it only has to
+  // record WHICH TAB an action was executed in.
+  sandbox.locatorCalls = [];
+  const record = (action) => async (loc, ...rest) => {
+    sandbox.locatorCalls.push({ action, loc, rest });
+    return { ok: true, action, tabTitle: document.title };
+  };
+  sandbox.CreelLocator = {
+    actions: {
+      click: record('click'), fill: record('fill'), type: record('type'),
+      hover: record('hover'), check: record('check'), selectOption: record('selectOption'),
+      press: record('press'),
+    },
+    snapshot: () => [],
+    snapshotText: () => `snapshot of ${document.title}`,
+    text: async (loc) => ({ text: `text of ${document.title}` }),
+    waitFor: async () => null,
+    role: () => 'button',
+    accessibleName: () => 'stub',
+  };
 
   vm.createContext(sandbox);
   vm.runInContext(SELF_JS, sandbox);
@@ -197,39 +233,45 @@ const check = async (name, fn) => {
     assert.strictEqual(again.stopped, false);
   });
 
-  await check('ui_snapshot returns usable selectors for the other tab', async () => {
-    const s = await alpha.call('ui_snapshot', { tab: 'bob1' });
-    const byId = Object.fromEntries(s.controls.map((c) => [c.selector, c]));
-    assert.ok(byId['#userInput'], 'found the chat input by id');
-    assert.ok(byId['#sendBtn'], 'found the send button by id');
-    assert.strictEqual(byId['#sendBtn'].kind, 'button');
+  await check('ui_snapshot routed to a tab describes THAT tab', async () => {
+    const mine = await alpha.call('ui_snapshot');
+    const theirs = await alpha.call('ui_snapshot', { tab: 'bob1' });
+    assert.match(mine.snapshot, /dashboard/);
+    assert.match(theirs.snapshot, /bobbin/, 'the remote tab took its own snapshot');
+    assert.strictEqual(theirs._tab, theirs.tab);
   });
 
-  await check('ui_snapshot masks credential fields instead of echoing them', async () => {
-    betaEls.key.value = 'sk-secret';
-    const s = await alpha.call('ui_snapshot', { tab: 'bob1' });
-    const k = s.controls.find((c) => c.selector === '#setApiKey');
-    assert.ok(k, 'the key field is listed');
-    assert.doesNotMatch(k.value, /sk-secret/, 'its value is not echoed');
+  await check('every action tool routes to the addressed tab, not the caller', async () => {
+    const cases = [
+      ['ui_click', { role: 'button', name: 'Send' }, 'click'],
+      ['ui_fill', { selector: '#userInput', value: 'x' }, 'fill'],
+      ['ui_type', { selector: '#userInput', text: 'x' }, 'type'],
+      ['ui_hover', { role: 'button' }, 'hover'],
+      ['ui_check', { role: 'checkbox' }, 'check'],
+      ['ui_select_option', { role: 'combobox', value: 'v' }, 'selectOption'],
+      ['ui_press', { key: 'Enter' }, 'press'],
+    ];
+    for (const [tool, args, action] of cases) {
+      const before = alpha.sandbox.locatorCalls.length;
+      await alpha.call(tool, { ...args, tab: 'bob1' });
+      assert.strictEqual(alpha.sandbox.locatorCalls.length, before, `${tool} must not run in the calling tab`);
+      const landed = beta.sandbox.locatorCalls.at(-1);
+      assert.strictEqual(landed.action, action, `${tool} landed as ${action} in the bobbin`);
+    }
   });
 
-  await check('ui_snapshot filter narrows the list', async () => {
-    const s = await alpha.call('ui_snapshot', { tab: 'bob1', filter: 'send' });
-    assert.ok(s.controls.length >= 1 && s.controls.every((c) => /send/i.test(`${c.label} ${c.selector}`)));
+  await check('the locator is passed through intact, and `tab` is stripped from it', async () => {
+    await alpha.call('ui_click', { tab: 'bob1', role: 'button', name: 'Settings', nth: 2, exact: true });
+    const { loc } = beta.sandbox.locatorCalls.at(-1);
+    assert.deepStrictEqual({ ...loc }, { role: 'button', name: 'Settings', nth: 2, exact: true });
+    assert.strictEqual(loc.tab, undefined, '`tab` is routing, not part of the locator');
   });
 
-  await check('ui_fill refuses a credential field in a remote tab too', async () => {
-    await assert.rejects(
-      () => alpha.call('ui_fill', { tab: 'bob1', selector: '#setApiKey', value: 'sk-leak' }),
-      /credential/,
-    );
-    assert.notStrictEqual(betaEls.key.value, 'sk-leak');
-  });
-
-  await check('ui_fill works on an ordinary remote field', async () => {
-    const r = await alpha.call('ui_fill', { tab: 'bob1', selector: '#userInput', value: 'typed remotely' });
-    assert.strictEqual(r.ok, true);
-    assert.strictEqual(betaEls.input.value, 'typed remotely');
+  await check('an action with no tab runs locally', async () => {
+    const before = beta.sandbox.locatorCalls.length;
+    await alpha.call('ui_click', { role: 'button', name: 'Send' });
+    assert.strictEqual(alpha.sandbox.locatorCalls.at(-1).action, 'click');
+    assert.strictEqual(beta.sandbox.locatorCalls.length, before, 'the other tab was not touched');
   });
 
   await check('an unknown tab fails with a pointer to ui_tabs, not a hang', async () => {

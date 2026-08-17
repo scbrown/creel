@@ -203,6 +203,7 @@
     const btn = el('button', {
       id: 'creelGraphBtn',
       title: 'Explore the in-page quipu knowledge graph',
+      'aria-label': 'Knowledge graph explorer',
       style: 'position:fixed;bottom:76px;right:16px;z-index:9999;background:#1d1d2e;color:#8be9fd;'
         + 'border:1px solid #2a2a3a;border-radius:18px;padding:7px 14px;cursor:pointer;'
         + 'font:12px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);',
