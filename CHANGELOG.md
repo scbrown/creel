@@ -4,6 +4,28 @@ All notable changes land directly on `main`. Format: date, then grouped changes.
 
 ## 2026-08-18 (later)
 
+### Compaction forks a thread instead of rewriting one (creel-7xu)
+Compaction spliced its summary back into the SAME conversation, so the
+transcript you were reading was rewritten underneath you — the detail gone,
+the thread you returned to not the thread you left, and no way back to what
+was actually said.
+
+It now forks. The summary opens a new thread; the original is left whole as
+the record. The new thread carries the VFS, because `newConversation()` resets
+it and a fork that loses the FILES panel loses the agent's workspace. It is
+titled `continued: <parent>` so the lineage is visible in the list. A
+`compaction` session entry with no prior chain already projects to the leading
+"[Conversation Summary] … continue from where we left off" message, so the
+forked thread needs no special case anywhere else.
+
+An auto-compaction fires from inside the agent loop, where a run owns its DOM
+and abort controller and is keyed by conversation id. That run cannot be moved
+mid-turn, so an auto-compaction still compacts in place — the model needs a
+smaller context *now* or the turn cannot continue — and the fork is queued and
+performed in the loop's teardown once nothing is running. Settings has an
+opt-out; forking is the default.
+
+
 ### The interface stops shouting (creel-hkl, creel-d0d, creel-ovp, creel-jpi, creel-xeg)
 - **Rules first** — `docs/ui.md`. Capability is not a button; an active mode is
   always visible; a destructive action is never more prominent than its

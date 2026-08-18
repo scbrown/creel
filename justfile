@@ -51,6 +51,7 @@ test: check
     node tests/test-fleet.js
     node tests/test-sw.js
     node tests/test-render.js
+    node tests/test-compact.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js
 
@@ -73,5 +74,6 @@ test-ui: check
     node tests/test-fleet.js
     node tests/test-sw.js
     node tests/test-render.js
+    node tests/test-compact.js
     node tests/test-ui-browser.js
     node tests/test-bridge-browser.js

@@ -157,6 +157,9 @@ function openSettingsModal() {
   document.getElementById('setMemAutoExtract').checked = !!mem.autoExtract;
   document.getElementById('setMemMaxRecall').value = String(Math.max(0, mem.maxRecall | 0) || MEM_DEFAULTS.maxRecall);
   const st = (typeof CreelState !== 'undefined' ? CreelState.loadCfg() : null) || {};
+  // Compaction forks by default; the box reflects the opt-out (creel-7xu).
+  const _cfSet = document.getElementById('setCompactForks');
+  if (_cfSet) _cfSet.checked = (loadSettings() || {}).compactForksThread !== false;
   document.getElementById('setStateEnabled').checked = !!st.enabled;
   document.getElementById('setStateOwner').value = st.owner || '';
   document.getElementById('setStateRepo').value = st.repo || 'creel-state';
@@ -623,6 +626,9 @@ async function saveSettings() {
     taskNotifications: { enabled: taskNotificationsEnabled },
     memory: { enabled: memEnabled, autoExtract: memAutoExtract, maxRecall: memMaxRecall, extractionModel: prevMem.extractionModel || '' }
   };
+  // creel-7xu: forking is the default, so only an explicit uncheck is stored.
+  const _cf = document.getElementById('setCompactForks');
+  if (_cf) settings.compactForksThread = !!_cf.checked;
   saveSettingsToStorage(settings);
   ralphModeEnabled = settings.ralph.enabled;
   renderRalphButton();

@@ -629,6 +629,11 @@ async function _runAgentLoop(userText, options = {}) {
       saveCurrentConv(true);
     }
     syncLegacyRunFlags(); updateButtons();
+    // An auto-compaction during this turn compacted in place, because the
+    // model needed a smaller context to continue. Now that nothing is running,
+    // the fork it queued can happen (creel-7xu).
+    try { if (typeof forkAfterRunIfPending === 'function') forkAfterRunIfPending(); }
+    catch (e) { console.warn('compaction fork failed', e); }
     const visibleRun = getActiveConversationRun();
     setStatus(visibleRun?.active ? 'running' : 'ready', visibleRun?.active ? (visibleRun.statusText || t('status.streaming')) : t('status.ready'));
     renderRalphButton(); updateMemoryUI();

@@ -558,6 +558,94 @@ function selectRecentEntriesByTokenBudget(entries, budgetTokens) {
   return { keptEntries: entries.filter(entry => selected.has(entry)), usedTokens: used };
 }
 
+/* ── Compaction forks a thread (creel-7xu) ────────────────────────
+ *
+ * Compaction used to splice the summary back into the SAME conversation, so
+ * the transcript you were reading got rewritten underneath you: the detail
+ * gone, no way back to what was actually said. A compact is for continuing
+ * without the weight, not for destroying the record.
+ *
+ * So it forks. The summary opens a NEW thread and the original is left exactly
+ * as it was. Two details make this more than calling newConversation():
+ *
+ *  - The VFS comes along. newConversation() resets it, and a fork that loses
+ *    the FILES panel loses the agent's workspace — the files are the work.
+ *  - A `compaction` session entry with no prior chain projects to exactly the
+ *    leading "[Conversation Summary] … continue from where we left off"
+ *    message (see buildProjectedConversation), so the new thread needs no
+ *    special case anywhere else. It is an ordinary thread that happens to
+ *    start with a summary.
+ */
+function compactionForksThread() {
+  const s = loadSettings() || {};
+  return s.compactForksThread !== false;      // opt out, not opt in
+}
+
+/** Fork the current thread into a new one seeded with `summary`.
+ *  Returns the new conversation id, or null if it could not fork. */
+function forkThreadFromSummary(summary, meta = {}) {
+  if (!summary) return null;
+  // Capture before newConversation() clears them.
+  const carriedVfs = vfs;
+  const carriedCwd = cwd;
+  const parentId = activeConvId;
+  const parentMeta = convHistory.find((c) => c.id === parentId);
+  const parentTitle = (parentMeta && parentMeta.title) || 'thread';
+
+  newConversation(false);                     // saves the parent, then switches
+
+  vfs = carriedVfs;                           // the workspace follows the fork
+  cwd = carriedCwd;
+  if (typeof renderFileTree === 'function') { try { renderFileTree(); } catch { /* panel closed */ } }
+
+  appendSessionEntry('compaction', {
+    summary,
+    firstKeptEntryId: null,                   // nothing precedes it here
+    forkedFrom: parentId,
+    forkedFromTitle: parentTitle,
+    tokensBefore: meta.tokensBefore,
+    trigger: meta.trigger || 'manual',
+    compactedEntryCount: meta.compactedEntryCount,
+  });
+  rebuildConversation();
+
+  // Name it so the lineage is visible in the list rather than implied.
+  const newMeta = convHistory.find((c) => c.id === activeConvId);
+  if (newMeta) {
+    newMeta.title = `continued: ${parentTitle}`.slice(0, 80);
+    newMeta.titleSource = 'compaction';
+    newMeta.forkedFrom = parentId;
+  }
+
+  appendSystemMsg(`Continued from "${parentTitle}" — the full thread is still in your list.`);
+  logMemEntry('compact', `Forked a new thread from the summary; "${parentTitle}" left intact`);
+  if (typeof renderConvList === 'function') { try { renderConvList(); } catch { /* list not mounted */ } }
+  saveCurrentConv();
+  updateMemoryUI();
+  return activeConvId;
+}
+
+/* A run owns its DOM and abort controller and is keyed by conversation id, so
+ * it cannot be moved to another thread mid-turn. An auto-compaction therefore
+ * compacts in place (the model needs a smaller context NOW, or the turn cannot
+ * continue) and leaves the fork here for the loop to perform when it ends. */
+let pendingCompactionFork = null;
+
+function takePendingCompactionFork() {
+  const p = pendingCompactionFork;
+  pendingCompactionFork = null;
+  return p;
+}
+
+/** Called from the agent loop's teardown, once nothing is running. */
+function forkAfterRunIfPending() {
+  const p = takePendingCompactionFork();
+  if (!p || !compactionForksThread()) return null;
+  if (hasAnyConversationRunning()) { pendingCompactionFork = p; return null; }
+  if (activeConvId !== p.convId) return null;   // the operator moved on; leave it
+  return forkThreadFromSummary(p.summary, p.meta);
+}
+
 async function compactMemory(options = {}) {
   const run = currentRunContext;
   rebuildConversation();
@@ -633,6 +721,22 @@ async function compactMemory(options = {}) {
   logMemEntry('compact', `Compacted ${toCompact.length} messages → summary; kept ${keptEntries.length}`);
   appendSystemMsg(`Compacted ${toCompact.length} messages.`, run);
   updateMemoryUI();
+
+  // Fork, if the operator has not opted out. With nothing running this happens
+  // now; during a run it waits for the turn to finish, because the run cannot
+  // change conversation underneath itself.
+  if (compactionForksThread()) {
+    const forkMeta = {
+      trigger: options.trigger || 'manual',
+      tokensBefore: options.snapshot?.totalEstimatedTokens ?? contextTokens,
+      compactedEntryCount: toCompact.length,
+    };
+    if (run || hasAnyConversationRunning()) {
+      pendingCompactionFork = { summary, meta: forkMeta, convId: activeConvId };
+    } else {
+      forkThreadFromSummary(summary, forkMeta);
+    }
+  }
 }
 
 function flashTool(name, run = currentRunContext) {

@@ -1190,6 +1190,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <details class="settings-group">
         <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg> <span data-i18n="settings.stateHeader">State Repo</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.stateHeaderHint">(a private GitHub repo you own)</span></summary>
       <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.stateDesc">Config, conversations, skills, memory and the quipu knowledge graph, pushed to a private repo as one commit. Uses the same GitHub token as the github_* tools. The repo must be private \u2014 creel refuses to push state to a public one.</div>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setCompactForks" style="width:auto;margin:0"> <span data-i18n="settings.compactForks">Compacting starts a new thread (the original is kept whole)</span></label>
       <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setStateEnabled" style="width:auto;margin:0"> <span data-i18n="settings.stateEnable">Use the state repo as this browser's sync destination</span></label>
       <div style="display:flex;gap:8px">
         <div style="flex:1">
