@@ -23,6 +23,11 @@ function shouldDefaultCollapseDir(path) {
   return normPath(path) === '/skills';
 }
 
+/* Every row carries role="button" and an aria-label. The FILES tree is where
+ * an agent checks its own output before pushing it, and a `<div onclick=...>`
+ * has the role `generic` — invisible to ui_snapshot, unresolvable by
+ * ui_click. The checkbox is named for its path for the same reason: an
+ * unnamed checkbox in a list of twenty is a coin flip. */
 function renderFileTree() {
   if (currentRunContext && !isRunVisible(currentRunContext)) return;
   const el = document.getElementById('fileTree');
@@ -36,7 +41,7 @@ function renderFileTree() {
       const indent = Math.min(d, 5);
       const sel = feSelected.has(fp) ? ' selected' : '';
       const checkedAttr = feSelected.has(fp) ? ' checked' : '';
-      const checkbox = `<input type="checkbox" class="fe-check" data-path="${esc(fp)}"${checkedAttr} onclick="feToggleSelect(event,'${esc(fp)}')">`;
+      const checkbox = `<input type="checkbox" class="fe-check" data-path="${esc(fp)}" aria-label="Select ${esc(fp)}"${checkedAttr} onclick="feToggleSelect(event,'${esc(fp)}')">`;
       if (ch.type === 'dir') {
         if (!seenDirs.has(fp)) {
           if (shouldDefaultCollapseDir(fp)) collapsedDirs.add(fp);
@@ -44,11 +49,11 @@ function renderFileTree() {
           seenDirs.add(fp);
         }
         const open = !collapsedDirs.has(fp);
-        items.push(`<div class="fe-item dir indent-${indent}${sel}" data-path="${esc(fp)}" onclick="feToggleDir('${esc(fp)}')" oncontextmenu="feCtx(event,'${esc(fp)}','dir')">${checkbox}<span class="arrow ${open ? 'open' : ''}">&#x25B6;</span><span class="icon">${open ? iconHtml('i:folder-open') : iconHtml('i:folder')}</span><span class="name">${esc(nm)}</span></div>`);
+        items.push(`<div class="fe-item dir indent-${indent}${sel}" data-path="${esc(fp)}" role="button" tabindex="0" aria-label="Folder ${esc(nm)}" onclick="feToggleDir('${esc(fp)}')" oncontextmenu="feCtx(event,'${esc(fp)}','dir')">${checkbox}<span class="arrow ${open ? 'open' : ''}">&#x25B6;</span><span class="icon">${open ? iconHtml('i:folder-open') : iconHtml('i:folder')}</span><span class="name">${esc(nm)}</span></div>`);
         if (open) walk(ch, fp, d + 1);
       } else {
         const act = currentViewFile === fp ? ' active' : '';
-        items.push(`<div class="fe-item indent-${indent}${act}${sel}" data-path="${esc(fp)}" onclick="openFileViewer('${esc(fp)}')" oncontextmenu="feCtx(event,'${esc(fp)}','file')" draggable="true" ondragstart="feStartDrag(event,'${esc(fp)}')">${checkbox}<span class="arrow"></span><span class="icon">${iconHtml(getFileIcon(nm))}</span><span class="name">${esc(nm)}</span></div>`);
+        items.push(`<div class="fe-item indent-${indent}${act}${sel}" data-path="${esc(fp)}" role="button" tabindex="0" aria-label="${esc(nm)}" onclick="openFileViewer('${esc(fp)}')" oncontextmenu="feCtx(event,'${esc(fp)}','file')" draggable="true" ondragstart="feStartDrag(event,'${esc(fp)}')">${checkbox}<span class="arrow"></span><span class="icon">${iconHtml(getFileIcon(nm))}</span><span class="name">${esc(nm)}</span></div>`);
       }
     }
   })(vfs, '', 0);

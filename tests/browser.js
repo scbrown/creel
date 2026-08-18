@@ -182,7 +182,10 @@ class Browser {
 
   static available() { return !!findChrome(); }
 
-  static async launch({ root, extension }) {
+  /** `window` is a "W,H" string. The default headless window is 800x600, which
+   *  puts creel in its mobile layout — fine for most tests, wrong for any test
+   *  about the desktop panels, which behave differently below 1024px. */
+  static async launch({ root, extension, window }) {
     const chrome = findChrome();
     if (!chrome) throw new Error('no Chromium found — set CHROME_PATH');
     const { server, port } = await serve(root);
@@ -191,6 +194,7 @@ class Browser {
       '--headless=new', '--remote-debugging-port=0', '--no-sandbox', '--disable-gpu',
       '--disable-dev-shm-usage', `--user-data-dir=${userDataDir}`,
     ];
+    if (window) args.push(`--window-size=${window}`);
     if (extension) {
       args.push(`--disable-extensions-except=${extension}`, `--load-extension=${extension}`);
     }

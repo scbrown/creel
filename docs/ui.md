@@ -1,8 +1,8 @@
 # creel's interface rules
 
 *2026-08-18. Status: adopted — tokens live in `app/harness.css`, the shell uses
-them. Enforced by review and by the accessible-name test in
-`tests/test-ui-browser.js`, not yet by a linter.*
+them. The naming rules are enforced by `tests/test-ui-browser.js` and
+`tests/test-ui-surfaces.js`; the token rules by review, not yet by a linter.*
 
 creel's interface grew by accretion. Inline styles everywhere, ad-hoc hex
 colours beside CSS variables, a dozen font sizes, arbitrary paddings — so every
@@ -102,6 +102,37 @@ it looks like. A `<select>` is named for the choice it makes, never after its
 current option. And a control that is hidden by disclosure must be genuinely
 hidden — the `hidden` attribute, not `display:none` alone — so the interface an
 agent describes is the interface the operator is looking at.
+
+Four corollaries, each of which cost a real bug before it became a rule
+(`tests/test-ui-surfaces.js` now holds all four):
+
+- **A glyph is not a name.** Content beats `title` in the naming order, so a
+  button whose text is `×` is *named* `×` — and the page had several, mutually
+  indistinguishable. The conversation search box was worse: wrapped in a
+  `<label>` that also contained the clear button, it was named `×` too. Give
+  every symbol control an explicit `aria-label`, and translate it —
+  `data-i18n-aria-label` exists for exactly that, because a page in Chinese
+  whose controls answer only to English names is half-translated.
+- **A clickable `<div>` is not a control.** Its role is `generic`, which never
+  appears in a snapshot and cannot be resolved. The conversation list and the
+  FILES tree were both built this way: fine for the operator, and to every
+  agent, empty. `role="button"`, `tabindex="0"`, `aria-label`.
+- **Nothing important may live behind CSS `:hover` alone.** `:hover` answers to
+  a real pointer; `ui_hover` dispatches events. A control revealed at
+  `opacity: 0` is one the operator can use and no agent ever can — so recess it
+  instead (the per-conversation delete sits at `0.28`).
+- **A modal announces itself and can always be closed.** `role="dialog"` named
+  by its own heading through `aria-labelledby`, a close control named for what
+  it closes, and Escape doing exactly what that control does. A modal an agent
+  can open but not close wedges the tab: every later click lands on the
+  overlay. `nameModal()` in `app/harness/26-layout.js` applies this to every
+  `.modal-overlay` from the markup that is already there, so the tenth modal
+  gets it without remembering to.
+
+A name that identifies its target will often contain another control's name —
+a conversation row and its own delete button both carry the thread's title.
+That is not a defect to design away; the locator refuses the ambiguity and
+names the candidates, and `exact: true` resolves it.
 
 ## What this does not cover
 

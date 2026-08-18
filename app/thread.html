@@ -643,8 +643,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
         <div class="conv-search" id="convSearchRow">
           <label class="conv-search-box" for="convSearchInput">
             <svg class="ui-icon" aria-hidden="true"><use href="#i-search"></use></svg>
-            <input id="convSearchInput" type="search" placeholder="Search conversations..." data-i18n-placeholder="conv.searchPh" oninput="onConvSearchInput(this.value)">
-            <button class="conv-search-clear" id="convSearchClear" onclick="clearConvSearch()" title="Clear search" data-i18n-title="conv.clearSearch">&times;</button>
+            <input id="convSearchInput" type="search" aria-label="Search conversations" data-i18n-aria-label="conv.openSearch" placeholder="Search conversations..." data-i18n-placeholder="conv.searchPh" oninput="onConvSearchInput(this.value)">
+            <button class="conv-search-clear" id="convSearchClear" onclick="clearConvSearch()" aria-label="Clear search" data-i18n-aria-label="conv.clearSearch" title="Clear search" data-i18n-title="conv.clearSearch">&times;</button>
           </label>
         </div>
         <div class="conv-list-meta" id="convListMeta"></div>
@@ -698,9 +698,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       <div class="section-title" onclick="toggleSection(this)">
         <span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></span> <span data-i18n="section.files">FILES</span></span>
         <span style="display:flex;gap:2px" onclick="event.stopPropagation()">
-          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feExpandAll()" title="Expand all" data-i18n-title="action.expandAll">&#x25BC;</button>
-          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feCollapseAll()" title="Collapse all" data-i18n-title="action.collapseAll">&#x25B6;</button>
-          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feNewFileIn('/')" title="New file" data-i18n-title="action.newFile">+</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feExpandAll()" aria-label="Expand all" data-i18n-aria-label="action.expandAll" title="Expand all" data-i18n-title="action.expandAll">&#x25BC;</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feCollapseAll()" aria-label="Collapse all" data-i18n-aria-label="action.collapseAll" title="Collapse all" data-i18n-title="action.collapseAll">&#x25B6;</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feNewFileIn('/')" aria-label="New file" data-i18n-aria-label="action.newFile" title="New file" data-i18n-title="action.newFile">+</button>
           <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feNewFolderIn('/')" title="New folder" data-i18n-title="action.newFolder"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></button>
         </span>
         <span class="section-arrow">&#x25BC;</span>

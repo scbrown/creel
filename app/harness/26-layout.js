@@ -514,6 +514,68 @@ function toggleMoreMenu() {
   setTimeout(() => document.addEventListener('click', away), 0);
 }
 
+/* Modals: announced as dialogs, and always closable.
+ *
+ * Nine modal overlays are written by hand in thread.html, each one a
+ * `.modal-overlay > .modal > .modal-header > h3` with a `×` beside the
+ * heading. Left alone that gives an agent a dialog with no role, no name and
+ * a close button called "×" — nine of them, indistinguishable. And a
+ * modal an agent can open but not close wedges the tab: every later click
+ * lands on the overlay.
+ *
+ * So name them from the markup that is already there, rather than hand-writing
+ * an aria-label onto each one and hoping the tenth modal remembers. The
+ * heading is the name (by aria-labelledby, so it stays true when the language
+ * switches or when the title changes between "Add Hook" and "Edit Hook"), and
+ * the close control is named for what it closes. */
+function nameModal(overlay) {
+  const modal = overlay.querySelector('.modal');
+  const h3 = overlay.querySelector('.modal-header h3');
+  if (!modal || !h3) return;
+  if (!h3.id) h3.id = (overlay.id || 'modal') + 'Heading';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', h3.id);
+  const close = overlay.querySelector('.modal-close');
+  // The heading leads with a decorative <svg> and some headings carry a
+  // subtitle; the first few words are the part that identifies the dialog.
+  const title = (h3.innerText || h3.textContent || '').replace(/\s+/g, ' ').trim()
+    .split(' ').slice(0, 4).join(' ');
+  if (close && title) close.setAttribute('aria-label', 'Close ' + title);
+}
+
+function nameModals() {
+  for (const overlay of document.querySelectorAll('.modal-overlay')) nameModal(overlay);
+}
+
+try {
+  nameModals();
+  // Headings are rewritten as a modal opens (Add Hook / Edit Hook) and when
+  // the language toggles, so re-name on the class change that shows one.
+  const modalNamer = new MutationObserver((records) => {
+    for (const r of records) if (r.target.classList.contains('show')) nameModal(r.target);
+  });
+  for (const overlay of document.querySelectorAll('.modal-overlay')) {
+    modalNamer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+  }
+} catch (e) { console.warn('modal naming failed', e); }
+
+/* Escape closes the top-most open modal by pressing its own close control, so
+ * Escape and the × mean exactly the same thing — including for the
+ * modals where closing is a decision (rejecting a plan, cancelling a request
+ * for input) rather than a dismissal. Skips an event another handler has
+ * already claimed: the @-mention dropdown and the inline rename inputs both
+ * take Escape first, and both preventDefault when they do. */
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  const open = [...document.querySelectorAll('.modal-overlay.show')].pop();
+  if (!open) return;
+  const close = open.querySelector('.modal-close');
+  if (!close) return;
+  e.preventDefault();
+  close.click();
+});
+
 /* Starting a new thread is the most common intent here, so it also gets a
  * keyboard route that does not depend on the left panel being open
  * (creel-jpi). Ctrl/Cmd+Shift+O — the same shape other tools use for it. */

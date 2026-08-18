@@ -642,7 +642,11 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .conv-item.dragging { opacity: 0.45; }
 .conv-item .c-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conv-item .c-time { font-size: 9px; color: var(--text-dim); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
-.conv-item .c-del { font-size: 10px; color: var(--text-dim); padding: 1px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.15s; cursor: pointer; }
+/* Faint, not absent. An agent cannot produce a CSS :hover state — ui_hover
+   dispatches mouse events, and :hover answers only to a real pointer — so a
+   control revealed at `opacity: 0` is one the operator can use and no agent
+   ever can. Recessed until hover, present always. */
+.conv-item .c-del { font-size: 10px; color: var(--text-dim); padding: 1px 4px; border-radius: 3px; opacity: 0.28; transition: opacity 0.15s; cursor: pointer; }
 .conv-item:hover .c-del { opacity: 1; }
 .conv-item .c-del:hover { color: var(--accent-red); background: rgba(255,68,102,0.1); }
 .conv-item.in-folder { padding-left: 22px; }

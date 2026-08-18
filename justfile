@@ -54,6 +54,7 @@ test: check
     node tests/test-compact.js
     node tests/test-quipu.js
     node tests/test-ui-browser.js
+    node tests/test-ui-surfaces.js
     node tests/test-bridge-browser.js
 
 # Just the fast ones — routing, the bridge handshake, the beads store, and
@@ -78,4 +79,5 @@ test-ui: check
     node tests/test-compact.js
     node tests/test-quipu.js
     node tests/test-ui-browser.js
+    node tests/test-ui-surfaces.js
     node tests/test-bridge-browser.js

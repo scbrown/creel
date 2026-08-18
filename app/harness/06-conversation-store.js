@@ -262,11 +262,16 @@ function renderConvList(options = {}) {
     const msgs = Number(c.messageCount || 0);
     const dragAttrs = opts.searchMode ? 'draggable="false"' : `draggable="true" ondragstart="onConvDragStart(event,'${esc(c.id)}')" ondragend="onConvDragEnd(event)"`;
     const runDot = running ? '<span class="c-run" title="Running"></span>' : '';
-    return `<div class="conv-item${active}${running}${inFolder}" data-id="${esc(c.id)}" ${dragAttrs} onclick="switchConversation('${esc(c.id)}')" oncontextmenu="showConvCtxMenu(event,'${esc(c.id)}')">
+    // role + aria-label, not just onclick: a div that responds to a click has
+    // the role `generic`, which never appears in ui_snapshot and cannot be
+    // resolved by ui_click. Without these the whole conversation list is,
+    // to every agent, an empty list — while looking fine to a human.
+    const label = esc(c.title || 'New Chat');
+    return `<div class="conv-item${active}${running}${inFolder}" data-id="${esc(c.id)}" role="button" tabindex="0" aria-label="${label}" ${dragAttrs} onclick="switchConversation('${esc(c.id)}')" oncontextmenu="showConvCtxMenu(event,'${esc(c.id)}')">
       ${runDot}
       <span class="c-title">${esc(c.title || 'New Chat')}</span>
       <span class="c-time">${msgs}msg ${time}</span>
-      <span class="c-del" onclick="event.stopPropagation();deleteConversation('${esc(c.id)}')" title="Delete">&times;</span>
+      <span class="c-del" role="button" tabindex="0" aria-label="Delete conversation ${label}" onclick="event.stopPropagation();deleteConversation('${esc(c.id)}')" title="Delete">&times;</span>
     </div>`;
   };
   const folderIds = new Set(convFolders.map(f => f.id));
@@ -287,7 +292,7 @@ function renderConvList(options = {}) {
       total += children.length;
       const visible = children.slice(0, Math.max(0, convRenderLimit - shown));
       if (!visible.length) continue;
-      parts.push(`<div class="conv-folder open" data-folder-id="${esc(f.id)}" oncontextmenu="showFolderCtxMenu(event,'${esc(f.id)}')">
+      parts.push(`<div class="conv-folder open" data-folder-id="${esc(f.id)}" role="group" aria-label="Folder ${esc(f.name)}" oncontextmenu="showFolderCtxMenu(event,'${esc(f.id)}')">
         <span class="cf-arrow">&#x25B6;</span>
         <span class="cf-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></span>
         <span class="cf-name">${esc(f.name)}</span>
@@ -307,12 +312,12 @@ function renderConvList(options = {}) {
     for (const f of convFolders) {
       const children = convHistory.filter(c => c.folderId === f.id);
       const openCls = f.expanded ? ' open' : '';
-      parts.push(`<div class="conv-folder${openCls}" data-folder-id="${esc(f.id)}" onclick="toggleConvFolder('${esc(f.id)}')" oncontextmenu="showFolderCtxMenu(event,'${esc(f.id)}')" ondragover="onConvDragOver(event,this)" ondragleave="onConvDragLeave(event,this)" ondrop="onConvDropToFolder(event,'${esc(f.id)}')">
+      parts.push(`<div class="conv-folder${openCls}" data-folder-id="${esc(f.id)}" role="button" tabindex="0" aria-label="Folder ${esc(f.name)}" onclick="toggleConvFolder('${esc(f.id)}')" oncontextmenu="showFolderCtxMenu(event,'${esc(f.id)}')" ondragover="onConvDragOver(event,this)" ondragleave="onConvDragLeave(event,this)" ondrop="onConvDropToFolder(event,'${esc(f.id)}')">
         <span class="cf-arrow">&#x25B6;</span>
         <span class="cf-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></span>
         <span class="cf-name">${esc(f.name)}</span>
         <span class="cf-count">${children.length}</span>
-        <span class="cf-add" title="${esc(t('action.newConv'))}" onclick="event.stopPropagation();newConversation(false,'${esc(f.id)}')"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg></span>
+        <span class="cf-add" role="button" tabindex="0" aria-label="New conversation in ${esc(f.name)}" title="${esc(t('action.newConv'))}" onclick="event.stopPropagation();newConversation(false,'${esc(f.id)}')"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg></span>
       </div>`);
       if (f.expanded && shown < convRenderLimit) {
         const visible = children.slice(0, convRenderLimit - shown);

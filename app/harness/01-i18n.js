@@ -988,6 +988,14 @@ function applyI18n(root) {
     if (!key) return;
     el.setAttribute('placeholder', t(key, el.getAttribute('placeholder') || ''));
   });
+  // An accessible name is how an agent addresses a control, so it has to
+  // follow the language like every other visible string — a page in Chinese
+  // whose controls still answer only to English names is half-translated.
+  scope.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    if (!key) return;
+    el.setAttribute('aria-label', t(key, el.getAttribute('aria-label') || ''));
+  });
   document.documentElement.setAttribute('lang', CURRENT_LANG === 'zh' ? 'zh-CN' : 'en');
 }
 function setLanguage(lang) {
