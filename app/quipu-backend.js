@@ -106,6 +106,7 @@
                     bound: !!this.provider,
                     build: window.CREEL_BUILD || 'unknown',
                     server: this.provider?.serverInfo?.name,
+                    store: this.storeScope || undefined,
                     storage: this.storageInfo || undefined,
                     group: tabGroupId() || undefined,
                     groupHint: 'episodes this tab ingests are stamped with this group_id unless '
@@ -252,10 +253,34 @@
     });
   }
 
+  /* One tab hosts the store; every other tab reaches it over this channel.
+   * That makes the leader's liveness the whole fleet's liveness, and the
+   * leader is simply whichever tab opened first — usually the operator's root
+   * tab, the very one they close, reload, or send through ui_reload when an
+   * update lands. Every agent tab is a client, so "quipu broke" is, from a
+   * non-root tab, almost always "the tab hosting it went away".
+   *
+   * Three things make that survivable, and all three are about knowing rather
+   * than waiting:
+   *
+   *   1. A leader announces itself when it starts serving, and answers pings.
+   *      A client never has to guess whether anyone is listening.
+   *   2. Every request is ACKed the moment a leader picks it up. An
+   *      un-ACKed request provably never reached anyone, so re-sending it is
+   *      safe even when the op writes.
+   *   3. When a new leader announces itself, un-ACKed requests are re-sent to
+   *      it at once, rather than sitting out a timeout that was only ever a
+   *      guess. */
+  function announceLeader() { RPC_BC.postMessage({ type: 'leader', tab: TAB_ID }); }
+
   function serveFleet() {
     RPC_BC.addEventListener('message', async (e) => {
       const m = e.data;
+      if (m?.type === 'ping') { announceLeader(); return; }
       if (m?.type !== 'req' || !workerRpc) return;
+      // ACK first: it is what tells the client its request was picked up, and
+      // therefore what tells it that re-sending would double-apply a write.
+      RPC_BC.postMessage({ type: 'ack', reqId: m.reqId });
       try {
         const result = await workerRpc(m.op, m.args);
         RPC_BC.postMessage({ type: 'res', reqId: m.reqId, ok: true, result });
@@ -263,30 +288,87 @@
         RPC_BC.postMessage({ type: 'res', reqId: m.reqId, ok: false, error: err.message || String(err) });
       }
     });
+    announceLeader();
   }
 
   const clientPending = new Map();
   RPC_BC.addEventListener('message', (e) => {
     const m = e.data;
+    if (m?.type === 'leader') {
+      // A leader is up — possibly a new one, after a takeover. Anything we
+      // sent that nobody ever acknowledged went to a tab that is now gone;
+      // send it again. Anything already ACKed is not re-sent: whether that
+      // write landed before the old leader died is not knowable from here,
+      // and repeating it would be the worse of the two guesses.
+      for (const [reqId, p] of clientPending) if (!p.acked) p.send(reqId);
+      return;
+    }
+    if (m?.type === 'ack') {
+      const p = clientPending.get(m.reqId);
+      if (p) p.acked = true;
+      return;
+    }
     if (m?.type !== 'res') return;
     const p = clientPending.get(m.reqId);
     if (!p) return;
     clientPending.delete(m.reqId);
     m.ok ? p.resolve(m.result) : p.reject(new Error(m.error));
   });
+
   let clientSeq = 0;
   function fleetRpc(op, args) {
     return new Promise((resolve, reject) => {
       const reqId = `${TAB_ID}-${clientSeq++}`;
-      clientPending.set(reqId, { resolve, reject });
+      const send = (id) => RPC_BC.postMessage({ type: 'req', reqId: id, op, args });
+      const entry = { resolve, reject, acked: false, send, op, args };
+      clientPending.set(reqId, entry);
+
+      // No ACK soon after sending means no leader picked it up: either none
+      // is serving yet (the lock is taken microseconds before serveFleet
+      // registers) or the one that was has died. Both are fixed by asking
+      // again, and asking costs nothing.
+      const nudge = setInterval(() => {
+        if (!clientPending.has(reqId)) { clearInterval(nudge); return; }
+        if (entry.acked) { clearInterval(nudge); return; }
+        RPC_BC.postMessage({ type: 'ping' });
+        send(reqId);
+      }, 400);
+
+      // The last resort, not the first: a request that has been ACKed and is
+      // still unanswered after this is one whose leader died mid-call, and
+      // the caller needs to hear that rather than hang forever.
       setTimeout(() => {
-        if (clientPending.has(reqId)) {
-          clientPending.delete(reqId);
-          reject(new Error('fleet store RPC timeout — leader tab may have just died; retry'));
-        }
+        clearInterval(nudge);
+        if (!clientPending.has(reqId)) return;
+        clientPending.delete(reqId);
+        reject(new Error(entry.acked
+          ? 'fleet store RPC: the tab hosting the quipu store died mid-call, so whether '
+            + 'this operation applied is unknown — read back before retrying a write'
+          : 'fleet store RPC: no tab is hosting the quipu store (none answered in 20s)'));
       }, 20000);
-      RPC_BC.postMessage({ type: 'req', reqId, op, args });
+
+      send(reqId);
     });
+  }
+
+  /* This tab just became the leader. A BroadcastChannel never delivers to the
+   * context that posted, so requests this tab still has in flight can never be
+   * answered by the server it is now running: re-sending them forever would
+   * hang, and so would waiting. Take them over directly.
+   *
+   * An ACKed request is the one case that cannot be re-run — the leader that
+   * ACKed it is gone, and whether its write landed died with it. That is not
+   * something to wait 20 seconds to discover, so say it now. */
+  function adoptPendingLocally() {
+    for (const [reqId, p] of [...clientPending]) {
+      clientPending.delete(reqId);
+      if (p.acked) {
+        p.reject(new Error('fleet store RPC: the tab hosting the quipu store died mid-call, so '
+          + 'whether this operation applied is unknown — read back before retrying a write'));
+      } else {
+        workerRpc(p.op, p.args).then(p.resolve, p.reject);
+      }
+    }
   }
 
   /** Try to become the store owner right now. Resolves true and holds the
@@ -308,9 +390,33 @@
     navigator.locks.request(STORE_LOCK, async () => {
       console.log('creel: quipu store leader died — this tab is taking over');
       workerRpc = bootDedicatedWorker();
-      await workerRpc('init');
-      serveFleet();
-      return new Promise(() => {});     // hold while this tab lives
+      try {
+        // Serve before init finishes, not after. The worker handles its
+        // messages in order, so a request forwarded now simply queues behind
+        // the init — whereas a request arriving during the await would be
+        // dropped by a leader that is not listening yet, and that gap is
+        // exactly where the clients are sitting right this second.
+        serveFleet();
+        CreelQuipu.storeScope = 'fleet-host (after takeover)';
+        await workerRpc('init');
+        adoptPendingLocally();
+        announceLeader();
+      } catch (e) {
+        /* A takeover can fail — most plausibly because the dead host's worker
+         * has not released its OPFS access handle yet, and only one may be
+         * open at a time. Holding the lock with a worker that never
+         * initialised is the worst outcome available: this tab would answer
+         * for a store it does not have, and every other tab would believe it.
+         * So drop the broken worker and return, which releases the lock, then
+         * queue again — the next attempt is a fresh worker against a handle
+         * that has had time to close. */
+        console.warn('creel: quipu store takeover failed, requeuing', e);
+        workerRpc = null;
+        CreelQuipu.storeScope = 'fleet-client (takeover failed, requeued)';
+        setTimeout(queueTakeover, 250);
+        return;                          // releases the lock for someone else
+      }
+      return new Promise(() => {});      // hold while this tab lives
     }).catch(() => {});
   }
 
@@ -321,7 +427,7 @@
   CreelQuipu.ensureWasm = function ensureWasm(force = false) {
     if (this.provider) return Promise.resolve(true);
     if (bootPromise && !force) return bootPromise;
-    bootPromise = (async () => {
+    const thisBoot = bootPromise = (async () => {
       /* Is the bundle actually deployed? Worth answering, because "wasm bundle
        * missing" is a far better error than whatever a failed dynamic import
        * says. But two things about how this asks:
@@ -364,6 +470,10 @@
         scope = 'tab';
       }
 
+      // Live, because it changes: a client that later wins the takeover lock
+      // is hosting the store, while serverInfo.name still says the word it
+      // was bound with. Status reads this, not the name.
+      CreelQuipu.storeScope = scope;
       const { persistence } = await rpc('init');
       const EXPORT_TOOL = {
         name: 'quipu_export_db',
@@ -417,6 +527,12 @@
     })();
     bootPromise.catch((e) => {
       CreelQuipu.lastBootError = e && e.message ? e.message : String(e);
+      // Drop the failed promise rather than caching it. A boot that failed
+      // because no tab was hosting the store yet is a transient fact about
+      // one moment, but an unforced ensureWasm() returns the memoized
+      // promise — so without this, the graph explorer and the world-model
+      // seeder keep replaying a failure that stopped being true seconds ago.
+      if (bootPromise === thisBoot) bootPromise = null;
       console.warn('creel: quipu-wasm init failed, staying unbound', e);
     });
     return bootPromise;
