@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v19';
+const CACHE_VERSION = 'creel-v22';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -26,6 +26,9 @@ const APP_SHELL = [
   './local-backend.js',
   './quipu-explorer.js',
   './creel-fleet.js',
+  './creel-fleet-log.js',
+  './creel-fleet-tools.js',
+  './creel-fleet-dashboard.js',
   './creel-self.js',
   './browser-backend.js',
   './measurement-backend.js',
@@ -73,6 +76,8 @@ const APP_SHELL = [
   './beads-backend.js',
   './creel-device.js',
   './creel-locator.js',
+  './creel-ui-tools.js',
+  './creel-world-model.js',
 ];
 
 const CDN_PREFETCH = [];
@@ -82,6 +87,9 @@ const NETWORK_FIRST = [
   './local-backend.js',
   './quipu-explorer.js',
   './creel-fleet.js',
+  './creel-fleet-log.js',
+  './creel-fleet-tools.js',
+  './creel-fleet-dashboard.js',
   './creel-self.js',
   './browser-backend.js',
   './measurement-backend.js',
@@ -121,6 +129,8 @@ const NETWORK_FIRST = [
   './beads-backend.js',
   './creel-device.js',
   './creel-locator.js',
+  './creel-ui-tools.js',
+  './creel-world-model.js',
 ];
 const NETWORK_FIRST_URLS = new Set(NETWORK_FIRST.map((p) => new URL(p, self.location.href).href));
 const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));

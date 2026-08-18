@@ -28,7 +28,13 @@ const path = require('node:path');
 const assert = require('node:assert');
 const { makeDocument, El } = require('./dom-stub.js');
 
-const SELF_JS = fs.readFileSync(path.join(__dirname, '..', 'app', 'creel-self.js'), 'utf8');
+/* The self layer is three files (creel-hun) and the order between them is
+ * load-bearing: creel-self.js creates the collections the tools file fills,
+ * and the world-model file boots the server once both exist. Loading them in
+ * page order is the point — a test that loaded only one would prove the parts
+ * parse, not that they still add up to a server. */
+const SELF_PARTS = ['creel-self.js', 'creel-ui-tools.js', 'creel-world-model.js']
+  .map((f) => fs.readFileSync(path.join(__dirname, '..', 'app', f), 'utf8'));
 
 /** Boot one creel tab: its own window/document/sessionStorage, the host's
  *  real BroadcastChannel (what the tabs genuinely share). */
@@ -96,7 +102,7 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
   };
 
   vm.createContext(sandbox);
-  vm.runInContext(SELF_JS, sandbox);
+  for (const src of SELF_PARTS) vm.runInContext(src, sandbox);
 
   const server = registered.get('inpage:ui');
   assert.ok(server, 'the ui server registered itself');

@@ -2,6 +2,35 @@
 
 All notable changes land directly on `main`. Format: date, then grouped changes.
 
+## 2026-08-18
+
+### Fleet leasing has a test, and it found a bug (creel-psr)
+`tests/test-fleet.js` opens real tabs and lets them race — real Web Locks,
+real IndexedDB, real BroadcastChannel, only `handleSend` stubbed. It pins
+claim exclusivity, death-releases-lease with the survivor picking it up,
+heartbeat-stale requeue while the lock is still held, drain, and the work log.
+
+On its first run it found that the task store's `tx()` helper resolved a
+**missing** `get` to the `IDBRequest` object instead of `undefined`, so every
+`(await getTask(id)) || {default}` skipped its fallback. The fleet work log
+was the casualty: its record could never be created, and `fleet_digest` had
+never returned a single entry — silently, because each failure was an
+unawaited rejection.
+
+### The oversized modules are split (creel-hun)
+`creel-self.js` (805) → `creel-self.js` 301 + `creel-ui-tools.js` 423 +
+`creel-world-model.js` 155. `creel-fleet.js` (1150) → 562 +
+`creel-fleet-tools.js` 422 + `creel-fleet-dashboard.js` 207 +
+`creel-fleet-log.js` 82. No file in `app/` now exceeds 600 lines.
+
+Unlike the harness split, these were IIFEs, so this is a restructure rather
+than a move: each group shares one documented internal namespace
+(`CreelSelfInternal`, `CreelFleetInternal`) instead of dropping ~40 names into
+the global scope. What deliberately does *not* cross the fleet seam is the
+lease state — `currentLeaseTaskId` and its lock resolver only stay in
+agreement if one place changes them, so the seam carries `heldLease()` and
+`releaseLease()` and the variables stay in the claim loop.
+
 ## 2026-08-17 (later)
 
 ### Python disabled behind a feature flag (creel-yon)

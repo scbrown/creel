@@ -128,9 +128,21 @@ async function untilAny(pages, fn, message, timeout = 30000) {
   const fleet = fleetCall(dash);
 
   // A queue left over from a previous run would make every count below a lie.
-  await dash.evaluate(() => new Promise((resolve) => {
-    const req = indexedDB.deleteDatabase('creel_fleet');
-    req.onsuccess = req.onerror = req.onblocked = () => resolve(true);
+  // Clear the store in a transaction rather than deleting the database: the
+  // fleet module holds its connection open for the life of the tab, so a
+  // deleteDatabase blocks behind it and every later IDB call queues behind
+  // the delete that never completes.
+  await dash.evaluate(() => new Promise((resolve, reject) => {
+    const open = indexedDB.open('creel_fleet');
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains('tasks')) { db.close(); resolve(true); return; }
+      const tx = db.transaction('tasks', 'readwrite');
+      tx.objectStore('tasks').clear();
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+    open.onerror = () => reject(open.error);
   }));
 
   let taskId = null;
@@ -263,6 +275,25 @@ async function untilAny(pages, fn, message, timeout = 30000) {
     const requeue = d.entries.find((e) => (e.event || e.kind || e.type) === 'requeued');
     assert.match(JSON.stringify(requeue), /lock-released|heartbeat-stale/,
       'the log records a requeue without saying why');
+  });
+
+  await check('the dashboard still mounts and shows the queue', async () => {
+    // The overlay lives in its own file since creel-hun and is the one third
+    // of the fleet layer with no other coverage. It is also the operator's
+    // only way back when a popup blocker eats an agent-initiated spawn, so
+    // "it renders and can see the tasks" is worth a line.
+    const mounted = await dash.evaluate(() => {
+      const btn = document.getElementById('creelFleetBtn');
+      if (!btn) return { error: 'no fleet button in the page' };
+      btn.click();
+      return { opened: !!document.querySelector('#creelFleetOverlay, .creel-fleet-overlay') };
+    });
+    assert.ok(!mounted.error, mounted.error);
+    // The core repaints the panel through a hook the dashboard publishes,
+    // because the core must not know whether a dashboard exists. If the hook
+    // is missing the panel silently stops refreshing on fleet comms.
+    assert.strictEqual(await dash.evaluate(() => typeof window.CreelFleetInternal.repaintDashboard),
+      'function', 'the dashboard never published its repaint hook to the seam');
   });
 
   for (const p of [alpha, beta, dash]) if (p) await p.close().catch(() => {});

@@ -2,7 +2,7 @@
 
 *2026-08-17. Status: implemented — `app/creel-locator.js`, `app/creel-self.js`,
 `app/browser-backend.js`, `app/state-backend.js`, `extension/`. Verified by
-`just test` (157 assertions, 88 of them against real Chromium).*
+`just test` (166 assertions, 97 of them against real Chromium).*
 
 An agent harness is defined less by what its agents can *think* than by what
 they can *touch*. creel gives its agents two sets of hands, split by which side
