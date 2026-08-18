@@ -1,5 +1,12 @@
 # Agent Instructions
 
+> `CLAUDE.md` is a symlink to this file — Claude Code reads one name, Codex and
+> the rest read the other, and there is only ever one set of instructions to
+> keep true. Edit this file. If a tool ever rewrites `CLAUDE.md` by replacing
+> it rather than writing through it (`bd setup` regenerating the managed blocks
+> is the likely culprit), the symlink is gone and the two will start to drift:
+> restore it with `ln -sf AGENTS.md CLAUDE.md`.
+
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
 > **Architecture in one line:** Issues live in a local Dolt database
@@ -12,6 +19,104 @@ This project uses **bd** (beads) for issue tracking. Run `bd prime` for full wor
 > for the one-screen overview and anti-patterns (don't treat JSONL as the
 > source of truth; don't `bd import` during normal operation; don't
 > reach for third-party Dolt hosting before trying the default).
+
+## Git workflow: main, directly
+
+**Work on `main` and push to `main`.** No feature branch, no pull request, no
+waiting to be asked. This holds for `scbrown/creel` and for its state
+repository `scbrown/creel-state`.
+
+```bash
+just check && just test     # both must pass
+git add -A && git commit    # a real message, not "wip"
+git push                    # not optional — see below
+```
+
+This repository explicitly opts into the **team-maintainer** profile described
+in the managed Beads block below, which is what that block means by "only when
+the repository explicitly opts in". So: close beads, run the quality gates,
+commit, and push as ordinary parts of doing the work.
+
+Three things this does *not* mean:
+
+- **Not "push anything".** `just check` and `just test` gate every push. A red
+  gate is a reason to fix or to revert, never a reason to push and mention it.
+- **Not "skip the message".** Direct-to-main deletes the pull request, which
+  was the place a change got explained. The commit message inherits that job:
+  say what changed and why it is right, because the log is now the only review
+  anyone gets.
+- **Not permanent.** A current instruction to hold off, work on a branch, or
+  open a PR overrides this section for as long as it stands.
+
+Work is not finished until `git push` succeeds. Leaving a green, committed
+change unpushed strands it on a machine that may not exist tomorrow — which is
+the same reason creel pushes its own state to a repository rather than trusting
+browser storage.
+
+## Build & Test
+
+No dependencies and no `node_modules` — everything runs on Node's built-ins.
+
+```bash
+just serve        # the harness at http://localhost:8420
+just check        # parse every JS file, the page's inline scripts, and the
+                  # service-worker/asset consistency check
+just test         # check, then the fast suites, then real headless Chromium
+just test-unit    # skip the browser half
+just test-ui      # only the browser half (CHROME_PATH overrides discovery)
+```
+
+Both `just check` and `just test` must pass before a push.
+
+## Architecture Overview
+
+A static page that runs agent loops in browser tabs. No server, no build step —
+`app/` is the deployable artifact.
+
+| | |
+|---|---|
+| `app/onepagent.html` | markup and an ordered stack of script tags |
+| `app/harness/01..26-*.js` | the harness itself, split out of that page |
+| `app/harness.css` | the page's stylesheet |
+| `app/creel-*.js` | creel's own layers: self/ui, fleet, locator, device |
+| `app/*-backend.js` | in-page MCP servers: quipu, github, state, beads, local, browser, measurement |
+| `app/creel-features.js` | feature flags, read before everything else |
+| `app/sw.js` | service worker; its precache list is gate-checked |
+| `extension/` | the Chrome bridge that reaches cross-origin sites |
+| `wasm/` | the quipu knowledge-graph provider, compiled to WASM |
+| `tests/` | zero-dependency; `browser.js` drives real Chromium over CDP |
+| `tools/` | `bd.js` (tracker CLI), `check-html.js`, `check-shell.js` |
+
+Agents reach every one of those surfaces through MCP tool families — `ui_*`,
+`fleet_*`, `github_*`, `state_*`, `quipu_*`, `bd_*`, `browser_*`, `local_*`,
+`bench_*`. The authoritative description of the system lives in the quipu graph
+itself (`creel-world-model-v4`), mirrored in `docs/hands.md`.
+
+## Conventions & Patterns
+
+- **Classic scripts, shared global scope.** The harness parts are not modules:
+  they share one global lexical environment, which is what lets the page's
+  inline `onclick=` handlers keep working. **Their load order is semantics** —
+  `tools/check-shell.js` fails the gate if they load out of order or if the
+  service worker does not know about one.
+- **A split IIFE gets an explicit seam.** `creel-self.js` and `creel-fleet.js`
+  share `window.CreelSelfInternal` / `window.CreelFleetInternal` with their
+  sibling files, rather than leaking their internals globally. Collections on a
+  seam are mutated in place, never reassigned, because handlers close over
+  them.
+- **Every control needs an accessible name.** Agents drive the UI by ARIA role
+  and accessible name, like a test author, never by CSS guesswork. An unnamed
+  control is unreachable; an ambiguous locator is an error, not a coin flip.
+- **Credentials go in, never out.** An agent may be handed a key and asked to
+  set it up. No read path exists: snapshots mask them, results report a length.
+- **Nothing is durable by default.** Browser storage is evictable. Work leaves
+  by `github_push`, `state_push`, or a quipu fact — see the durability rule in
+  `DEFAULT_SYSTEM`.
+- **Flags, not deletions.** A runtime being off (`app/creel-features.js`) means
+  its tools leave the model's list and its loader never runs, while the code
+  stays wired so re-enabling is one setting.
+- **No dependencies.** Tests included. If something needs a package, it is
+  probably the wrong shape for this project.
 
 ## Quick Reference
 
