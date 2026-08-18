@@ -322,8 +322,27 @@
     if (this.provider) return Promise.resolve(true);
     if (bootPromise && !force) return bootPromise;
     bootPromise = (async () => {
-      const probe = await fetch('wasm/pkg/creel_quipu_provider.js', { method: 'HEAD' });
-      if (!probe.ok) throw new Error(`wasm bundle missing (HTTP ${probe.status})`);
+      /* Is the bundle actually deployed? Worth answering, because "wasm bundle
+       * missing" is a far better error than whatever a failed dynamic import
+       * says. But two things about how this asks:
+       *
+       * GET, not HEAD. The service worker only handles GET — `if (req.method
+       * !== 'GET') return;` — so a HEAD skips the cache and goes to the
+       * network. That made the graph fail offline (and on any blip, captive
+       * portal or flaky link) even with both wasm files sitting precached: a
+       * liveness probe that defeated the cache it was meant to be checking.
+       *
+       * And a network failure here is NOT fatal. The import below is the real
+       * test; if the bundle is cached it will succeed regardless of what this
+       * probe could reach. Only a definite 404 — the server answering, saying
+       * it is not there — stops us early. */
+      try {
+        const probe = await fetch('wasm/pkg/creel_quipu_provider.js');
+        if (probe.status === 404) throw new Error('wasm bundle missing (HTTP 404)');
+      } catch (e) {
+        if (/wasm bundle missing/.test(e.message || '')) throw e;
+        // Offline or unreachable: fall through and let the import decide.
+      }
 
       const acquired = await tryAcquireStore();
       let rpc; let scope;
