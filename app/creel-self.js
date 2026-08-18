@@ -87,6 +87,69 @@
     if (CreelSelf.role === 'root') document.title = '⬢ ' + document.title;
   }
 
+  /* ── The update notice (creel-vup) ────────────────────────────────
+   *
+   * The page fires `creel-update-ready` when a newer service worker has
+   * installed, which means the bundle on the server is ahead of the one this
+   * tab is running. Nothing reloads on its own: a creel tab may be mid-turn,
+   * and a fleet worker may be holding a claimed task, so throwing the page
+   * away is the operator's call (or an agent's, via ui_reload, which saves
+   * first). This just makes the fact visible and offers the safe path.
+   */
+  let updateBanner = null;
+  function showUpdateNotice() {
+    if (updateBanner) return;
+    updateBanner = document.createElement('div');
+    updateBanner.id = 'creelUpdateBanner';
+    updateBanner.setAttribute('role', 'status');
+    updateBanner.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:14px;'
+      + 'z-index:10000;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;'
+      + 'font:12px system-ui,sans-serif;background:#1d2436;color:#cbd5e1;'
+      + 'border:1px solid #33405c;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:min(92vw,560px)';
+
+    const text = document.createElement('span');
+    text.textContent = 'A newer version of creel is deployed.';
+    updateBanner.appendChild(text);
+
+    const reload = document.createElement('button');
+    reload.type = 'button';
+    reload.textContent = 'Save state and reload';
+    reload.setAttribute('aria-label', 'Save state and reload');
+    reload.style.cssText = 'cursor:pointer;border-radius:5px;padding:4px 10px;font:inherit;'
+      + 'background:#2b3a55;color:#e2e8f0;border:1px solid #44557a';
+    reload.onclick = async () => {
+      reload.disabled = true;
+      reload.textContent = 'Saving\u2026';
+      try {
+        // The same path the agent tool takes, so the button cannot be the
+        // careless option: state first, reload second.
+        await CreelSelf.saveStateAndReload({ force: true });
+      } catch (e) {
+        reload.disabled = false;
+        reload.textContent = 'Reload anyway';
+        text.textContent = 'Could not save state: ' + ((e && e.message) || e);
+        reload.onclick = () => location.reload();
+      }
+    };
+    updateBanner.appendChild(reload);
+
+    const later = document.createElement('button');
+    later.type = 'button';
+    later.textContent = 'Later';
+    later.setAttribute('aria-label', 'Dismiss update notice');
+    later.style.cssText = 'cursor:pointer;border-radius:5px;padding:4px 10px;font:inherit;'
+      + 'background:none;color:#8892a4;border:1px solid #33405c';
+    later.onclick = () => { updateBanner.remove(); updateBanner = null; };
+    updateBanner.appendChild(later);
+
+    document.body.appendChild(updateBanner);
+  }
+  window.addEventListener('creel-update-ready', showUpdateNotice);
+  // The event may have fired before this file ran — the registration lives in
+  // the page head and the worker can install fast.
+  if (window.CREEL_UPDATE_READY) showUpdateNotice();
+  CreelSelf.showUpdateNotice = showUpdateNotice;
+
   function electRoot() {
     if (IS_AGENT_TAB || !navigator.locks) { renderBadge(); return; }
     navigator.locks.request(ROOT_LOCK, async () => {

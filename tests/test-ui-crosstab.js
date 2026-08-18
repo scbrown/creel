@@ -43,6 +43,7 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
   document.title = title;
 
   const store = new Map();
+  const winListeners = {};
   const sandbox = {
     document,
     console,
@@ -60,6 +61,15 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
     },
     localStorage: { getItem: () => null, setItem: () => {} },
     Event: class Event { constructor(type) { this.type = type; } },
+    // The window is an event target like any other. creel-self listens on it
+    // for creel-update-ready; a stub without these does not model a browser,
+    // it models a browser with one arbitrary hole in it.
+    addEventListener: (type, fn) => { (winListeners[type] = winListeners[type] || []).push(fn); },
+    removeEventListener: (type, fn) => {
+      winListeners[type] = (winListeners[type] || []).filter((f) => f !== fn);
+    },
+    dispatchEvent: (ev) => { for (const fn of winListeners[ev.type] || []) fn(ev); return true; },
+    CustomEvent: class CustomEvent { constructor(type, init) { this.type = type; this.detail = init && init.detail; } },
   };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;

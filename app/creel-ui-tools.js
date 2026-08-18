@@ -200,6 +200,43 @@
         required: ['value'],
       },
     },
+    {
+      name: 'ui_update_status',
+      description: 'Whether a newer creel bundle is deployed than the one this tab is running. '
+        + 'A static site cannot restart itself, so a long-lived tab can run an old build for days; '
+        + 'this is how you find out. Also reports whether state can be saved before reloading.',
+      inputSchema: { type: 'object', properties: { tab: TAB_ARG }, required: [] },
+    },
+    {
+      name: 'ui_reload',
+      description: 'Reload creel — saving state first. Use after ui_update_status reports an update, '
+        + 'or to recover a wedged tab. THE SAVE IS THE POINT: a creel tab holds its conversation, its '
+        + 'FILES workspace and its share of the knowledge graph in browser memory and storage, so '
+        + 'reloading without pushing discards them. Refuses by default when this tab holds a claimed '
+        + 'fleet task (call fleet_report first) or when no state repo is configured to save into.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          tab: TAB_ARG,
+          scope: {
+            type: 'string',
+            enum: ['self', 'all'],
+            description: "self (default) = this tab. all = every live creel tab, one at a time with a "
+              + 'pause between them, so a burst does not go dark at once. Each tab saves its own state.',
+          },
+          force: {
+            type: 'boolean',
+            description: 'Reload even when state cannot be saved, or when a fleet task is still held. '
+              + 'This discards work — only when the operator asked for it.',
+          },
+          stagger_ms: {
+            type: 'integer',
+            description: 'Pause between tabs when scope is "all". Default 1500.',
+          },
+        },
+        required: [],
+      },
+    },
   ];
 
   const impl = {
@@ -413,8 +450,102 @@
       return { ok: true, panel: args.panel };
     },
 
+
+    /** Is this tab behind the deployed bundle, and could it save if asked? */
+    async ui_update_status() {
+      const st = window.CreelState;
+      const configured = !!(st && st.isConfigured && st.isConfigured());
+      let lease = null;
+      try { lease = (await window.CreelFleet?.debug())?.currentLeaseTaskId || null; } catch { /* no fleet */ }
+      return {
+        updateReady: !!window.CREEL_UPDATE_READY,
+        canSaveState: configured,
+        holdsFleetTask: lease,
+        hint: window.CREEL_UPDATE_READY
+          ? 'a newer bundle is deployed; ui_reload saves state and picks it up'
+          : 'this tab is running the current bundle as far as it knows',
+      };
+    },
+
+    async ui_reload(args) {
+      const stagger = Number.isFinite(args.stagger_ms) ? Math.max(0, args.stagger_ms) : 1500;
+
+      if (args.scope === 'all') {
+        // Peers first, one at a time, this tab last — reloading ourselves
+        // first would kill the loop that is driving the rest.
+        const tabs = await roster();
+        const others = tabs.filter((t) => !t.self);
+        const reloaded = [];
+        for (const t of others) {
+          try {
+            await remoteCall(t.tab, 'ui_reload', { force: args.force, scope: 'self' });
+            reloaded.push({ tab: t.tab, label: t.label || null, ok: true });
+          } catch (e) {
+            reloaded.push({ tab: t.tab, label: t.label || null, ok: false, error: (e && e.message) || String(e) });
+          }
+          if (stagger) await new Promise((r) => setTimeout(r, stagger));
+        }
+        const self = await impl.ui_reload({ force: args.force });
+        return { scope: 'all', peers: reloaded, self };
+      }
+
+      return CreelSelf.saveStateAndReload({ force: args.force });
+    },
   };
 
+
+  /* ── Saving before reloading (creel-ick) ──────────────────────────
+   *
+   * A reload is destructive here in a way it is not for an ordinary web page.
+   * This tab holds a conversation, a FILES workspace, and whatever it has
+   * learned that has not reached the graph — all in memory and evictable
+   * browser storage. So the order is not negotiable: persist, then reload.
+   *
+   * Two refusals, both deliberate. A tab holding a claimed fleet task should
+   * end it through fleet_report rather than by vanishing, because a lease
+   * dropped by a dying tab is a requeue that looks like a crash. And with no
+   * state repo configured there is nowhere to save TO, which makes "save and
+   * reload" a promise this cannot keep — better to say so than to reload and
+   * call it saved. `force` overrides either, for an operator who means it.
+   */
+  CreelSelf.saveStateAndReload = async function saveStateAndReload(opts = {}) {
+    const out = { tab: TAB_ID, saved: false, reloading: false };
+
+    let lease = null;
+    try { lease = (await window.CreelFleet?.debug())?.currentLeaseTaskId || null; } catch { /* no fleet here */ }
+    if (lease && !opts.force) {
+      throw new Error(`this tab holds fleet task ${lease}; call fleet_report to finish it first `
+        + '(or pass force: true to reload anyway, which requeues the task as if the tab had crashed)');
+    }
+    out.heldFleetTask = lease || undefined;
+
+    const st = window.CreelState;
+    if (st && st.isConfigured && st.isConfigured()) {
+      // A spawned tab owns a slice; the operator's tab owns the shared state.
+      const scope = (CreelSelf.agentId || IS_AGENT_TAB) ? 'agent' : 'shared';
+      const reply = await st.handle({
+        jsonrpc: '2.0', id: 'reload', method: 'tools/call',
+        params: { name: 'state_push', arguments: { scope } },
+      });
+      if (reply.error) {
+        if (!opts.force) throw new Error(`state_push failed, so nothing was reloaded: ${reply.error.message}`);
+        out.saveError = reply.error.message;
+      } else {
+        out.saved = true;
+        out.savedTo = JSON.parse(reply.result.content[0].text).prefix;
+      }
+    } else if (!opts.force) {
+      throw new Error('no state repo is configured, so this tab has nowhere to save and a reload would '
+        + 'discard its conversation and workspace. Run state_configure first, or pass force: true.');
+    }
+
+    // Reload after the caller has its answer — an RPC that reloads before
+    // replying looks like a dead tab to whoever asked.
+    out.reloading = true;
+    window.__creelSuppressLeaveWarn = true;
+    setTimeout(() => location.reload(), 250);
+    return out;
+  };
 
   // Fill the collections the bus and CreelUi.handle are already holding.
   // Mutate, never reassign — see the seam comment in creel-self.js.

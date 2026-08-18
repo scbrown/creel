@@ -4,6 +4,25 @@ All notable changes land directly on `main`. Format: date, then grouped changes.
 
 ## 2026-08-18
 
+### An update now reaches the operator and the agent (creel-vup, creel-ick)
+The service-worker fix below made a pending update *detectable*; nothing
+consumed the signal. Now:
+
+- **The operator** gets a dismissible notice when a newer bundle is deployed,
+  whose primary action is *Save state and reload* — the same save-first path
+  the agent tool takes, so the button is not the careless option.
+- **An agent** gets `ui_update_status` (am I stale? can I save?) and
+  `ui_reload`. The reload saves first and **refuses** rather than quietly
+  discarding work: no state repo configured means nowhere to save, and a held
+  fleet lease should end through `fleet_report` rather than by the tab
+  vanishing, which reads to the fleet as a crash. `force` overrides both.
+- **`scope: "all"`** reloads every live creel tab over the existing cross-tab
+  bus — peers first and the caller last, staggered, since reloading the tab
+  driving the fan-out first would end it.
+
+Nothing reloads on its own. A creel tab may be mid-turn or holding a task, so
+that decision stays with the operator or an agent that saved first.
+
 ### The service worker could strand users on an old build (deploy staleness)
 `install` did `await cache.addAll(APP_SHELL)` and called `skipWaiting()` only
 afterwards. `cache.addAll` is atomic across all 71 shell URLs — including a
