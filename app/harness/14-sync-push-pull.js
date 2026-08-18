@@ -93,7 +93,7 @@ async function pushSnapshotToS3(silent) {
       `creel state: ${objectsToUpload.length} object(s), ${blobsToUpload.length} blob(s)`);
     _setProgress('Committing', 1, 1, committed ? String(committed).slice(0, 12) : '');
 
-    try { localStorage.setItem(S3_LAST_SYNC_KEY, String(Date.now())); } catch {}
+    markStateClean();
     try { localStorage.setItem(S3_LAST_PASS_HASH_KEY, passHash); } catch {}
     _updateSyncStatus();
     const totalObjs = objects.size, totalBlobs = blobs.size;
@@ -140,7 +140,7 @@ async function pullSnapshotFromS3() {
       }
       _setProgress('Applying v1 snapshot', 0, 1, '');
       await _applyV1Snapshot(v1);
-      try { localStorage.setItem(S3_LAST_SYNC_KEY, String(Date.now())); } catch {}
+      markStateClean();
       _updateSyncStatus();
       appendSystemMsg('Pulled v1 snapshot (' + (v1.conversations?.meta?.length || 0) + ' conv, ' + (v1.skills?.metadata?.length || 0) + ' skills). Push to migrate to v2.');
       _clearProgress();
@@ -219,7 +219,7 @@ async function pullSnapshotFromS3() {
     await _applyRemoteState(remote, objs, blobMap);
     _setProgress('Applying changes', 1, 1, '');
 
-    try { localStorage.setItem(S3_LAST_SYNC_KEY, String(Date.now())); } catch {}
+    markStateClean();
     const passHash = cfg.passphrase ? await _hashString(cfg.passphrase) : '';
     try { localStorage.setItem(S3_LAST_PASS_HASH_KEY, passHash); } catch {}
     _updateSyncStatus();
@@ -362,7 +362,34 @@ function toggleSyncMenu() {
     document.addEventListener('click', h);
   }, 0);
 }
+/* The unpushed marker on the Sync button.
+ *
+ * beforeunload can only raise the browser's own generic dialog — the text is
+ * not ours to write — so "you have unsaved work" has to be legible BEFORE
+ * someone reaches for the close button, not only in the prompt after. */
+function _renderDirtyIndicator() {
+  const btn = document.getElementById('syncBtn');
+  if (!btn) return;
+  const dirty = typeof stateIsDirty === 'function' && stateIsDirty();
+  let dot = btn.querySelector('.sync-dirty-dot');
+  if (dirty && !dot) {
+    dot = document.createElement('span');
+    dot.className = 'sync-dirty-dot';
+    dot.setAttribute('aria-hidden', 'true');   // the title carries the meaning
+    dot.textContent = '\u25CF';
+    dot.style.cssText = 'color:var(--accent-orange,#e39a4e);margin-left:4px;font-size:9px;line-height:1';
+    btn.appendChild(dot);
+  } else if (!dirty && dot) {
+    dot.remove();
+  }
+  btn.title = dirty
+    ? t('sync.unpushed', 'Unpushed changes — this tab holds state that has not been saved')
+    : t('btn.syncTitle', 'Cloud sync to S3-compatible bucket');
+}
+window.__creelStateChanged = _renderDirtyIndicator;
+
 function _updateSyncStatus() {
+  _renderDirtyIndicator();
   const el = document.getElementById('syncStatus');
   if (!el) return;
   const cfg = _loadS3Cfg();
@@ -391,6 +418,12 @@ async function onSyncPullClick() {
 let _s3PushTimer = null;
 let _s3PushInFlight = false;
 function schedulePush() {
+  // Called from every path that mutates local state (conversations, skills,
+  // memory), so this is where "something changed" is known — regardless of
+  // whether any auto-push is configured to act on it. Stamp first, before the
+  // early returns below, or the leave guard only ever sees changes made by
+  // operators who happen to use S3 auto-push.
+  markStateDirty();
   if (_s3PushInFlight) return;
   const cfg = _loadS3Cfg();
   if (!cfg || !cfg.autoPush || !_s3Configured(cfg)) return;

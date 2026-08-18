@@ -379,18 +379,60 @@ window.addEventListener('pagehide', () => { saveCurrentConv(); });
 // evaluates this exact source (tests/test-leave-warning.js). The app's own
 // programmatic closes (fleet abort) set window.__creelSuppressLeaveWarn.
 // BEGIN creelShouldWarnOnLeave
+/* Should closing, reloading, or navigating away be interrupted?
+ *
+ * Deliberately self-contained: this runs inside beforeunload, where nothing
+ * may await, a throw silently cancels the warning, and other modules may
+ * already be tearing down. It reads storage directly rather than calling
+ * across files for that reason.
+ *
+ * It used to warn whenever the transcript held a message, which is the wrong
+ * question — a conversation that has been pushed is not lost by closing the
+ * tab, and a prompt that fires every time teaches people to dismiss the one
+ * that matters. What is actually at stake is state that exists only here.
+ */
 window.creelShouldWarnOnLeave = function creelShouldWarnOnLeave() {
   try {
+    const ls = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+
+    // 1. Work in flight. A claimed fleet task outlives this tab's attention
+    //    but not this tab, so leaving abandons it either way.
+    if ((parseInt(ls('creel_fleet_live') || '0', 10) || 0) > 0) return true;
+
+    // 2. Is there anywhere for state to go? A state repo, or S3 sync.
+    let persists = false;
+    try {
+      const st = JSON.parse(ls('creel_state_repo') || 'null');
+      persists = !!(st && st.enabled && st.owner && st.repo);
+    } catch { /* unreadable config */ }
+    if (!persists) {
+      try {
+        const s3 = JSON.parse(ls('ba_s3_sync') || 'null');
+        persists = !!(s3 && s3.endpoint && s3.bucket && s3.accessKey && s3.secretKey);
+      } catch { /* unreadable config */ }
+    }
+
+    // 3. With somewhere to push, the question is whether anything is unpushed.
+    //    Warning about a pushed conversation is the false alarm that makes the
+    //    real one worthless.
+    if (persists) {
+      const dirty = Number(ls('creel_state_dirty_at') || 0);
+      const synced = Number(ls('ba_s3_last_sync') || 0);
+      return dirty > synced;
+    }
+
+    // 4. With nowhere to push, nothing here can be saved, so anything real in
+    //    the transcript is about to be lost.
     const chat = document.getElementById('chatMessages');
     if (chat && chat.querySelector('.msg:not(.msg-placeholder)')) return true;
-    try {
-      const live = parseInt(localStorage.getItem('creel_fleet_live') || '0', 10) || 0;
-      if (live > 0) return true;
-    } catch {}
-  } catch {}
+  } catch { /* never let the guard itself break the unload */ }
   return false;
 };
 // END creelShouldWarnOnLeave
+// Show the unpushed marker as soon as the page is up — a tab that reloads
+// with state still unpushed should say so without being clicked first.
+try { if (typeof _renderDirtyIndicator === 'function') _renderDirtyIndicator(); } catch { /* optional */ }
+
 window.addEventListener('beforeunload', (e) => {
   if (window.__creelSuppressLeaveWarn) return;
   if (!window.creelShouldWarnOnLeave()) return;

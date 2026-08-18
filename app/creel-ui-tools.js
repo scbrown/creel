@@ -460,6 +460,7 @@
       return {
         updateReady: !!window.CREEL_UPDATE_READY,
         canSaveState: configured,
+        unpushedChanges: typeof stateIsDirty === 'function' ? stateIsDirty() : null,
         holdsFleetTask: lease,
         hint: window.CREEL_UPDATE_READY
           ? 'a newer bundle is deployed; ui_reload saves state and picks it up'

@@ -18,6 +18,31 @@
 // ═══════════════════════════════════════════════════════════════════
 const S3_SYNC_KEY = 'ba_s3_sync';
 const S3_LAST_SYNC_KEY = 'ba_s3_last_sync';
+/* ── Is local state ahead of what has been pushed? ────────────────
+ *
+ * The leave guard has to answer this SYNCHRONOUSLY, inside beforeunload,
+ * where nothing may await and a throw silently cancels the warning. Comparing
+ * content hashes would be exact and is what a push does — and is far too slow
+ * to do while the tab is closing. So two timestamps: when local state last
+ * changed, and when it last reached a remote. Cheap, synchronous, and wrong
+ * only in the safe direction (a push that changed nothing still marks clean).
+ */
+const STATE_DIRTY_KEY = 'creel_state_dirty_at';
+function markStateDirty() {
+  try { localStorage.setItem(STATE_DIRTY_KEY, String(Date.now())); } catch { /* private mode */ }
+  try { window.__creelStateChanged?.(); } catch { /* indicator is optional */ }
+}
+function markStateClean() {
+  try { localStorage.setItem(S3_LAST_SYNC_KEY, String(Date.now())); } catch { /* private mode */ }
+  try { window.__creelStateChanged?.(); } catch { /* indicator is optional */ }
+}
+/** True when something changed locally since the last successful push. */
+function stateIsDirty() {
+  try {
+    const dirty = Number(localStorage.getItem(STATE_DIRTY_KEY) || 0);
+    return dirty > Number(localStorage.getItem(S3_LAST_SYNC_KEY) || 0);
+  } catch { return false; }
+}
 const S3_LAST_PASS_HASH_KEY = 'ba_s3_last_pass_hash';
 // v1 snapshot names (kept for backward-compat pull only)
 const S3_V1_JSON = 'onepagent-snapshot.json';

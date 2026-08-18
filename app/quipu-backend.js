@@ -123,6 +123,12 @@
               return fail(`quipu-wasm provider not bound (${this.lastBootError || 'boot not attempted'}); cannot call ${name}`);
             }
             const result = await this.provider.callTool(name, scopeArgs(name, args || {}));
+            // A fact written to the graph is unpushed state exactly like a
+            // conversation is: the store lives in OPFS, which is evictable and
+            // travels nowhere until state_push carries the .db. Without this
+            // the leave guard would wave through a tab whose only work this
+            // session was everything an agent learned.
+            if (WRITE_TOOLS.has(name) && typeof markStateDirty === 'function') markStateDirty();
             return reply({
               content: [{
                 type: 'text',
@@ -195,6 +201,14 @@
    * meaningful, and silently overriding it would be the bug.
    */
   const GROUPED_TOOLS = new Set(['quipu_episode', 'quipu_episodes_complete']);
+
+  /** Graph tools that change the store, so the tab has something to push. */
+  const WRITE_TOOLS = new Set([
+    'quipu_episode', 'quipu_episodes_complete', 'quipu_knot', 'quipu_set',
+    'quipu_transact', 'quipu_retract', 'quipu_retract_episode', 'quipu_datasets',
+    'quipu_overlay_create', 'quipu_overlay_write', 'quipu_propose_schema_change',
+    'quipu_accept_proposal', 'quipu_reject_proposal',
+  ]);
 
   /** This tab's stable graph group. Prefers the fleet agent id (a spawned
    *  bobbin keeps its identity across a reload) and falls back to the tab id

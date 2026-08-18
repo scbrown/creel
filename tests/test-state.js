@@ -480,6 +480,45 @@ function installFakeGitHub() {
     assert.ok(!('group_id' in seen), 'a read was silently scoped to one tab');
   });
 
+  await check('a push marks state clean, and a change marks it dirty again', async () => {
+    // This is the signal the leave guard reads, so it has to track reality:
+    // warning about state that is already pushed is the false alarm that
+    // makes the real warning worthless.
+    await state('state_push');
+    assert.strictEqual(await page.evaluate(() => stateIsDirty()), false,
+      'state is still dirty right after a successful push');
+
+    await page.evaluate(() => markStateDirty());
+    assert.strictEqual(await page.evaluate(() => stateIsDirty()), true);
+    const s = await state('state_status');
+    assert.strictEqual(s.unpushedChanges, true, 'state_status hides what the guard can see');
+
+    // And the operator can see it without asking: the Sync button is marked.
+    const marked = await page.evaluate(() => {
+      _renderDirtyIndicator();
+      const btn = document.getElementById('syncBtn');
+      return { dot: !!btn.querySelector('.sync-dirty-dot'), title: btn.title };
+    });
+    assert.strictEqual(marked.dot, true, 'nothing on screen says state is unpushed');
+    assert.match(marked.title, /unpushed/i);
+
+    await state('state_push');
+    assert.strictEqual(await page.evaluate(() => stateIsDirty()), false);
+    assert.strictEqual(await page.evaluate(() => {
+      _renderDirtyIndicator();
+      return !!document.getElementById('syncBtn').querySelector('.sync-dirty-dot');
+    }), false, 'the marker outlived the push that cleared it');
+  });
+
+  await check('an ordinary edit marks state dirty without anyone asking', async () => {
+    await state('state_push');
+    // schedulePush is what every mutation path already calls; the dirty stamp
+    // rides on it so it cannot be forgotten at a new call site.
+    await page.evaluate(() => schedulePush());
+    assert.strictEqual(await page.evaluate(() => stateIsDirty()), true,
+      'a local mutation did not mark state unpushed');
+  });
+
   await check('the settings block round-trips the config an agent set', async () => {
     // Settings is where a human configures this, so what the tools write must
     // show up there — and what the fields say must be what gets saved.

@@ -4,6 +4,33 @@ All notable changes land directly on `main`. Format: date, then grouped changes.
 
 ## 2026-08-18
 
+### The leave guard now protects unpushed state, not activity
+Closing, reloading or navigating away already raised a prompt — but it fired
+whenever the transcript held a message, which is the wrong question. A pushed
+conversation is not lost by closing the tab, and a prompt that fires every
+time teaches people to dismiss the one that matters. Meanwhile a tab whose
+only work was settings, skills, or facts an agent wrote to the graph left
+silently.
+
+`schedulePush()` — already called from every mutation path — now stamps a
+dirty marker regardless of whether S3 auto-push is configured, quipu write
+tools stamp it too (the graph lives in evictable OPFS and travels only via
+`state_push`), and a successful push or pull clears it. The guard compares the
+two timestamps: **synchronously**, reading storage directly, because it runs
+inside `beforeunload` where nothing may await and a throw silently cancels the
+warning.
+
+So it warns when a fleet task is claimed, or when state is genuinely unpushed
+and there is somewhere to push it — and stays quiet when everything is saved.
+With no persistence configured it keeps the old behaviour, since then nothing
+*can* be pushed and the transcript really is about to be lost.
+
+`beforeunload` can only raise the browser's own generic dialog, so the Sync
+button also carries an unpushed marker and tooltip: the state is legible
+before you reach for the close button, not only in the prompt after.
+`state_status` and `ui_update_status` report `unpushedChanges` from the same
+signal, so an agent sees exactly what would interrupt the operator.
+
 ### An update now reaches the operator and the agent (creel-vup, creel-ick)
 The service-worker fix below made a pending update *detectable*; nothing
 consumed the signal. Now:

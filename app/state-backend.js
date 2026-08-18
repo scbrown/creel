@@ -443,6 +443,10 @@
         lastSync: last ? new Date(last).toISOString() : null,
         // What `scope: "agent"` would resolve to from THIS tab.
         agentSlice: tabScope() ? scopePrefix(c, tabScope()) : null,
+        // Whether anything has changed locally since the last successful push.
+        // The leave guard uses the same signal, so an agent asking this sees
+        // exactly what would interrupt the operator on close.
+        unpushedChanges: typeof stateIsDirty === 'function' ? stateIsDirty() : null,
       };
     },
 
