@@ -54,7 +54,7 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
     "const APP_SHELL = [\n  './this-asset-does-not-exist.js',"));
 
   const browser = await Browser.launch({ root: broken });
-  const page = await browser.newPage('/onepagent.html');
+  const page = await browser.newPage('/thread.html');
 
   await check('the worker takes over even though one shell asset 404s', async () => {
     await controlled(page);
@@ -76,7 +76,7 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
       const cache = await caches.open(names.find((n) => n.startsWith('onepagent-')));
       return (await cache.keys()).map((r) => new URL(r.url).pathname);
     });
-    assert.ok(cached.some((p) => p.endsWith('/onepagent.html')), 'the page itself was not cached');
+    assert.ok(cached.some((p) => p.endsWith('/thread.html')), 'the page itself was not cached');
     assert.ok(cached.some((p) => p.includes('/harness/')), 'no harness part was cached');
     assert.ok(!cached.some((p) => p.includes('this-asset-does-not-exist')),
       'a URL that 404s should not be in the cache');
@@ -88,7 +88,7 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
 
   // And the real app/, unmodified: the healthy path still works.
   const clean = await Browser.launch({ root: APP });
-  const page2 = await clean.newPage('/onepagent.html');
+  const page2 = await clean.newPage('/thread.html');
 
   await check('the unmodified app registers and is controlled', async () => {
     await controlled(page2);
@@ -102,7 +102,7 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
   await check('the page checks for updates instead of registering once and forgetting', async () => {
     // The failure this guards is a tab left open for weeks on a stale bundle,
     // which is creel's normal mode — the fleet lives in long-lived tabs.
-    const html = fs.readFileSync(path.join(APP, 'onepagent.html'), 'utf8');
+    const html = fs.readFileSync(path.join(APP, 'thread.html'), 'utf8');
     assert.match(html, /reg\.update\(\)/, 'nothing ever calls registration.update()');
     assert.match(html, /visibilitychange/, 'no update check when returning to the tab');
     assert.match(html, /SKIP_WAITING/, 'a waiting worker is never promoted, so it waits forever');
@@ -189,7 +189,7 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
   });
 
   await check('scope "all" reloads every live creel tab, peers before self', async () => {
-    const peer = await clean.newPage('/onepagent.html');
+    const peer = await clean.newPage('/thread.html');
     await peer.waitForFunction(() => !!window.CreelUi && !!window.CreelSelf, { message: 'peer boot' });
     // A marker that cannot survive a real navigation.
     await peer.evaluate(() => { window.__beforeReload = true; });
@@ -215,6 +215,21 @@ const controlled = (page, timeout = 20000) => page.waitForFunction(
     await page2.waitForFunction(() => !window.__beforeReload && !!window.CreelUi,
       { timeout: 15000, message: 'the calling tab to come back reloaded' });
     await peer.close();
+  });
+
+  await check('the old URL still works, and keeps the hash that identifies a tab', async () => {
+    // thread.html was onepagent.html (creel-xeg). The old name is what people
+    // bookmarked and what an installed PWA launches, so it forwards rather
+    // than 404s — and it must carry the hash through, because #creel-agent=<id>
+    // is what makes a spawned tab a fleet worker rather than an ordinary one.
+    const old = await clean.newPage('/onepagent.html#creel-agent=oldlink');
+    await old.waitForFunction(() => !!window.CreelSelf, { timeout: 15000, message: 'the redirect to land' });
+    const where = await old.evaluate(() => ({ path: location.pathname, hash: location.hash,
+                                              agent: window.CreelSelf.agentId }));
+    assert.match(where.path, /thread\.html$/, 'the old URL did not forward: ' + where.path);
+    assert.strictEqual(where.hash, '#creel-agent=oldlink', 'the hash was dropped in the redirect');
+    assert.strictEqual(where.agent, 'oldlink', 'the tab lost its fleet identity crossing the redirect');
+    await old.close();
   });
 
   await page2.close();

@@ -6,7 +6,7 @@
  * 18k-line page. A stub always agrees with you about what the DOM contains.
  * Chromium does not.
  *
- * So these tests boot app/onepagent.html at a real http origin, in a real
+ * So these tests boot app/thread.html at a real http origin, in a real
  * browser, and drive it exclusively through the `ui` MCP server — the same
  * JSON-RPC surface an agent gets. Nothing here reaches into the page's
  * internals to make an assertion pass that an agent could not also reach.
@@ -55,7 +55,7 @@ function uiCall(page) {
   }
 
   const browser = await Browser.launch({ root: APP });
-  const alpha = await browser.newPage('/onepagent.html');
+  const alpha = await browser.newPage('/thread.html');
   const ui = uiCall(alpha);
   await alpha.waitForFunction(() => !!window.CreelUi && !!window.CreelLocator, { message: 'creel servers' });
 
@@ -306,7 +306,7 @@ function uiCall(page) {
 
   // ── cross-tab, in a real browser ─────────────────────────────────
 
-  const beta = await browser.newPage('/onepagent.html#creel-agent=btest');
+  const beta = await browser.newPage('/thread.html#creel-agent=btest');
   await beta.waitForFunction(() => !!window.CreelUi && !!window.CreelLocator, { message: 'second tab ready' });
 
   await check('ui_tabs sees the other real tab over a real BroadcastChannel', async () => {

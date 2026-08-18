@@ -11,7 +11,7 @@
   'use strict';
 
   const FLEET = window.CreelFleetInternal;
-  if (!FLEET) throw new Error('creel-fleet-dashboard.js loaded before creel-fleet.js — check the script order in onepagent.html');
+  if (!FLEET) throw new Error('creel-fleet-dashboard.js loaded before creel-fleet.js — check the script order in thread.html');
   const {
     BC, DRAIN_ID, MY_TASK_ID, MY_WORKER_ID,
     putTask, getTask, allTasks, delTask, genId, notify,
@@ -171,7 +171,7 @@
 
   // Burst isolation: fleet tabs must never carry the operator's conversation
   // (or any other tab's) into a task. The harness boots fleet tabs fresh
-  // (onepagent.html loadConvHistory / IS_FLEET_TAB), but guard here too so a
+  // (thread.html loadConvHistory / IS_FLEET_TAB), but guard here too so a
   // stale harness build still starts clean — newConversation(true) resets
   // in-memory state and (since IS_FLEET_TAB) never touches ba_active_conv.
   function isolateContext() {

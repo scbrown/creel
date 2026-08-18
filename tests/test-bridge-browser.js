@@ -50,7 +50,7 @@ const check = async (name, fn) => {
   await worker.evaluate((origin) => chrome.storage.local.set({ creelOrigins: [origin] }), browser.origin);
   await new Promise((r) => setTimeout(r, 300));
 
-  const creel = await browser.newPage('/onepagent.html');
+  const creel = await browser.newPage('/thread.html');
   await creel.waitForFunction(() => !!window.CreelBrowser, { message: 'the browser server' });
 
   let callId = 0;
@@ -80,9 +80,9 @@ const check = async (name, fn) => {
     // The regression this guards: a port-blind check makes every dev server
     // on localhost both undriveable AND able to command the bridge.
     const verdicts = await worker.evaluate((creelOrigin, siteOrigin) => ({
-      creel: isCreelUrl(`${creelOrigin}/onepagent.html`),
+      creel: isCreelUrl(`${creelOrigin}/thread.html`),
       otherPort: isCreelUrl(`${siteOrigin}/site.html`),
-      pages: isCreelUrl('https://scbrown.github.io/creel/onepagent.html'),
+      pages: isCreelUrl('https://scbrown.github.io/creel/thread.html'),
       pagesOtherPath: isCreelUrl('https://scbrown.github.io/somebody-else/'),
     }), browser.origin, site);
     assert.strictEqual(verdicts.creel, true, 'creel\'s own port is creel');
@@ -215,10 +215,10 @@ const check = async (name, fn) => {
 
   await check('the bridge still refuses to act on creel\'s own origin', async () => {
     const tabs = await tool('browser_list_tabs');
-    assert.ok(!tabs.some((t) => t.url.includes('onepagent.html')), 'creel tabs are hidden');
+    assert.ok(!tabs.some((t) => t.url.includes('thread.html')), 'creel tabs are hidden');
     // And naming creel explicitly is refused rather than obeyed.
     await assert.rejects(
-      () => tool('browser_open_tab', { url: `${browser.origin}/onepagent.html` }),
+      () => tool('browser_open_tab', { url: `${browser.origin}/thread.html` }),
       /refusing/,
     );
   });

@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>creel &middot; a thread</title>
+<meta name="description" content="Single-page, browser-native AI agent.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="creel">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='a' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff6b35' stop-opacity='0.18'/><stop offset='1' stop-color='%23ff3399' stop-opacity='0.06'/></linearGradient><linearGradient id='b' x1='4' y1='3' x2='19' y2='21' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040'/><stop offset='1' stop-color='%23ff3399'/></linearGradient><linearGradient id='c' x1='7' y1='10' x2='16' y2='17' gradientUnits='userSpaceOnUse'><stop stop-color='%23ff8040' stop-opacity='0.9'/><stop offset='1' stop-color='%23aa66ff' stop-opacity='0.9'/></linearGradient><radialGradient id='d' cx='40%25' cy='35%25'><stop stop-color='%23ffb070'/><stop offset='1' stop-color='%23cc1f77'/></radialGradient></defs><path d='M5 3H15L19 7V20A1 1 0 0 1 18 21H5A1 1 0 0 1 4 20V4A1 1 0 0 1 5 3Z' fill='url(%23a)' stroke='url(%23b)' stroke-width='1.1' stroke-linejoin='round'/><path d='M15 3V7H19' stroke='url(%23b)' stroke-width='1.1' fill='none' stroke-linejoin='round'/><circle cx='11.5' cy='13' r='2.6' fill='url(%23d)'/><circle cx='7' cy='10' r='0.9' fill='%23ff6b35'/><circle cx='16' cy='11' r='0.9' fill='%2300d4ff'/><circle cx='8' cy='17' r='0.9' fill='%23aa66ff'/><circle cx='15' cy='17' r='0.9' fill='%2300ff88'/><path d='M7 10L11.5 13L16 11M8 17L11.5 13L15 17' stroke='url(%23c)' stroke-width='0.9' stroke-linecap='round' fill='none' opacity='0.85'/></svg>">
+<script crossorigin="anonymous" src="vendor/marked.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   Inlined from pretext-chat.js — Pretext text-layout engine + Markdown renderer
+   Exposes window.ptParseBlocks / ptLayout / ptRender used by renderMd()
+   ═══════════════════════════════════════════════════════════════════ */
+var Pretext = (function() {
+var j0=["BN","BN","BN","BN","BN","BN","BN","BN","BN","S","B","S","WS","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","B","B","B","S","WS","ON","ON","ET","ET","ET","ON","ON","ON","ON","ON","ES","CS","ES","CS","CS","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","CS","ON","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","ON","ON","ON","BN","BN","BN","BN","BN","BN","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","CS","ON","ET","ET","ET","ET","ON","ON","ON","ON","L","ON","ON","BN","ON","ON","ET","ET","EN","EN","ON","L","ON","ON","ON","EN","L","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","L","L","L","L","L","L","L","L"],Z0=[[697,698,"ON"],[706,719,"ON"],[722,735,"ON"],[741,749,"ON"],[751,767,"ON"],[768,879,"NSM"],[884,885,"ON"],[894,894,"ON"],[900,901,"ON"],[903,903,"ON"],[1014,1014,"ON"],[1155,1161,"NSM"],[1418,1418,"ON"],[1421,1422,"ON"],[1423,1423,"ET"],[1424,1424,"R"],[1425,1469,"NSM"],[1470,1470,"R"],[1471,1471,"NSM"],[1472,1472,"R"],[1473,1474,"NSM"],[1475,1475,"R"],[1476,1477,"NSM"],[1478,1478,"R"],[1479,1479,"NSM"],[1480,1535,"R"],[1536,1541,"AN"],[1542,1543,"ON"],[1544,1544,"AL"],[1545,1546,"ET"],[1547,1547,"AL"],[1548,1548,"CS"],[1549,1549,"AL"],[1550,1551,"ON"],[1552,1562,"NSM"],[1563,1610,"AL"],[1611,1631,"NSM"],[1632,1641,"AN"],[1642,1642,"ET"],[1643,1644,"AN"],[1645,1647,"AL"],[1648,1648,"NSM"],[1649,1749,"AL"],[1750,1756,"NSM"],[1757,1757,"AN"],[1758,1758,"ON"],[1759,1764,"NSM"],[1765,1766,"AL"],[1767,1768,"NSM"],[1769,1769,"ON"],[1770,1773,"NSM"],[1774,1775,"AL"],[1776,1785,"EN"],[1786,1808,"AL"],[1809,1809,"NSM"],[1810,1839,"AL"],[1840,1866,"NSM"],[1867,1957,"AL"],[1958,1968,"NSM"],[1969,1983,"AL"],[1984,2026,"R"],[2027,2035,"NSM"],[2036,2037,"R"],[2038,2041,"ON"],[2042,2044,"R"],[2045,2045,"NSM"],[2046,2069,"R"],[2070,2073,"NSM"],[2074,2074,"R"],[2075,2083,"NSM"],[2084,2084,"R"],[2085,2087,"NSM"],[2088,2088,"R"],[2089,2093,"NSM"],[2094,2136,"R"],[2137,2139,"NSM"],[2140,2143,"R"],[2144,2191,"AL"],[2192,2193,"AN"],[2194,2198,"AL"],[2199,2207,"NSM"],[2208,2249,"AL"],[2250,2273,"NSM"],[2274,2274,"AN"],[2275,2306,"NSM"],[2362,2362,"NSM"],[2364,2364,"NSM"],[2369,2376,"NSM"],[2381,2381,"NSM"],[2385,2391,"NSM"],[2402,2403,"NSM"],[2433,2433,"NSM"],[2492,2492,"NSM"],[2497,2500,"NSM"],[2509,2509,"NSM"],[2530,2531,"NSM"],[2546,2547,"ET"],[2555,2555,"ET"],[2558,2558,"NSM"],[2561,2562,"NSM"],[2620,2620,"NSM"],[2625,2626,"NSM"],[2631,2632,"NSM"],[2635,2637,"NSM"],[2641,2641,"NSM"],[2672,2673,"NSM"],[2677,2677,"NSM"],[2689,2690,"NSM"],[2748,2748,"NSM"],[2753,2757,"NSM"],[2759,2760,"NSM"],[2765,2765,"NSM"],[2786,2787,"NSM"],[2801,2801,"ET"],[2810,2815,"NSM"],[2817,2817,"NSM"],[2876,2876,"NSM"],[2879,2879,"NSM"],[2881,2884,"NSM"],[2893,2893,"NSM"],[2901,2902,"NSM"],[2914,2915,"NSM"],[2946,2946,"NSM"],[3008,3008,"NSM"],[3021,3021,"NSM"],[3059,3064,"ON"],[3065,3065,"ET"],[3066,3066,"ON"],[3072,3072,"NSM"],[3076,3076,"NSM"],[3132,3132,"NSM"],[3134,3136,"NSM"],[3142,3144,"NSM"],[3146,3149,"NSM"],[3157,3158,"NSM"],[3170,3171,"NSM"],[3192,3198,"ON"],[3201,3201,"NSM"],[3260,3260,"NSM"],[3276,3277,"NSM"],[3298,3299,"NSM"],[3328,3329,"NSM"],[3387,3388,"NSM"],[3393,3396,"NSM"],[3405,3405,"NSM"],[3426,3427,"NSM"],[3457,3457,"NSM"],[3530,3530,"NSM"],[3538,3540,"NSM"],[3542,3542,"NSM"],[3633,3633,"NSM"],[3636,3642,"NSM"],[3647,3647,"ET"],[3655,3662,"NSM"],[3761,3761,"NSM"],[3764,3772,"NSM"],[3784,3790,"NSM"],[3864,3865,"NSM"],[3893,3893,"NSM"],[3895,3895,"NSM"],[3897,3897,"NSM"],[3898,3901,"ON"],[3953,3966,"NSM"],[3968,3972,"NSM"],[3974,3975,"NSM"],[3981,3991,"NSM"],[3993,4028,"NSM"],[4038,4038,"NSM"],[4141,4144,"NSM"],[4146,4151,"NSM"],[4153,4154,"NSM"],[4157,4158,"NSM"],[4184,4185,"NSM"],[4190,4192,"NSM"],[4209,4212,"NSM"],[4226,4226,"NSM"],[4229,4230,"NSM"],[4237,4237,"NSM"],[4253,4253,"NSM"],[4957,4959,"NSM"],[5008,5017,"ON"],[5120,5120,"ON"],[5760,5760,"WS"],[5787,5788,"ON"],[5906,5908,"NSM"],[5938,5939,"NSM"],[5970,5971,"NSM"],[6002,6003,"NSM"],[6068,6069,"NSM"],[6071,6077,"NSM"],[6086,6086,"NSM"],[6089,6099,"NSM"],[6107,6107,"ET"],[6109,6109,"NSM"],[6128,6137,"ON"],[6144,6154,"ON"],[6155,6157,"NSM"],[6158,6158,"BN"],[6159,6159,"NSM"],[6277,6278,"NSM"],[6313,6313,"NSM"],[6432,6434,"NSM"],[6439,6440,"NSM"],[6450,6450,"NSM"],[6457,6459,"NSM"],[6464,6464,"ON"],[6468,6469,"ON"],[6622,6655,"ON"],[6679,6680,"NSM"],[6683,6683,"NSM"],[6742,6742,"NSM"],[6744,6750,"NSM"],[6752,6752,"NSM"],[6754,6754,"NSM"],[6757,6764,"NSM"],[6771,6780,"NSM"],[6783,6783,"NSM"],[6832,6877,"NSM"],[6880,6891,"NSM"],[6912,6915,"NSM"],[6964,6964,"NSM"],[6966,6970,"NSM"],[6972,6972,"NSM"],[6978,6978,"NSM"],[7019,7027,"NSM"],[7040,7041,"NSM"],[7074,7077,"NSM"],[7080,7081,"NSM"],[7083,7085,"NSM"],[7142,7142,"NSM"],[7144,7145,"NSM"],[7149,7149,"NSM"],[7151,7153,"NSM"],[7212,7219,"NSM"],[7222,7223,"NSM"],[7376,7378,"NSM"],[7380,7392,"NSM"],[7394,7400,"NSM"],[7405,7405,"NSM"],[7412,7412,"NSM"],[7416,7417,"NSM"],[7616,7679,"NSM"],[8125,8125,"ON"],[8127,8129,"ON"],[8141,8143,"ON"],[8157,8159,"ON"],[8173,8175,"ON"],[8189,8190,"ON"],[8192,8202,"WS"],[8203,8205,"BN"],[8207,8207,"R"],[8208,8231,"ON"],[8232,8232,"WS"],[8233,8233,"B"],[8234,8238,"BN"],[8239,8239,"CS"],[8240,8244,"ET"],[8245,8259,"ON"],[8260,8260,"CS"],[8261,8286,"ON"],[8287,8287,"WS"],[8288,8303,"BN"],[8304,8304,"EN"],[8308,8313,"EN"],[8314,8315,"ES"],[8316,8318,"ON"],[8320,8329,"EN"],[8330,8331,"ES"],[8332,8334,"ON"],[8352,8399,"ET"],[8400,8432,"NSM"],[8448,8449,"ON"],[8451,8454,"ON"],[8456,8457,"ON"],[8468,8468,"ON"],[8470,8472,"ON"],[8478,8483,"ON"],[8485,8485,"ON"],[8487,8487,"ON"],[8489,8489,"ON"],[8494,8494,"ET"],[8506,8507,"ON"],[8512,8516,"ON"],[8522,8525,"ON"],[8528,8543,"ON"],[8585,8587,"ON"],[8592,8721,"ON"],[8722,8722,"ES"],[8723,8723,"ET"],[8724,9013,"ON"],[9083,9108,"ON"],[9110,9257,"ON"],[9280,9290,"ON"],[9312,9351,"ON"],[9352,9371,"EN"],[9450,9899,"ON"],[9901,10239,"ON"],[10496,11123,"ON"],[11126,11263,"ON"],[11493,11498,"ON"],[11503,11505,"NSM"],[11513,11519,"ON"],[11647,11647,"NSM"],[11744,11775,"NSM"],[11776,11869,"ON"],[11904,11929,"ON"],[11931,12019,"ON"],[12032,12245,"ON"],[12272,12287,"ON"],[12288,12288,"WS"],[12289,12292,"ON"],[12296,12320,"ON"],[12330,12333,"NSM"],[12336,12336,"ON"],[12342,12343,"ON"],[12349,12351,"ON"],[12441,12442,"NSM"],[12443,12444,"ON"],[12448,12448,"ON"],[12539,12539,"ON"],[12736,12773,"ON"],[12783,12783,"ON"],[12829,12830,"ON"],[12880,12895,"ON"],[12924,12926,"ON"],[12977,12991,"ON"],[13004,13007,"ON"],[13175,13178,"ON"],[13278,13279,"ON"],[13311,13311,"ON"],[19904,19967,"ON"],[42128,42182,"ON"],[42509,42511,"ON"],[42607,42610,"NSM"],[42611,42611,"ON"],[42612,42621,"NSM"],[42622,42623,"ON"],[42654,42655,"NSM"],[42736,42737,"NSM"],[42752,42785,"ON"],[42888,42888,"ON"],[43010,43010,"NSM"],[43014,43014,"NSM"],[43019,43019,"NSM"],[43045,43046,"NSM"],[43048,43051,"ON"],[43052,43052,"NSM"],[43064,43065,"ET"],[43124,43127,"ON"],[43204,43205,"NSM"],[43232,43249,"NSM"],[43263,43263,"NSM"],[43302,43309,"NSM"],[43335,43345,"NSM"],[43392,43394,"NSM"],[43443,43443,"NSM"],[43446,43449,"NSM"],[43452,43453,"NSM"],[43493,43493,"NSM"],[43561,43566,"NSM"],[43569,43570,"NSM"],[43573,43574,"NSM"],[43587,43587,"NSM"],[43596,43596,"NSM"],[43644,43644,"NSM"],[43696,43696,"NSM"],[43698,43700,"NSM"],[43703,43704,"NSM"],[43710,43711,"NSM"],[43713,43713,"NSM"],[43756,43757,"NSM"],[43766,43766,"NSM"],[43882,43883,"ON"],[44005,44005,"NSM"],[44008,44008,"NSM"],[44013,44013,"NSM"],[64285,64285,"R"],[64286,64286,"NSM"],[64287,64296,"R"],[64297,64297,"ES"],[64298,64335,"R"],[64336,64450,"AL"],[64451,64466,"ON"],[64467,64829,"AL"],[64830,64847,"ON"],[64848,64911,"AL"],[64912,64913,"ON"],[64914,64967,"AL"],[64968,64975,"ON"],[64976,65007,"BN"],[65008,65020,"AL"],[65021,65023,"ON"],[65024,65039,"NSM"],[65040,65049,"ON"],[65056,65071,"NSM"],[65072,65103,"ON"],[65104,65104,"CS"],[65105,65105,"ON"],[65106,65106,"CS"],[65108,65108,"ON"],[65109,65109,"CS"],[65110,65118,"ON"],[65119,65119,"ET"],[65120,65121,"ON"],[65122,65123,"ES"],[65124,65126,"ON"],[65128,65128,"ON"],[65129,65130,"ET"],[65131,65131,"ON"],[65136,65278,"AL"],[65279,65279,"BN"],[65281,65282,"ON"],[65283,65285,"ET"],[65286,65290,"ON"],[65291,65291,"ES"],[65292,65292,"CS"],[65293,65293,"ES"],[65294,65295,"CS"],[65296,65305,"EN"],[65306,65306,"CS"],[65307,65312,"ON"],[65339,65344,"ON"],[65371,65381,"ON"],[65504,65505,"ET"],[65506,65508,"ON"],[65509,65510,"ET"],[65512,65518,"ON"],[65520,65528,"BN"],[65529,65533,"ON"],[65534,65535,"BN"],[65793,65793,"ON"],[65856,65932,"ON"],[65936,65948,"ON"],[65952,65952,"ON"],[66045,66045,"NSM"],[66272,66272,"NSM"],[66273,66299,"EN"],[66422,66426,"NSM"],[67584,67870,"R"],[67871,67871,"ON"],[67872,68096,"R"],[68097,68099,"NSM"],[68100,68100,"R"],[68101,68102,"NSM"],[68103,68107,"R"],[68108,68111,"NSM"],[68112,68151,"R"],[68152,68154,"NSM"],[68155,68158,"R"],[68159,68159,"NSM"],[68160,68324,"R"],[68325,68326,"NSM"],[68327,68408,"R"],[68409,68415,"ON"],[68416,68863,"R"],[68864,68899,"AL"],[68900,68903,"NSM"],[68904,68911,"AL"],[68912,68921,"AN"],[68922,68927,"AL"],[68928,68937,"AN"],[68938,68968,"R"],[68969,68973,"NSM"],[68974,68974,"ON"],[68975,69215,"R"],[69216,69246,"AN"],[69247,69290,"R"],[69291,69292,"NSM"],[69293,69311,"R"],[69312,69327,"AL"],[69328,69336,"ON"],[69337,69369,"AL"],[69370,69375,"NSM"],[69376,69423,"R"],[69424,69445,"AL"],[69446,69456,"NSM"],[69457,69487,"AL"],[69488,69505,"R"],[69506,69509,"NSM"],[69510,69631,"R"],[69633,69633,"NSM"],[69688,69702,"NSM"],[69714,69733,"ON"],[69744,69744,"NSM"],[69747,69748,"NSM"],[69759,69761,"NSM"],[69811,69814,"NSM"],[69817,69818,"NSM"],[69826,69826,"NSM"],[69888,69890,"NSM"],[69927,69931,"NSM"],[69933,69940,"NSM"],[70003,70003,"NSM"],[70016,70017,"NSM"],[70070,70078,"NSM"],[70089,70092,"NSM"],[70095,70095,"NSM"],[70191,70193,"NSM"],[70196,70196,"NSM"],[70198,70199,"NSM"],[70206,70206,"NSM"],[70209,70209,"NSM"],[70367,70367,"NSM"],[70371,70378,"NSM"],[70400,70401,"NSM"],[70459,70460,"NSM"],[70464,70464,"NSM"],[70502,70508,"NSM"],[70512,70516,"NSM"],[70587,70592,"NSM"],[70606,70606,"NSM"],[70608,70608,"NSM"],[70610,70610,"NSM"],[70625,70626,"NSM"],[70712,70719,"NSM"],[70722,70724,"NSM"],[70726,70726,"NSM"],[70750,70750,"NSM"],[70835,70840,"NSM"],[70842,70842,"NSM"],[70847,70848,"NSM"],[70850,70851,"NSM"],[71090,71093,"NSM"],[71100,71101,"NSM"],[71103,71104,"NSM"],[71132,71133,"NSM"],[71219,71226,"NSM"],[71229,71229,"NSM"],[71231,71232,"NSM"],[71264,71276,"ON"],[71339,71339,"NSM"],[71341,71341,"NSM"],[71344,71349,"NSM"],[71351,71351,"NSM"],[71453,71453,"NSM"],[71455,71455,"NSM"],[71458,71461,"NSM"],[71463,71467,"NSM"],[71727,71735,"NSM"],[71737,71738,"NSM"],[71995,71996,"NSM"],[71998,71998,"NSM"],[72003,72003,"NSM"],[72148,72151,"NSM"],[72154,72155,"NSM"],[72160,72160,"NSM"],[72193,72198,"NSM"],[72201,72202,"NSM"],[72243,72248,"NSM"],[72251,72254,"NSM"],[72263,72263,"NSM"],[72273,72278,"NSM"],[72281,72283,"NSM"],[72330,72342,"NSM"],[72344,72345,"NSM"],[72544,72544,"NSM"],[72546,72548,"NSM"],[72550,72550,"NSM"],[72752,72758,"NSM"],[72760,72765,"NSM"],[72850,72871,"NSM"],[72874,72880,"NSM"],[72882,72883,"NSM"],[72885,72886,"NSM"],[73009,73014,"NSM"],[73018,73018,"NSM"],[73020,73021,"NSM"],[73023,73029,"NSM"],[73031,73031,"NSM"],[73104,73105,"NSM"],[73109,73109,"NSM"],[73111,73111,"NSM"],[73459,73460,"NSM"],[73472,73473,"NSM"],[73526,73530,"NSM"],[73536,73536,"NSM"],[73538,73538,"NSM"],[73562,73562,"NSM"],[73685,73692,"ON"],[73693,73696,"ET"],[73697,73713,"ON"],[78912,78912,"NSM"],[78919,78933,"NSM"],[90398,90409,"NSM"],[90413,90415,"NSM"],[92912,92916,"NSM"],[92976,92982,"NSM"],[94031,94031,"NSM"],[94095,94098,"NSM"],[94178,94178,"ON"],[94180,94180,"NSM"],[113821,113822,"NSM"],[113824,113827,"BN"],[117760,117973,"ON"],[118000,118009,"EN"],[118010,118012,"ON"],[118016,118451,"ON"],[118458,118480,"ON"],[118496,118512,"ON"],[118528,118573,"NSM"],[118576,118598,"NSM"],[119143,119145,"NSM"],[119155,119162,"BN"],[119163,119170,"NSM"],[119173,119179,"NSM"],[119210,119213,"NSM"],[119273,119274,"ON"],[119296,119361,"ON"],[119362,119364,"NSM"],[119365,119365,"ON"],[119552,119638,"ON"],[120513,120513,"ON"],[120539,120539,"ON"],[120571,120571,"ON"],[120597,120597,"ON"],[120629,120629,"ON"],[120655,120655,"ON"],[120687,120687,"ON"],[120713,120713,"ON"],[120745,120745,"ON"],[120771,120771,"ON"],[120782,120831,"EN"],[121344,121398,"NSM"],[121403,121452,"NSM"],[121461,121461,"NSM"],[121476,121476,"NSM"],[121499,121503,"NSM"],[121505,121519,"NSM"],[122880,122886,"NSM"],[122888,122904,"NSM"],[122907,122913,"NSM"],[122915,122916,"NSM"],[122918,122922,"NSM"],[123023,123023,"NSM"],[123184,123190,"NSM"],[123566,123566,"NSM"],[123628,123631,"NSM"],[123647,123647,"ET"],[124140,124143,"NSM"],[124398,124399,"NSM"],[124643,124643,"NSM"],[124646,124646,"NSM"],[124654,124655,"NSM"],[124661,124661,"NSM"],[124928,125135,"R"],[125136,125142,"NSM"],[125143,125251,"R"],[125252,125258,"NSM"],[125259,126063,"R"],[126064,126143,"AL"],[126144,126207,"R"],[126208,126287,"AL"],[126288,126463,"R"],[126464,126703,"AL"],[126704,126705,"ON"],[126706,126719,"AL"],[126720,126975,"R"],[126976,127019,"ON"],[127024,127123,"ON"],[127136,127150,"ON"],[127153,127167,"ON"],[127169,127183,"ON"],[127185,127221,"ON"],[127232,127242,"EN"],[127243,127247,"ON"],[127279,127279,"ON"],[127338,127343,"ON"],[127405,127405,"ON"],[127584,127589,"ON"],[127744,128728,"ON"],[128732,128748,"ON"],[128752,128764,"ON"],[128768,128985,"ON"],[128992,129003,"ON"],[129008,129008,"ON"],[129024,129035,"ON"],[129040,129095,"ON"],[129104,129113,"ON"],[129120,129159,"ON"],[129168,129197,"ON"],[129200,129211,"ON"],[129216,129217,"ON"],[129232,129240,"ON"],[129280,129623,"ON"],[129632,129645,"ON"],[129648,129660,"ON"],[129664,129674,"ON"],[129678,129734,"ON"],[129736,129736,"ON"],[129741,129756,"ON"],[129759,129770,"ON"],[129775,129784,"ON"],[129792,129938,"ON"],[129940,130031,"ON"],[130032,130041,"EN"],[130042,130042,"ON"],[131070,131071,"BN"],[196606,196607,"BN"],[262142,262143,"BN"],[327678,327679,"BN"],[393214,393215,"BN"],[458750,458751,"BN"],[524286,524287,"BN"],[589822,589823,"BN"],[655358,655359,"BN"],[720894,720895,"BN"],[786430,786431,"BN"],[851966,851967,"BN"],[917502,917759,"BN"],[917760,917999,"NSM"],[918000,921599,"BN"],[983038,983039,"BN"],[1048574,1048575,"BN"],[1114110,1114111,"BN"]];function E1(x){if(x<=255)return j0[x];let N=0,F=Z0.length-1;while(N<=F){let D=N+F>>1,A=Z0[D];if(x<A[0]){F=D-1;continue}if(x>A[1]){N=D+1;continue}return A[2]}return"L"}function O1(x){let N=x.length;if(N===0)return null;let F=Array(N),D=!1;for(let B=0;B<N;){let O=x.charCodeAt(B),R=O,V=1;if(O>=55296&&O<=56319&&B+1<N){let X=x.charCodeAt(B+1);if(X>=56320&&X<=57343)R=(O-55296<<10)+(X-56320)+65536,V=2}let L=E1(R);if(L==="R"||L==="AL"||L==="AN")D=!0;for(let X=0;X<V;X++)F[B+X]=L;B+=V}if(!D)return null;let A=0;for(let B=0;B<N;B++){let O=F[B];if(O==="L"){A=0;break}if(O==="R"||O==="AL"){A=1;break}}let M=new Int8Array(N);for(let B=0;B<N;B++)M[B]=A;let E=A&1?"R":"L",C=E,S=C;for(let B=0;B<N;B++)if(F[B]==="NSM")F[B]=S;else S=F[B];S=C;for(let B=0;B<N;B++){let O=F[B];if(O==="EN")F[B]=S==="AL"?"AN":"EN";else if(O==="R"||O==="L"||O==="AL")S=O}for(let B=0;B<N;B++)if(F[B]==="AL")F[B]="R";for(let B=1;B<N-1;B++){if(F[B]==="ES"&&F[B-1]==="EN"&&F[B+1]==="EN")F[B]="EN";if(F[B]==="CS"&&(F[B-1]==="EN"||F[B-1]==="AN")&&F[B+1]===F[B-1])F[B]=F[B-1]}for(let B=0;B<N;B++){if(F[B]!=="EN")continue;let O;for(O=B-1;O>=0&&F[O]==="ET";O--)F[O]="EN";for(O=B+1;O<N&&F[O]==="ET";O++)F[O]="EN"}for(let B=0;B<N;B++){let O=F[B];if(O==="WS"||O==="ES"||O==="ET"||O==="CS")F[B]="ON"}S=C;for(let B=0;B<N;B++){let O=F[B];if(O==="EN")F[B]=S==="L"?"L":"EN";else if(O==="R"||O==="L")S=O}for(let B=0;B<N;B++){if(F[B]!=="ON")continue;let O=B+1;while(O<N&&F[O]==="ON")O++;let R=B>0?F[B-1]:C,V=O<N?F[O]:C,L=R!=="L"?"R":"L";if(L===(V!=="L"?"R":"L"))for(let q=B;q<O;q++)F[q]=L;B=O-1}for(let B=0;B<N;B++)if(F[B]==="ON")F[B]=E;for(let B=0;B<N;B++){let O=F[B];if((M[B]&1)===0){if(O==="R")M[B]++;else if(O==="AN"||O==="EN")M[B]+=2}else if(O==="L"||O==="AN"||O==="EN")M[B]++}return M}function K0(x,N){let F=O1(x);if(F===null)return null;let D=new Int8Array(N.length);for(let A=0;A<N.length;A++)D[A]=F[N[A]];return D}var S1=/[ \t\n\r\f]+/g,C1=/[\t\n\r\f]| {2,}|^ | $/;function R1(x){let N=x??"normal";return N==="pre-wrap"?{mode:N,preserveOrdinarySpaces:!0,preserveHardBreaks:!0}:{mode:N,preserveOrdinarySpaces:!1,preserveHardBreaks:!1}}function V1(x){if(!C1.test(x))return x;let N=x.replace(S1," ");if(N.charCodeAt(0)===32)N=N.slice(1);if(N.length>0&&N.charCodeAt(N.length-1)===32)N=N.slice(0,-1);return N}function q1(x){if(!/[\r\f]/.test(x))return x;return x.replace(/\r\n/g,"\n").replace(/[\r\f]/g,"\n")}var e=null,Z1;function $1(){if(e===null)e=new Intl.Segmenter(Z1,{granularity:"word"});return e}function W0(){e=null}var X1=/\p{Script=Arabic}/u,x0=/\p{M}/u,I0=/\p{Nd}/u;function G0(x){return X1.test(x)}function y0(x){return x>=19968&&x<=40959||x>=13312&&x<=19903||x>=131072&&x<=173791||x>=173824&&x<=177983||x>=177984&&x<=178207||x>=178208&&x<=183983||x>=183984&&x<=191471||x>=191472&&x<=192093||x>=194560&&x<=195103||x>=196608&&x<=201551||x>=201552&&x<=205743||x>=205744&&x<=210041||x>=63744&&x<=64255||x>=12288&&x<=12351||x>=12352&&x<=12447||x>=12448&&x<=12543||x>=44032&&x<=55215||x>=65280&&x<=65519}function h(x){for(let N=0;N<x.length;N++){let F=x.charCodeAt(N);if(F<12288)continue;if(F>=55296&&F<=56319&&N+1<x.length){let D=x.charCodeAt(N+1);if(D>=56320&&D<=57343){let A=(F-55296<<10)+(D-56320)+65536;if(y0(A))return!0;N++;continue}}if(y0(F))return!0}return!1}function Y1(x){let N=M0(x);return N!==null&&(F0.has(N)||p.has(N))}var H1=new Set([" "," ","\u2060","\uFEFF"]);function L1(x){return h(x)}function Q1(x){let N=M0(x);return N!==null&&H1.has(N)}function N0(x){return!Y1(x)&&!Q1(x)}var F0=new Set(["\uFF0C","\uFF0E","\uFF01","\uFF1A","\uFF1B","\uFF1F","\u3001","\u3002","\u30FB","\uFF09","\u3015","\u3009","\u300B","\u300D","\u300F","\u3011","\u3017","\u3019","\u301B","\u30FC","\u3005","\u303B","\u309D","\u309E","\u30FD","\u30FE"]),i=new Set(['"',"(","[","{","\u201C","\u2018","\u00AB","\u2039","\uFF08","\u3014","\u3008","\u300A","\u300C","\u300E","\u3010","\u3016","\u3018","\u301A"]),X0=new Set(["'","\u2019"]),p=new Set([".",",","!","?",":",";","\u060C","\u061B","\u061F","\u0964","\u0965","\u104A","\u104B","\u104C","\u104D","\u104F",")","]","}","%",'"',"\u201D","\u2019","\u00BB","\u203A","\u2026"]),_1=new Set([":",".","\u060C","\u061B"]),z1=new Set(["\u104F"]),J1=new Set(["\u201D","\u2019","\u00BB","\u203A","\u300D","\u300F","\u3011","\u300B","\u3009","\u3015","\uFF09"]);function U1(x){if(Y0(x))return!0;let N=!1;for(let F of x){if(p.has(F)){N=!0;continue}if(N&&x0.test(F))continue;return!1}return N}function T1(x){for(let N of x)if(!F0.has(N)&&!p.has(N))return!1;return x.length>0}function b1(x){if(Y0(x))return!0;for(let N of x)if(!i.has(N)&&!X0.has(N)&&!x0.test(N))return!1;return x.length>0}function Y0(x){let N=!1;for(let F of x){if(F==="\\"||x0.test(F))continue;if(i.has(F)||p.has(F)||X0.has(F)){N=!0;continue}return!1}return N}function u0(x,N){let F=N-1;if(F<=0)return Math.max(F,0);let D=x.charCodeAt(F);if(D<56320||D>57343)return F;let A=F-1;if(A<0)return F;let M=x.charCodeAt(A);return M>=55296&&M<=56319?A:F}function M0(x){if(x.length===0)return null;let N=u0(x,x.length);return x.slice(N)}function j1(x){let N=Array.from(x),F=N.length;while(F>0){let D=N[F-1];if(x0.test(D)){F--;continue}if(i.has(D)||X0.has(D)){F--;continue}break}if(F<=0||F===N.length)return null;return{head:N.slice(0,F).join(""),tail:N.slice(F).join("")}}function K1(x,N,F){return F==="text"&&!N&&x.length===1&&x!=="-"&&x!=="\u2014"?x:null}function P0(x,N,F,D){let A=N[D],M=x[D];if(A==null)return M;let E=F[D];if(M.length===E)return M;let C=A.repeat(E);return x[D]=C,C}function v0(x,N){return x&&N!==null&&_1.has(N)}function G1(x){let N=M0(x);return N!==null&&z1.has(N)}function y1(x){if(x.length<2||x[0]!==" ")return null;let N=x.slice(1);if(/^\p{M}+$/u.test(N))return{space:" ",marks:N};return null}function A0(x){let N=x.length;while(N>0){let F=u0(x,N),D=x.slice(F,N);if(J1.has(D))return!0;if(!p.has(D))return!1;N=F}return!1}function P1(x,N){if(N.preserveOrdinarySpaces||N.preserveHardBreaks){if(x===" ")return"preserved-space";if(x==="\t")return"tab";if(N.preserveHardBreaks&&x==="\n")return"hard-break"}if(x===" ")return"space";if(x===" "||x===" "||x==="\u2060"||x==="\uFEFF")return"glue";if(x==="\u200B")return"zero-width-break";if(x==="\u00AD")return"soft-hyphen";return"text"}var v1=/[\x20\t\n\xA0\xAD\u200B\u202F\u2060\uFEFF]/;function c(x){return x.length===1?x[0]:x.join("")}function w1(x,N){let F=[];for(let D=x.length-1;D>=0;D--)F.push(x[D]);return F.push(N),c(F)}function k1(x,N,F,D){if(!v1.test(x))return[{text:x,isWordLike:N,kind:"text",start:F}];let A=[],M=null,E=[],C=F,S=!1,B=0;for(let O of x){let R=P1(O,D),V=R==="text"&&N;if(M!==null&&R===M&&V===S){E.push(O),B+=O.length;continue}if(M!==null)A.push({text:c(E),isWordLike:S,kind:M,start:C});M=R,E=[O],C=F+B,S=V,B+=O.length}if(M!==null)A.push({text:c(E),isWordLike:S,kind:M,start:C});return A}function $0(x){return x==="space"||x==="preserved-space"||x==="zero-width-break"||x==="hard-break"}var f1=/^[A-Za-z][A-Za-z0-9+.-]*:$/;function W1(x,N){let F=x.texts[N];if(F.startsWith("www."))return!0;return f1.test(F)&&N+1<x.len&&x.kinds[N+1]==="text"&&x.texts[N+1]==="//"}function I1(x){return x.includes("?")&&(x.includes("://")||x.startsWith("www."))}function u1(x){let N=x.texts.slice(),F=x.isWordLike.slice(),D=x.kinds.slice(),A=x.starts.slice();for(let E=0;E<x.len;E++){if(D[E]!=="text"||!W1(x,E))continue;let C=[N[E]],S=E+1;while(S<x.len&&!$0(D[S])){C.push(N[S]),F[E]=!0;let B=N[S].includes("?");if(D[S]="text",N[S]="",S++,B)break}N[E]=c(C)}let M=0;for(let E=0;E<N.length;E++){let C=N[E];if(C.length===0)continue;if(M!==E)N[M]=C,F[M]=F[E],D[M]=D[E],A[M]=A[E];M++}return N.length=M,F.length=M,D.length=M,A.length=M,{len:M,texts:N,isWordLike:F,kinds:D,starts:A}}function l1(x){let N=[],F=[],D=[],A=[];for(let M=0;M<x.len;M++){let E=x.texts[M];if(N.push(E),F.push(x.isWordLike[M]),D.push(x.kinds[M]),A.push(x.starts[M]),!I1(E))continue;let C=M+1;if(C>=x.len||$0(x.kinds[C]))continue;let S=[],B=x.starts[C],O=C;while(O<x.len&&!$0(x.kinds[O]))S.push(x.texts[O]),O++;if(S.length>0)N.push(c(S)),F.push(!0),D.push("text"),A.push(B),M=O-1}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}var c1=new Set([":","-","/","\u00D7",",",".","+","\u2013","\u2014"]),w0=/^[A-Za-z0-9_]+[,:;]*$/,k0=/[,:;]+$/;function l0(x){for(let N of x)if(I0.test(N))return!0;return!1}function r(x){if(x.length===0)return!1;for(let N of x){if(I0.test(N)||c1.has(N))continue;return!1}return!0}function h1(x){let N=[],F=[],D=[],A=[];for(let M=0;M<x.len;M++){let E=x.texts[M],C=x.kinds[M];if(C==="text"&&r(E)&&l0(E)){let S=[E],B=M+1;while(B<x.len&&x.kinds[B]==="text"&&r(x.texts[B]))S.push(x.texts[B]),B++;N.push(c(S)),F.push(!0),D.push("text"),A.push(x.starts[M]),M=B-1;continue}N.push(E),F.push(x.isWordLike[M]),D.push(C),A.push(x.starts[M])}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function g1(x){let N=[],F=[],D=[],A=[];for(let M=0;M<x.len;M++){let E=x.texts[M],C=x.kinds[M],S=x.isWordLike[M];if(C==="text"&&S&&w0.test(E)){let B=[E],O=k0.test(E),R=M+1;while(O&&R<x.len&&x.kinds[R]==="text"&&x.isWordLike[R]&&w0.test(x.texts[R])){let V=x.texts[R];B.push(V),O=k0.test(V),R++}N.push(c(B)),F.push(!0),D.push("text"),A.push(x.starts[M]),M=R-1;continue}N.push(E),F.push(S),D.push(C),A.push(x.starts[M])}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function p1(x){let N=[],F=[],D=[],A=[];for(let M=0;M<x.len;M++){let E=x.texts[M];if(x.kinds[M]==="text"&&E.includes("-")){let C=E.split("-"),S=C.length>1;for(let B=0;B<C.length;B++){let O=C[B];if(!S)break;if(O.length===0||!l0(O)||!r(O))S=!1}if(S){let B=0;for(let O=0;O<C.length;O++){let R=C[O],V=O<C.length-1?`${R}-`:R;N.push(V),F.push(!0),D.push("text"),A.push(x.starts[M]+B),B+=V.length}continue}}N.push(E),F.push(x.isWordLike[M]),D.push(x.kinds[M]),A.push(x.starts[M])}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function o1(x){let N=[],F=[],D=[],A=[],M=0;while(M<x.len){let E=[x.texts[M]],C=x.isWordLike[M],S=x.kinds[M],B=x.starts[M];if(S==="glue"){let O=[E[0]],R=B;M++;while(M<x.len&&x.kinds[M]==="glue")O.push(x.texts[M]),M++;let V=c(O);if(M<x.len&&x.kinds[M]==="text")E[0]=V,E.push(x.texts[M]),C=x.isWordLike[M],S="text",B=R,M++;else{N.push(V),F.push(!1),D.push("glue"),A.push(R);continue}}else M++;if(S==="text")while(M<x.len&&x.kinds[M]==="glue"){let O=[];while(M<x.len&&x.kinds[M]==="glue")O.push(x.texts[M]),M++;let R=c(O);if(M<x.len&&x.kinds[M]==="text"){E.push(R,x.texts[M]),C=C||x.isWordLike[M],M++;continue}E.push(R)}N.push(c(E)),F.push(C),D.push(S),A.push(B)}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function m1(x){let N=x.texts.slice(),F=x.isWordLike.slice(),D=x.kinds.slice(),A=x.starts.slice();for(let M=0;M<N.length-1;M++){if(D[M]!=="text"||D[M+1]!=="text")continue;if(!h(N[M])||!h(N[M+1]))continue;let E=j1(N[M]);if(E===null)continue;N[M]=E.head,N[M+1]=E.tail+N[M+1],A[M+1]=A[M]+E.head.length}return{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function f0(x,N,F){let D=$1(),A=0,M=[],E=[],C=[],S=[],B=[],O=[],R=[],V=[],L=[],X=[],q=[],Q=[];for(let $ of D.segment(x))for(let Y of k1($.segment,$.isWordLike??!1,$.index,F)){let j=function(){if(O[Z]!==null)E[Z]=[P0(M,O,R,Z)],O[Z]=null;E[Z].push(Y.text),C[Z]=C[Z]||Y.isWordLike,V[Z]=V[Z]||U,L[Z]=L[Z]||P,X[Z]=k,q[Z]=u,Q[Z]=v0(L[Z],f)},H=Y.kind==="text",J=K1(Y.text,Y.isWordLike,Y.kind),U=h(Y.text),P=G0(Y.text),f=M0(Y.text),k=A0(Y.text),u=G1(Y.text),Z=A-1;if(N.carryCJKAfterClosingQuote&&H&&A>0&&S[Z]==="text"&&U&&V[Z]&&X[Z])j();else if(H&&A>0&&S[Z]==="text"&&T1(Y.text)&&V[Z])j();else if(H&&A>0&&S[Z]==="text"&&q[Z])j();else if(H&&A>0&&S[Z]==="text"&&Y.isWordLike&&P&&Q[Z])j(),C[Z]=!0;else if(J!==null&&A>0&&S[Z]==="text"&&O[Z]===J)R[Z]=(R[Z]??1)+1;else if(H&&!Y.isWordLike&&A>0&&S[Z]==="text"&&(U1(Y.text)||Y.text==="-"&&C[Z]))j();else M[A]=Y.text,E[A]=[Y.text],C[A]=Y.isWordLike,S[A]=Y.kind,B[A]=Y.start,O[A]=J,R[A]=J===null?0:1,V[A]=U,L[A]=P,X[A]=k,q[A]=u,Q[A]=v0(P,f),A++}for(let $=0;$<A;$++){if(O[$]!==null){M[$]=P0(M,O,R,$);continue}M[$]=c(E[$])}for(let $=1;$<A;$++)if(S[$]==="text"&&!C[$]&&Y0(M[$])&&S[$-1]==="text")M[$-1]+=M[$],C[$-1]=C[$-1]||C[$],M[$]="";let b=Array.from({length:A},()=>null),v=-1;for(let $=A-1;$>=0;$--){let Y=M[$];if(Y.length===0)continue;if(S[$]==="text"&&!C[$]&&b1(Y)&&v>=0&&S[v]==="text"){let H=b[v]??[];H.push(Y),b[v]=H,B[v]=B[$],M[$]="";continue}v=$}for(let $=0;$<A;$++){let Y=b[$];if(Y==null)continue;M[$]=w1(Y,M[$])}let _=0;for(let $=0;$<A;$++){let Y=M[$];if(Y.length===0)continue;if(_!==$)M[_]=Y,C[_]=C[$],S[_]=S[$],B[_]=B[$];_++}M.length=_,C.length=_,S.length=_,B.length=_;let w=o1({len:_,texts:M,isWordLike:C,kinds:S,starts:B}),K=m1(g1(p1(h1(l1(u1(w))))));for(let $=0;$<K.len-1;$++){let Y=y1(K.texts[$]);if(Y===null)continue;if(K.kinds[$]!=="space"&&K.kinds[$]!=="preserved-space"||K.kinds[$+1]!=="text"||!G0(K.texts[$+1]))continue;K.texts[$]=Y.space,K.isWordLike[$]=!1,K.kinds[$]=K.kinds[$]==="preserved-space"?"preserved-space":"space",K.texts[$+1]=Y.marks+K.texts[$+1],K.starts[$+1]=K.starts[$]+Y.space.length}return K}function s1(x,N){if(x.len===0)return[];if(!N.preserveHardBreaks)return[{startSegmentIndex:0,endSegmentIndex:x.len,consumedEndSegmentIndex:x.len}];let F=[],D=0;for(let A=0;A<x.len;A++){if(x.kinds[A]!=="hard-break")continue;F.push({startSegmentIndex:D,endSegmentIndex:A,consumedEndSegmentIndex:A+1}),D=A+1}if(D<x.len)F.push({startSegmentIndex:D,endSegmentIndex:x.len,consumedEndSegmentIndex:x.len});return F}function a1(x){if(x.len<=1)return x;let N=[],F=[],D=[],A=[],M=null,E=!1,C=0,S=!1,B=!1;function O(){if(M===null)return;N.push(c(M)),F.push(E),D.push("text"),A.push(C),M=null}for(let R=0;R<x.len;R++){let V=x.texts[R],L=x.kinds[R],X=x.isWordLike[R],q=x.starts[R];if(L==="text"){let Q=L1(V),b=N0(V);if(M!==null&&S&&B){M.push(V),E=E||X,S=S||Q,B=b;continue}O(),M=[V],E=X,C=q,S=Q,B=b;continue}O(),N.push(V),F.push(X),D.push(L),A.push(q)}return O(),{len:N.length,texts:N,isWordLike:F,kinds:D,starts:A}}function c0(x,N,F="normal",D="normal"){let A=R1(F),M=A.mode==="pre-wrap"?q1(x):V1(x);if(M.length===0)return{normalized:M,chunks:[],len:0,texts:[],isWordLike:[],kinds:[],starts:[]};let E=D==="keep-all"?a1(f0(M,N,A)):f0(M,N,A);return{normalized:M,chunks:s1(E,A),...E}}var a=null,H0=new Map,d=null,d1=96,r1=/\p{Emoji_Presentation}/u,i1=/[\p{Emoji_Presentation}\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u20E3]/u,D0=null,L0=new Map;function Q0(){if(a!==null)return a;if(typeof OffscreenCanvas<"u")return a=new OffscreenCanvas(1,1).getContext("2d"),a;if(typeof document<"u")return a=document.createElement("canvas").getContext("2d"),a;throw Error("Text measurement requires OffscreenCanvas or a DOM canvas context.")}function t1(x){let N=H0.get(x);if(!N)N=new Map,H0.set(x,N);return N}function g(x,N){let F=N.get(x);if(F===void 0)F={width:Q0().measureText(x).width,containsCJK:h(x)},N.set(x,F);return F}function m(){if(d!==null)return d;if(typeof navigator>"u")return d={lineFitEpsilon:0.005,carryCJKAfterClosingQuote:!1,preferPrefixWidthsForBreakableRuns:!1,preferEarlySoftHyphenBreak:!1},d;let x=navigator.userAgent,F=navigator.vendor==="Apple Computer, Inc."&&x.includes("Safari/")&&!x.includes("Chrome/")&&!x.includes("Chromium/")&&!x.includes("CriOS/")&&!x.includes("FxiOS/")&&!x.includes("EdgiOS/"),D=x.includes("Chrome/")||x.includes("Chromium/")||x.includes("CriOS/")||x.includes("Edg/");return d={lineFitEpsilon:F?0.015625:0.005,carryCJKAfterClosingQuote:D,preferPrefixWidthsForBreakableRuns:F,preferEarlySoftHyphenBreak:F},d}function n1(x){let N=x.match(/(\d+(?:\.\d+)?)\s*px/);return N?parseFloat(N[1]):16}function h0(){if(D0===null)D0=new Intl.Segmenter(void 0,{granularity:"grapheme"});return D0}function e1(x){return r1.test(x)||x.includes("\uFE0F")}function g0(x){return i1.test(x)}function xx(x,N){let F=L0.get(x);if(F!==void 0)return F;let D=Q0();D.font=x;let A=D.measureText("\uD83D\uDE00").width;if(F=0,A>N+0.5&&typeof document<"u"&&document.body!==null){let M=document.createElement("span");M.style.font=x,M.style.display="inline-block",M.style.visibility="hidden",M.style.position="absolute",M.textContent="\uD83D\uDE00",document.body.appendChild(M);let E=M.getBoundingClientRect().width;if(document.body.removeChild(M),A-E>0.5)F=A-E}return L0.set(x,F),F}function Nx(x){let N=0,F=h0();for(let D of F.segment(x))if(e1(D.segment))N++;return N}function Fx(x,N){if(N.emojiCount===void 0)N.emojiCount=Nx(x);return N.emojiCount}function o(x,N,F){if(F===0)return N.width;return N.width-Fx(x,N)*F}function p0(x,N,F,D,A){if(N.breakableFitAdvances!==void 0)return N.breakableFitAdvances;let M=h0(),E=[];for(let O of M.segment(x))E.push(O.segment);if(E.length<=1)return N.breakableFitAdvances=null,N.breakableFitAdvances;if(A==="sum-graphemes"){let O=[];for(let R of E){let V=g(R,F);O.push(o(R,V,D))}return N.breakableFitAdvances=O,N.breakableFitAdvances}if(A==="pair-context"||E.length>d1){let O=[],R=null,V=0;for(let L of E){let X=g(L,F),q=o(L,X,D);if(R===null)O.push(q);else{let Q=R+L,b=g(Q,F);O.push(o(Q,b,D)-V)}R=L,V=q}return N.breakableFitAdvances=O,N.breakableFitAdvances}let C=[],S="",B=0;for(let O of E){S+=O;let R=g(S,F),V=o(S,R,D);C.push(V-B),B=V}return N.breakableFitAdvances=C,N.breakableFitAdvances}function o0(x,N){let F=Q0();F.font=x;let D=t1(x),A=n1(x),M=N?xx(x,A):0;return{cache:D,fontSize:A,emojiCorrection:M}}function m0(){H0.clear(),L0.clear(),D0=null}function Mx(x,N){while(N<x.widths.length){let F=x.kinds[N];if(F!=="space"&&F!=="zero-width-break"&&F!=="soft-hyphen")break;N++}return N}function s0(x,N){if(N<=0)return 0;let F=x%N;if(Math.abs(F)<=0.000001)return N;return N-F}function a0(x,N,F,D,A){let M=0,E=N;while(M<x.length){let C=E+x[M];if((M+1<x.length?C+A:C)>F+D)break;E=C,M++}return{fitCount:M,fittedWidth:E}}function Ax(x,N){let F=0,D=x.chunks.length;while(F<D){let A=Math.floor((F+D)/2);if(N<x.chunks[A].consumedEndSegmentIndex)D=A;else F=A+1}return F<x.chunks.length?F:-1}function d0(x,N,F){let D=F.segmentIndex;if(F.graphemeIndex>0)return N;let A=x.chunks[N];if(A.startSegmentIndex===A.endSegmentIndex&&D===A.startSegmentIndex)return F.segmentIndex=D,F.graphemeIndex=0,N;if(D<A.startSegmentIndex)D=A.startSegmentIndex;while(D<A.endSegmentIndex){let M=x.kinds[D];if(M!=="space"&&M!=="zero-width-break"&&M!=="soft-hyphen")return F.segmentIndex=D,F.graphemeIndex=0,N;D++}if(A.consumedEndSegmentIndex>=x.widths.length)return-1;return F.segmentIndex=A.consumedEndSegmentIndex,F.graphemeIndex=0,N+1}function r0(x,N){if(N.segmentIndex>=x.widths.length)return-1;let F=Ax(x,N.segmentIndex);if(F<0)return-1;return d0(x,F,N)}function Dx(x,N,F){if(F.segmentIndex>=x.widths.length)return-1;let D=N;while(D<x.chunks.length&&F.segmentIndex>=x.chunks[D].consumedEndSegmentIndex)D++;if(D>=x.chunks.length)return-1;return d0(x,D,F)}function Bx(x,N,F){let{widths:D,kinds:A,breakableFitAdvances:M}=x;if(D.length===0)return 0;let C=m().lineFitEpsilon,S=N+C,B=0,O=0,R=!1,V=0,L=0,X=0,q=0,Q=-1,b=0;function v(){Q=-1,b=0}function _(J=X,U=q,P=O){B++,F?.(P,V,L,J,U),O=0,R=!1,v()}function w(J,U){R=!0,V=J,L=0,X=J+1,q=0,O=U}function K(J,U,P){R=!0,V=J,L=U,X=J,q=U+1,O=P}function $(J,U){if(!R){w(J,U);return}O+=U,X=J+1,q=0}function Y(J,U){let P=M[J];for(let f=U;f<P.length;f++){let k=P[f];if(!R)K(J,f,k);else if(O+k>S)_(),K(J,f,k);else O+=k,X=J,q=f+1}if(R&&X===J&&q===P.length)X=J+1,q=0}let H=0;while(H<D.length){if(!R){if(H=Mx(x,H),H>=D.length)break}let J=D[H],U=A[H],P=U==="space"||U==="preserved-space"||U==="tab"||U==="zero-width-break"||U==="soft-hyphen";if(!R){if(J>N&&M[H]!==null)Y(H,0);else w(H,J);if(P)Q=H+1,b=O-J;H++;continue}if(O+J>S){if(P){$(H,J),_(H+1,0,O-J),H++;continue}if(Q>=0){if(X>Q||X===Q&&q>0){_();continue}_(Q,0,b);continue}if(J>N&&M[H]!==null){_(),Y(H,0),H++;continue}_();continue}if($(H,J),P)Q=H+1,b=O-J;H++}if(R)_();return B}function _0(x,N,F){if(x.simpleLineWalkFastPath)return Bx(x,N,F);let{widths:D,lineEndFitAdvances:A,lineEndPaintAdvances:M,kinds:E,breakableFitAdvances:C,discretionaryHyphenWidth:S,tabStopAdvance:B,chunks:O}=x;if(D.length===0||O.length===0)return 0;let R=m(),V=R.lineFitEpsilon,L=N+V,X=0,q=0,Q=!1,b=0,v=0,_=0,w=0,K=-1,$=0,Y=0,H=null;function J(){K=-1,$=0,Y=0,H=null}function U(z=_,G=w,T=q){X++,F?.(T,b,v,z,G),q=0,Q=!1,J()}function P(z,G){Q=!0,b=z,v=0,_=z+1,w=0,q=G}function f(z,G,T){Q=!0,b=z,v=G,_=z,w=G+1,q=T}function k(z,G){if(!Q){P(z,G);return}q+=G,_=z+1,w=0}function u(z,G,T,y){if(!G)return;let l=z==="tab"?0:A[T],I=z==="tab"?y:M[T];K=T+1,$=q-y+l,Y=q-y+I,H=z}function Z(z,G){let T=C[z];for(let y=G;y<T.length;y++){let l=T[y];if(!Q)f(z,y,l);else if(q+l>L)U(),f(z,y,l);else q+=l,_=z,w=y+1}if(Q&&_===z&&w===T.length)_=z+1,w=0}function j(z){if(H!=="soft-hyphen")return!1;let G=C[z];if(G==null)return!1;let{fitCount:T,fittedWidth:y}=a0(G,q,N,V,S);if(T===0)return!1;if(q=y,_=z,w=T,J(),T===G.length)return _=z+1,w=0,!0;return U(z,T,y+S),Z(z,T),!0}function W(z){X++,F?.(0,z.startSegmentIndex,0,z.consumedEndSegmentIndex,0),J()}for(let z=0;z<O.length;z++){let G=O[z];if(G.startSegmentIndex===G.endSegmentIndex){W(G);continue}Q=!1,q=0,b=G.startSegmentIndex,v=0,_=G.startSegmentIndex,w=0,J();let T=G.startSegmentIndex;while(T<G.endSegmentIndex){let y=E[T],l=y==="space"||y==="preserved-space"||y==="tab"||y==="zero-width-break"||y==="soft-hyphen",I=y==="tab"?s0(q,B):D[T];if(y==="soft-hyphen"){if(Q)_=T+1,w=0,K=T+1,$=q+S,Y=q+S,H=y;T++;continue}if(!Q){if(I>N&&C[T]!==null)Z(T,0);else P(T,I);u(y,l,T,I),T++;continue}if(q+I>L){let n=q+(y==="tab"?0:A[T]),B1=q+(y==="tab"?I:M[T]);if(H==="soft-hyphen"&&R.preferEarlySoftHyphenBreak&&$<=L){U(K,0,Y);continue}if(H==="soft-hyphen"&&j(T)){T++;continue}if(l&&n<=L){k(T,I),U(T+1,0,B1),T++;continue}if(K>=0&&$<=L){if(_>K||_===K&&w>0){U();continue}let b0=K;U(b0,0,Y),T=b0;continue}if(I>N&&C[T]!==null){U(),Z(T,0),T++;continue}U();continue}k(T,I),u(y,l,T,I),T++}if(Q){let y=K===G.consumedEndSegmentIndex?Y:q;U(G.consumedEndSegmentIndex,0,y)}}return X}function i0(x,N,F,D){let A=x.chunks[F];if(A.startSegmentIndex===A.endSegmentIndex)return N.segmentIndex=A.consumedEndSegmentIndex,N.graphemeIndex=0,0;let{widths:M,lineEndFitAdvances:E,lineEndPaintAdvances:C,kinds:S,breakableFitAdvances:B,discretionaryHyphenWidth:O,tabStopAdvance:R}=x,V=m(),L=V.lineFitEpsilon,X=D+L,q=0,Q=!1,b=N.segmentIndex,v=N.graphemeIndex,_=-1,w=0,K=0,$=null;function Y(){_=-1,w=0,K=0,$=null}function H(Z=b,j=v,W=q){if(!Q)return null;return N.segmentIndex=Z,N.graphemeIndex=j,W}function J(Z,j){Q=!0,b=Z+1,v=0,q=j}function U(Z,j,W){Q=!0,b=Z,v=j+1,q=W}function P(Z,j){if(!Q){J(Z,j);return}q+=j,b=Z+1,v=0}function f(Z,j,W,z){if(!j)return;let G=Z==="tab"?0:E[W],T=Z==="tab"?z:C[W];_=W+1,w=q-z+G,K=q-z+T,$=Z}function k(Z,j){let W=B[Z];for(let z=j;z<W.length;z++){let G=W[z];if(!Q)U(Z,z,G);else{if(q+G>X)return H();q+=G,b=Z,v=z+1}}if(Q&&b===Z&&v===W.length)b=Z+1,v=0;return null}function u(Z){if($!=="soft-hyphen"||_<0)return null;let j=B[Z]??null;if(j!==null){let{fitCount:W,fittedWidth:z}=a0(j,q,D,L,O);if(W===j.length)return q=z,b=Z+1,v=0,Y(),null;if(W>0)return H(Z,W,z+O)}if(w<=X)return H(_,0,K);return null}for(let Z=N.segmentIndex;Z<A.endSegmentIndex;Z++){let j=S[Z],W=j==="space"||j==="preserved-space"||j==="tab"||j==="zero-width-break"||j==="soft-hyphen",z=Z===N.segmentIndex?N.graphemeIndex:0,G=j==="tab"?s0(q,R):M[Z];if(j==="soft-hyphen"&&z===0){if(Q)b=Z+1,v=0,_=Z+1,w=q+O,K=q+O,$=j;continue}if(!Q){if(z>0){let y=k(Z,z);if(y!==null)return y}else if(G>D&&B[Z]!==null){let y=k(Z,0);if(y!==null)return y}else J(Z,G);f(j,W,Z,G);continue}if(q+G>X){let y=q+(j==="tab"?0:E[Z]),l=q+(j==="tab"?G:C[Z]);if($==="soft-hyphen"&&V.preferEarlySoftHyphenBreak&&w<=X)return H(_,0,K);let I=u(Z);if(I!==null)return I;if(W&&y<=X)return P(Z,G),H(Z+1,0,l);if(_>=0&&w<=X){if(b>_||b===_&&v>0)return H();return H(_,0,K)}if(G>D&&B[Z]!==null){let q0=H();if(q0!==null)return q0;let n=k(Z,0);if(n!==null)return n}return H()}P(Z,G),f(j,W,Z,G)}if(_===A.consumedEndSegmentIndex&&v===0)return H(A.consumedEndSegmentIndex,0,K);return H(A.consumedEndSegmentIndex,0,q)}function Ex(x,N,F){let{widths:D,kinds:A,breakableFitAdvances:M}=x,C=m().lineFitEpsilon,S=F+C,B=0,O=!1,R=N.segmentIndex,V=N.graphemeIndex,L=-1,X=0;for(let q=N.segmentIndex;q<D.length;q++){let Q=D[q],b=A[q],v=b==="space"||b==="preserved-space"||b==="tab"||b==="zero-width-break"||b==="soft-hyphen",_=q===N.segmentIndex?N.graphemeIndex:0,w=M[q];if(!O){if(_>0||Q>F&&w!==null){let K=w,$=K[_];O=!0,B=$,R=q,V=_+1;for(let Y=_+1;Y<K.length;Y++){let H=K[Y];if(B+H>S)return N.segmentIndex=R,N.graphemeIndex=V,B;B+=H,R=q,V=Y+1}if(R===q&&V===K.length)R=q+1,V=0}else O=!0,B=Q,R=q+1,V=0;if(v)L=q+1,X=B-Q;continue}if(B+Q>S){if(v)return N.segmentIndex=q+1,N.graphemeIndex=0,B;if(L>=0){if(R>L||R===L&&V>0)return N.segmentIndex=R,N.graphemeIndex=V,B;return N.segmentIndex=L,N.graphemeIndex=0,X}return N.segmentIndex=R,N.graphemeIndex=V,B}if(B+=Q,R=q+1,V=0,v)L=q+1,X=B-Q}if(!O)return null;return N.segmentIndex=R,N.graphemeIndex=V,B}function s(x,N,F){let D=r0(x,N);if(D<0)return null;if(x.simpleLineWalkFastPath)return Ex(x,N,F);return i0(x,N,D,F)}function t0(x,N){if(x.widths.length===0)return{lineCount:0,maxLineWidth:0};let F={segmentIndex:0,graphemeIndex:0},D=0,A=0;if(!x.simpleLineWalkFastPath){let M=r0(x,F);while(M>=0){let E=i0(x,F,M,N);if(E===null)return{lineCount:D,maxLineWidth:A};if(D++,E>A)A=E;M=Dx(x,M,F)}return{lineCount:D,maxLineWidth:A}}while(!0){let M=s(x,F,N);if(M===null)return{lineCount:D,maxLineWidth:A};if(D++,M>A)A=M}}var B0=null,z0=new WeakMap;function Ox(){if(B0===null)B0=new Intl.Segmenter(void 0,{granularity:"grapheme"});return B0}function n0(x,N,F){let D=F.get(x);if(D!==void 0)return D;D=[];let A=Ox();for(let M of A.segment(N[x]))D.push(M.segment);return F.set(x,D),D}function Sx(x,N,F,D){return D>0&&x[D-1]==="soft-hyphen"&&!(N===D&&F>0)}function e0(x,N,F,D){for(let A=F;A<D;A++)x+=N[A];return x}function E0(x){let N=z0.get(x);if(N!==void 0)return N;return N=new Map,z0.set(x,N),N}function O0(x,N,F,D,A,M){let E="",C=Sx(x.kinds,F,D,A);for(let S=F;S<A;S++){if(x.kinds[S]==="soft-hyphen"||x.kinds[S]==="hard-break")continue;if(S===F&&D>0){let B=n0(S,x.segments,N);E=e0(E,B,D,B.length)}else E+=x.segments[S]}if(M>0){if(C)E+="-";let S=n0(A,x.segments,N);E=e0(E,S,F===A?D:0,M)}else if(C)E+="-";return E}function x1(){B0=null,z0=new WeakMap}var S0=null;function Cx(){if(S0===null)S0=new Intl.Segmenter(void 0,{granularity:"grapheme"});return S0}function Rx(x){if(x)return{widths:[],lineEndFitAdvances:[],lineEndPaintAdvances:[],kinds:[],simpleLineWalkFastPath:!0,segLevels:null,breakableFitAdvances:[],discretionaryHyphenWidth:0,tabStopAdvance:0,chunks:[],segments:[]};return{widths:[],lineEndFitAdvances:[],lineEndPaintAdvances:[],kinds:[],simpleLineWalkFastPath:!0,segLevels:null,breakableFitAdvances:[],discretionaryHyphenWidth:0,tabStopAdvance:0,chunks:[]}}function Vx(x,N){let F=[],D=[],A=0,M=!1,E=!1,C=!1;function S(){if(D.length===0)return;F.push({text:D.length===1?D[0]:D.join(""),start:A}),D=[],M=!1,E=!1,C=!1}function B(R,V,L){D=[R],A=V,M=L,E=A0(R),C=i.has(R)}function O(R,V){D.push(R),M=M||V;let L=A0(R);if(R.length===1&&p.has(R))E=E||L;else E=L;C=!1}for(let R of Cx().segment(x)){let V=R.segment,L=h(V);if(D.length===0){B(V,R.index,L);continue}if(C||F0.has(V)||p.has(V)||N.carryCJKAfterClosingQuote&&L&&E){O(V,L);continue}if(!M&&!L){O(V,L);continue}S(),B(V,R.index,L)}return S(),F}function qx(x){if(x.length<=1)return x;let N=[],F=[x[0].text],D=x[0].start,A=h(x[0].text),M=N0(x[0].text);function E(){N.push({text:F.length===1?F[0]:F.join(""),start:D})}for(let C=1;C<x.length;C++){let S=x[C],B=h(S.text),O=N0(S.text);if(A&&M){F.push(S.text),A=A||B,M=O;continue}E(),F=[S.text],D=S.start,A=B,M=O}return E(),N}function Zx(x,N,F,D){let A=m(),{cache:M,emojiCorrection:E}=o0(N,g0(x.normalized)),C=o("-",g("-",M),E),B=o(" ",g(" ",M),E)*8;if(x.len===0)return Rx(F);let O=[],R=[],V=[],L=[],X=x.chunks.length<=1,q=F?[]:null,Q=[],b=F?[]:null,v=Array.from({length:x.len});function _(Y,H,J,U,P,f,k){if(P!=="text"&&P!=="space"&&P!=="zero-width-break")X=!1;if(O.push(H),R.push(J),V.push(U),L.push(P),q?.push(f),Q.push(k),b!==null)b.push(Y)}function w(Y,H,J,U,P){let f=g(Y,M),k=o(Y,f,E),u=H==="space"||H==="preserved-space"||H==="zero-width-break"?0:k,Z=H==="space"||H==="zero-width-break"?0:k;if(P&&U&&Y.length>1){let j="sum-graphemes";if(r(Y))j="pair-context";else if(A.preferPrefixWidthsForBreakableRuns)j="segment-prefixes";let W=p0(Y,f,M,E,j);_(Y,k,u,Z,H,J,W);return}_(Y,k,u,Z,H,J,null)}for(let Y=0;Y<x.len;Y++){v[Y]=O.length;let H=x.texts[Y],J=x.isWordLike[Y],U=x.kinds[Y],P=x.starts[Y];if(U==="soft-hyphen"){_(H,0,C,C,U,P,null);continue}if(U==="hard-break"){_(H,0,0,0,U,P,null);continue}if(U==="tab"){_(H,0,0,0,U,P,null);continue}let f=g(H,M);if(U==="text"&&f.containsCJK){let k=Vx(H,A),u=D==="keep-all"?qx(k):k;for(let Z=0;Z<u.length;Z++){let j=u[Z];w(j.text,"text",P+j.start,J,D==="keep-all"||!h(j.text))}continue}w(H,U,P,J,!0)}let K=$x(x.chunks,v,O.length),$=q===null?null:K0(x.normalized,q);if(b!==null)return{widths:O,lineEndFitAdvances:R,lineEndPaintAdvances:V,kinds:L,simpleLineWalkFastPath:X,segLevels:$,breakableFitAdvances:Q,discretionaryHyphenWidth:C,tabStopAdvance:B,chunks:K,segments:b};return{widths:O,lineEndFitAdvances:R,lineEndPaintAdvances:V,kinds:L,simpleLineWalkFastPath:X,segLevels:$,breakableFitAdvances:Q,discretionaryHyphenWidth:C,tabStopAdvance:B,chunks:K}}function $x(x,N,F){let D=[];for(let A=0;A<x.length;A++){let M=x[A],E=M.startSegmentIndex<N.length?N[M.startSegmentIndex]:F,C=M.endSegmentIndex<N.length?N[M.endSegmentIndex]:F,S=M.consumedEndSegmentIndex<N.length?N[M.consumedEndSegmentIndex]:F;D.push({startSegmentIndex:E,endSegmentIndex:C,consumedEndSegmentIndex:S})}return D}function Xx(x,N,F,D){let A=D?.wordBreak??"normal",M=c0(x,m(),D?.whiteSpace,A);return Zx(M,N,F,A)}function t(x,N,F){return Xx(x,N,!0,F)}function J0(x){return x}function Yx(x,N,F,D,A,M,E){return{text:O0(x,N,D,A,M,E),width:F,start:{segmentIndex:D,graphemeIndex:A},end:{segmentIndex:M,graphemeIndex:E}}}function Hx(x,N){return t0(J0(x),N)}function C0(x){let N=0;return _0(J0(x),Number.POSITIVE_INFINITY,(F)=>{if(F>N)N=F}),N}function Lx(x,N,F){let D=[];if(x.widths.length===0)return{lineCount:0,height:0,lines:D};let A=E0(x),M=_0(J0(x),N,(E,C,S,B,O)=>{D.push(Yx(x,A,E,C,S,B,O))});return{lineCount:M,height:M*F,lines:D}}function Qx(){W0(),S0=null,x1(),m0()}var _x=/[ \t\n\f\r]+/,N1=/^[ \t\n\f\r]+/,F1=/[ \t\n\f\r]+$/,M1={segmentIndex:0,graphemeIndex:0},A1={itemIndex:0,segmentIndex:0,graphemeIndex:0};function T0(x){return x}function U0(x){return{segmentIndex:x.segmentIndex,graphemeIndex:x.graphemeIndex}}function V0(x){return x.segmentIndex===0&&x.graphemeIndex===0}function R0(x,N){let F=N.get(x);if(F!==void 0)return F;let D=C0(t("A A",x)),A=C0(t("AA",x)),M=Math.max(0,D-A);return N.set(x,M),M}function zx(x){let N={segmentIndex:0,graphemeIndex:0},F=s(x,N,Number.POSITIVE_INFINITY);if(F===null)return null;return{endGraphemeIndex:N.graphemeIndex,endSegmentIndex:N.segmentIndex,width:F}}function D1(x,N){return x===0&&N>0}function Jx(x){let N=[],F=Array.from({length:x.length}),D=new Map,A=0;for(let M=0;M<x.length;M++){let E=x[M],C=N1.test(E.text),S=F1.test(E.text),B=E.text.replace(N1,"").replace(F1,"");if(B.length===0){if(_x.test(E.text)&&A===0)A=R0(E.font,D);continue}let O=A>0?A:C?R0(E.font,D):0,R=t(B,E.font),V=zx(R);if(V===null){A=S?R0(E.font,D):0;continue}let L={break:E.break??"normal",endGraphemeIndex:V.endGraphemeIndex,endSegmentIndex:V.endSegmentIndex,extraWidth:E.extraWidth??0,gapBefore:O,naturalWidth:V.width,prepared:R,sourceItemIndex:M};N.push(L),F[M]=L,A=S?R0(E.font,D):0}return{items:N,itemsBySourceItemIndex:F}}function Ux(x,N,F,D){if(x.items.length===0||F.itemIndex>=x.items.length)return null;let A=Math.max(1,N),M=0,E=A,C=F.itemIndex,S={segmentIndex:F.segmentIndex,graphemeIndex:F.graphemeIndex};x:while(C<x.items.length){let B=x.items[C];if(!V0(S)&&S.segmentIndex===B.endSegmentIndex&&S.graphemeIndex===B.endGraphemeIndex){C++,S.segmentIndex=0,S.graphemeIndex=0;continue}let O=M===0?0:B.gapBefore,R=V0(S);if(B.break==="never"){if(!R){C++,S.segmentIndex=0,S.graphemeIndex=0;continue}let Q=B.naturalWidth+B.extraWidth,b=O+Q;if(M>0&&b>E)break x;D?.(B,O,Q,U0(M1),{segmentIndex:B.endSegmentIndex,graphemeIndex:B.endGraphemeIndex}),M+=b,E=Math.max(0,A-M),C++,S.segmentIndex=0,S.graphemeIndex=0;continue}let V=O+B.extraWidth;if(M>0&&V>=E)break x;if(R){let Q=V+B.naturalWidth;if(Q<=E){D?.(B,O,B.naturalWidth+B.extraWidth,U0(M1),{segmentIndex:B.endSegmentIndex,graphemeIndex:B.endGraphemeIndex}),M+=Q,E=Math.max(0,A-M),C++,S.segmentIndex=0,S.graphemeIndex=0;continue}}let L=Math.max(1,E-V),X={segmentIndex:S.segmentIndex,graphemeIndex:S.graphemeIndex},q=s(B.prepared,X,L);if(q===null){C++,S.segmentIndex=0,S.graphemeIndex=0;continue}if(S.segmentIndex===X.segmentIndex&&S.graphemeIndex===X.graphemeIndex){C++,S.segmentIndex=0,S.graphemeIndex=0;continue}if(M>0&&R&&O>0&&D1(X.segmentIndex,X.graphemeIndex)){let Q={segmentIndex:0,graphemeIndex:0};if(s(B.prepared,Q,Math.max(1,A-B.extraWidth))!==null&&(Q.segmentIndex>X.segmentIndex||Q.segmentIndex===X.segmentIndex&&Q.graphemeIndex>X.graphemeIndex))break x}if(D?.(B,O,q+B.extraWidth,U0(S),{segmentIndex:X.segmentIndex,graphemeIndex:X.graphemeIndex}),M+=O+q+B.extraWidth,E=Math.max(0,A-M),X.segmentIndex===B.endSegmentIndex&&X.graphemeIndex===B.endGraphemeIndex){C++,S.segmentIndex=0,S.graphemeIndex=0;continue}S.segmentIndex=X.segmentIndex,S.graphemeIndex=X.graphemeIndex;break}if(M===0)return null;return F.itemIndex=C,F.segmentIndex=S.segmentIndex,F.graphemeIndex=S.graphemeIndex,M}function Tx(x,N,F){if(x.items.length===0||F.itemIndex>=x.items.length)return null;let D=Math.max(1,N),A=0,M=D,E=F.itemIndex;x:while(E<x.items.length){let C=x.items[E];if(!V0(F)&&F.segmentIndex===C.endSegmentIndex&&F.graphemeIndex===C.endGraphemeIndex){E++,F.segmentIndex=0,F.graphemeIndex=0;continue}let S=A===0?0:C.gapBefore,B=V0(F);if(C.break==="never"){if(!B){E++,F.segmentIndex=0,F.graphemeIndex=0;continue}let X=C.naturalWidth+C.extraWidth,q=S+X;if(A>0&&q>M)break x;A+=q,M=Math.max(0,D-A),E++,F.segmentIndex=0,F.graphemeIndex=0;continue}let O=S+C.extraWidth;if(A>0&&O>=M)break x;if(B){let X=O+C.naturalWidth;if(X<=M){A+=X,M=Math.max(0,D-A),E++,F.segmentIndex=0,F.graphemeIndex=0;continue}}let R=Math.max(1,M-O),V={segmentIndex:F.segmentIndex,graphemeIndex:F.graphemeIndex},L=s(C.prepared,V,R);if(L===null){E++,F.segmentIndex=0,F.graphemeIndex=0;continue}if(F.segmentIndex===V.segmentIndex&&F.graphemeIndex===V.graphemeIndex){E++,F.segmentIndex=0,F.graphemeIndex=0;continue}if(A>0&&B&&S>0&&D1(V.segmentIndex,V.graphemeIndex)){let X={segmentIndex:0,graphemeIndex:0};if(s(C.prepared,X,Math.max(1,D-C.extraWidth))!==null&&(X.segmentIndex>V.segmentIndex||X.segmentIndex===V.segmentIndex&&X.graphemeIndex>V.graphemeIndex))break x}if(A+=S+L+C.extraWidth,M=Math.max(0,D-A),V.segmentIndex===C.endSegmentIndex&&V.graphemeIndex===C.endGraphemeIndex){E++,F.segmentIndex=0,F.graphemeIndex=0;continue}F.segmentIndex=V.segmentIndex,F.graphemeIndex=V.graphemeIndex;break}if(A===0)return null;return F.itemIndex=E,A}function bx(x,N,F=A1){let D=T0(x),A={itemIndex:F.itemIndex,segmentIndex:F.segmentIndex,graphemeIndex:F.graphemeIndex},M=[],E=Ux(D,N,A,(C,S,B,O,R)=>{M.push({itemIndex:C.sourceItemIndex,gapBefore:S,occupiedWidth:B,start:O,end:R})});if(E===null)return null;return{fragments:M,width:E,end:A}}function jx(x,N){return O0(x.prepared,E0(x.prepared),N.start.segmentIndex,N.start.graphemeIndex,N.end.segmentIndex,N.end.graphemeIndex)}function Kx(x,N){let F=T0(x),D=[];for(let A=0;A<N.fragments.length;A++){let M=N.fragments[A],E=F.itemsBySourceItemIndex[M.itemIndex];if(E===void 0)throw Error("Missing rich-text inline item for fragment");D.push({itemIndex:M.itemIndex,text:jx(E,M),gapBefore:M.gapBefore,occupiedWidth:M.occupiedWidth,start:M.start,end:M.end})}return{fragments:D,width:N.width,end:N.end}}function Gx(x,N,F){let D=0,A=A1;while(!0){let M=bx(x,N,A);if(M===null)return D;F(M),D++,A=M.end}}function yx(x,N){let F=T0(x),D=0,A=0,M={itemIndex:0,segmentIndex:0,graphemeIndex:0};while(!0){let E=Tx(F,N,M);if(E===null)return{lineCount:D,maxLineWidth:A};if(D++,E>A)A=E}}return{walkRichInlineLineRanges:Gx,prepareWithSegments:t,prepareRichInline:Jx,measureRichInlineStats:yx,measureNaturalWidth:C0,measureLineStats:Hx,materializeRichInlineLineRange:Kx,layoutWithLines:Lx,clearCache:Qx};
+})();
+
+// Markdown → Pretext blocks renderer
+;(function() {
+var PT = Pretext;
+var PT_SANS = "'Inter', sans-serif";
+var PT_MONO = "'JetBrains Mono', monospace";
+var PT_CODE_BLOCK_FONT = '400 12px ' + PT_MONO;
+var PT_CODE_FONT = '500 12px ' + PT_MONO;
+var PT_MARKER_FONT = '600 11px ' + PT_MONO;
+var PT_IMAGE_FONT = '700 11px ' + PT_SANS;
+var PT_BODY_LH = 21, PT_H1_LH = 26, PT_H2_LH = 22, PT_CODE_LH = 18;
+var PT_CODE_PAD_X = 12, PT_CODE_PAD_Y = 8;
+var PT_BLOCK_GAP = 10, PT_RICH_GAP = 2, PT_HARD_BREAK_GAP = 4;
+var PT_LIST_ITEM_GAP = 4, PT_LIST_INDENT = 18, PT_QUOTE_INDENT = 18;
+var PT_MARKER_GAP = 10, PT_RAIL_OFFSET = 5, PT_RULE_HEIGHT = 18;
+var PT_INLINE_CODE_EXTRA = 14, PT_IMAGE_EXTRA = 14;
+var EMPTY_M = { bold: false, italic: false, strike: false, href: null };
+
+function ptFont(v, m) {
+  var it = m.italic ? 'italic ' : '';
+  if (v === 'h1') return it + '700 18px ' + PT_SANS;
+  if (v === 'h2') return it + '600 15px ' + PT_SANS;
+  return it + (m.bold ? 700 : m.href ? 500 : 400) + ' 13px ' + PT_SANS;
+}
+function ptCls(v, m) {
+  var c = 'pt-frag';
+  c += v === 'h1' ? ' pt-frag-h1' : v === 'h2' ? ' pt-frag-h2' : ' pt-frag-body';
+  if (m.href) c += ' is-link';
+  if (m.bold) c += ' is-strong';
+  if (m.italic) c += ' is-em';
+  if (m.strike) c += ' is-del';
+  return c;
+}
+function ptLH(v) { return v === 'h1' ? PT_H1_LH : v === 'h2' ? PT_H2_LH : PT_BODY_LH; }
+function ptHV(d) { return d <= 1 ? 'h1' : d === 2 ? 'h2' : 'body'; }
+
+function ptBase(ctx) {
+  var li = Math.max(0, ctx.ld - 1) * PT_LIST_INDENT, cl = li + ctx.qd * PT_QUOTE_INDENT, rails = [];
+  for (var d = 0; d < ctx.qd; d++) rails.push(li + d * PT_QUOTE_INDENT + PT_RAIL_OFFSET);
+  return { contentLeft: cl, mc: null, ml: null, mt: null, rails: rails };
+}
+
+// marked.lexer() HTML-escapes the `text` property of inline tokens (e.g. " → &quot;).
+// Since Pretext renders via textContent (not innerHTML), we must reverse this escaping.
+function ptUnesc(s) {
+  if (s.indexOf('&') === -1) return s;
+  return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+
+function ptPlain(tks) {
+  var s = '';
+  for (var i = 0; i < tks.length; i++) {
+    var t = tks[i];
+    if (t.type === 'strong' || t.type === 'em' || t.type === 'del' || t.type === 'link') s += ptPlain(t.tokens || []);
+    else if (t.type === 'br') s += '\n';
+    else s += ptUnesc(t.text || t.raw || '');
+  }
+  return s;
+}
+
+function ptCollect(tokens, v) {
+  var lines = [[]], cur = function() { return lines[lines.length - 1]; };
+  function mk(tx, m) { return tx ? { bm: 'normal', cn: ptCls(v, m), ew: 0, ft: ptFont(v, m), hr: m.href, tx: ptUnesc(tx) } : null; }
+  function add(p) {
+    if (!p) return;
+    var l = cur(), pr = l.length ? l[l.length - 1] : null;
+    if (pr && pr.bm === p.bm && pr.cn === p.cn && pr.ew === p.ew && pr.ft === p.ft && pr.hr === p.hr) { pr.tx += p.tx; return; }
+    l.push(p);
+  }
+  function w(tks, m) {
+    for (var i = 0; i < tks.length; i++) {
+      var t = tks[i];
+      switch (t.type) {
+        case 'text': Array.isArray(t.tokens) && t.tokens.length ? w(t.tokens, m) : add(mk(t.text, m)); break;
+        case 'escape': add(mk(t.text, m)); break;
+        case 'strong': w(t.tokens || [], Object.assign({}, m, { bold: true })); break;
+        case 'em': w(t.tokens || [], Object.assign({}, m, { italic: true })); break;
+        case 'del': w(t.tokens || [], Object.assign({}, m, { strike: true })); break;
+        case 'codespan': if (t.text) add({ bm: 'normal', cn: 'pt-frag pt-frag-code', ew: PT_INLINE_CODE_EXTRA, ft: PT_CODE_FONT, hr: null, tx: ptUnesc(t.text) }); break;
+        case 'link': w(t.tokens || [], Object.assign({}, m, { href: t.href })); break;
+        case 'image': add({ bm: 'never', cn: 'pt-frag pt-frag-chip', ew: PT_IMAGE_EXTRA, ft: PT_IMAGE_FONT, hr: null, tx: ptUnesc(t.text || t.href || 'image') }); break;
+        case 'br': lines.push([]); break;
+        case 'checkbox': add(mk(t.checked ? '[x] ' : '[ ] ', m)); break;
+        case 'html': add(mk(t.text, m)); break;
+        default: var fb = t.text || t.raw || ''; if (fb) add(mk(fb, m));
+      }
+    }
+  }
+  w(tokens, EMPTY_M);
+  while (lines.length && !lines[lines.length - 1].length) lines.pop();
+  return lines;
+}
+
+function ptPrepInl(plines, v, ctx) {
+  var blks = [];
+  for (var i = 0; i < plines.length; i++) {
+    var pieces = plines[i];
+    if (!pieces.length) continue;
+    var lh = ptLH(v);
+    blks.push(Object.assign({}, ptBase(ctx), {
+      kind: 'inline', cns: pieces.map(function(p) { return p.cn; }), hrs: pieces.map(function(p) { return p.hr; }),
+      flow: PT.prepareRichInline(pieces.map(function(p) { return { text: p.tx, font: p.ft, break: p.bm, extraWidth: p.ew }; })),
+      lineHeight: lh, marginTop: blks.length ? PT_HARD_BREAK_GAP : 0
+    }));
+  }
+  return blks;
+}
+
+function ptInlBlks(tokens, v, ctx) { return ptPrepInl(ptCollect(tokens, v), v, ctx); }
+function ptPlainBlks(text, v, ctx) {
+  if (!text) return [];
+  return ptPrepInl([[{ bm: 'normal', cn: ptCls(v, EMPTY_M), ew: 0, ft: ptFont(v, EMPTY_M), hr: null, tx: text }]], v, ctx);
+}
+
+function ptCodeBlk(text, ctx, lang) {
+  var t = text.endsWith('\n') ? text.slice(0, -1) : text;
+  return Object.assign({}, ptBase(ctx), { kind: 'code', lineHeight: PT_CODE_LH, prepared: PT.prepareWithSegments(t, PT_CODE_BLOCK_FONT, { whiteSpace: 'pre-wrap' }), marginTop: 0, lang: String(lang || '').toLowerCase(), rawText: t });
+}
+function ptTableCellInline(cell) {
+  var toks = (cell && cell.tokens) || [];
+  var lines = ptCollect(toks, 'body');
+  if (!lines.length) lines = [[{ bm: 'normal', cn: ptCls('body', EMPTY_M), ew: 0, ft: ptFont('body', EMPTY_M), hr: null, tx: '' }]];
+  return lines.map(function(line) {
+    return line.map(function(p) { return { cn: p.cn, hr: p.hr || null, tx: p.tx }; });
+  });
+}
+function ptTableBlk(token, ctx) {
+  var header = (token.header || []).map(function(c) { return { align: c.align || null, lines: ptTableCellInline(c) }; });
+  var rows = (token.rows || []).map(function(row) {
+    return row.map(function(c) { return { align: c.align || null, lines: ptTableCellInline(c) }; });
+  });
+  return Object.assign({}, ptBase(ctx), { kind: 'table', header: header, rows: rows, marginTop: 0 });
+}
+function ptRuleBlk(ctx) { return Object.assign({}, ptBase(ctx), { kind: 'rule', height: PT_RULE_HEIGHT, marginTop: 0 }); }
+
+function ptAG(tgt, grp, fm) {
+  for (var i = 0; i < grp.length; i++) tgt.push(Object.assign({}, grp[i], { marginTop: i === 0 ? (tgt.length ? fm : 0) : grp[i].marginTop }));
+}
+
+function ptListBlks(token, ctx) {
+  var blks = [], ic = { ld: ctx.ld + 1, qd: ctx.qd };
+  for (var i = 0; i < token.items.length; i++) {
+    var item = token.items[i];
+    var ib = ptParseToks(item.tokens, ic);
+    if (!ib.length) ib = ptPlainBlks(item.text, 'body', ic);
+    var mt, mcl = 'pt-marker';
+    if (item.task) mt = item.checked ? iconHtml('i:check-square') : iconHtml('i:square');
+    else if (token.ordered) mt = ((token.start || 1) + i) + '.';
+    else mt = '\u2022';
+    var mw = PT.measureNaturalWidth(PT.prepareWithSegments(mt, PT_MARKER_FONT)) + PT_MARKER_GAP;
+    for (var j = 0; j < ib.length; j++) ib[j] = Object.assign({}, ib[j], { contentLeft: ib[j].contentLeft + mw });
+    if (ib.length) ib[0] = Object.assign({}, ib[0], { mt: mt, mc: mcl, ml: ib[0].contentLeft - mw });
+    ptAG(blks, ib, PT_LIST_ITEM_GAP);
+  }
+  return blks;
+}
+
+function ptParseToks(tokens, ctx) {
+  var out = [];
+  for (var i = 0; i < tokens.length; i++) {
+    var t = tokens[i];
+    switch (t.type) {
+      case 'space': case 'def': break;
+      case 'paragraph': ptAG(out, ptInlBlks(t.tokens || [], 'body', ctx), PT_BLOCK_GAP); break;
+      case 'heading': ptAG(out, ptInlBlks(t.tokens || [], ptHV(t.depth), ctx), PT_BLOCK_GAP + 4); break;
+      case 'code': ptAG(out, [ptCodeBlk(t.text, ctx, t.lang)], PT_RICH_GAP); break;
+      case 'list': ptAG(out, ptListBlks(t, ctx), PT_BLOCK_GAP); break;
+      case 'blockquote': ptAG(out, ptParseToks(t.tokens || [], { ld: ctx.ld, qd: ctx.qd + 1 }), PT_RICH_GAP); break;
+      case 'hr': ptAG(out, [ptRuleBlk(ctx)], PT_BLOCK_GAP + 2); break;
+      case 'table':
+        ptAG(out, [ptTableBlk(t, ctx)], PT_RICH_GAP);
+        break;
+      case 'html':
+        var tx = (t.text || '').trim() || t.raw;
+        if (t.block || t.pre) ptAG(out, [ptCodeBlk(tx, ctx, 'html')], PT_RICH_GAP);
+        else ptAG(out, ptPlainBlks(tx, 'body', ctx), PT_BLOCK_GAP);
+        break;
+      case 'text':
+        if (Array.isArray(t.tokens) && t.tokens.length) ptAG(out, ptInlBlks(t.tokens, 'body', ctx), PT_BLOCK_GAP);
+        else ptAG(out, ptPlainBlks(t.text, 'body', ctx), PT_BLOCK_GAP);
+        break;
+      default: var fb = t.text || t.raw || ''; if (fb) ptAG(out, ptPlainBlks(fb, 'body', ctx), PT_BLOCK_GAP);
+    }
+  }
+  return out;
+}
+
+window.ptParseBlocks = function(md) {
+  return ptParseToks(marked.lexer(md, { gfm: true }), { ld: 0, qd: 0 });
+};
+
+window.ptLayout = function(blocks, cw) {
+  var res = [], y = 0;
+  for (var bi = 0; bi < blocks.length; bi++) {
+    var b = blocks[bi];
+    y += b.marginTop;
+    var w = Math.max(1, cw - b.contentLeft);
+    if (b.kind === 'inline') {
+      var lines = [];
+      PT.walkRichInlineLineRanges(b.flow, w, function(range) {
+        var line = PT.materializeRichInlineLineRange(b.flow, range);
+        lines.push({ w: line.width, frags: line.fragments.map(function(f) { return { cn: b.cns[f.itemIndex], hr: b.hrs[f.itemIndex] || null, gap: f.gapBefore, tx: f.text }; }) });
+      });
+      var h = lines.length * b.lineHeight;
+      res.push({ kind: 'inline', top: y, height: h, lines: lines, lh: b.lineHeight, cl: b.contentLeft, rails: b.rails, mt: b.mt, mc: b.mc, ml: b.ml });
+      y += h;
+    } else if (b.kind === 'code') {
+      var iw = Math.max(1, w - PT_CODE_PAD_X * 2);
+      var lay = PT.layoutWithLines(b.prepared, iw, b.lineHeight);
+      var ch = lay.lines.length * b.lineHeight + PT_CODE_PAD_Y * 2;
+      res.push({ kind: 'code', top: y, height: ch, lines: lay.lines, cw: w, cl: b.contentLeft, rails: b.rails, mt: b.mt, mc: b.mc, ml: b.ml, lang: b.lang || '', rawText: b.rawText || '' });
+      y += ch;
+    } else if (b.kind === 'table') {
+      var countLines = function(cell) { return Math.max(1, (cell.lines || []).length); };
+      var th = Math.max.apply(null, b.header.map(countLines)) * PT_BODY_LH + 12;
+      var rowHeights = b.rows.map(function(row) {
+        return Math.max.apply(null, row.map(countLines)) * PT_BODY_LH + 12;
+      });
+      var tHeight = th + rowHeights.reduce(function(s, h) { return s + h; }, 0) + 2;
+      res.push({ kind: 'table', top: y, height: tHeight, header: b.header, rows: b.rows, rowHeights: rowHeights, headerHeight: th, cl: b.contentLeft, rails: b.rails, mt: b.mt, mc: b.mc, ml: b.ml });
+      y += tHeight;
+    } else {
+      res.push({ kind: 'rule', top: y, height: b.height, rw: w, cl: b.contentLeft, rails: b.rails });
+      y += b.height;
+    }
+  }
+  return { layouts: res, totalHeight: y };
+};
+
+window.ptRender = function(el, layouts) {
+  var frag = document.createDocumentFragment();
+  for (var i = 0; i < layouts.length; i++) {
+    var b = layouts[i];
+    if (b.kind === 'inline') frag.appendChild(ptDomInline(b));
+    else if (b.kind === 'code') frag.appendChild(ptDomCode(b));
+    else if (b.kind === 'table') frag.appendChild(ptDomTable(b));
+    else frag.appendChild(ptDomRule(b));
+  }
+  el.replaceChildren(frag);
+};
+
+function ptFrags(frags) {
+  var f = document.createDocumentFragment();
+  for (var i = 0; i < frags.length; i++) {
+    var fr = frags[i], n = fr.hr ? document.createElement('a') : document.createElement('span');
+    n.className = fr.cn; n.textContent = fr.tx;
+    if (fr.hr && n.tagName === 'A') { n.href = fr.hr; n.target = '_blank'; n.rel = 'noreferrer'; }
+    f.appendChild(n);
+  }
+  return f;
+}
+
+function ptDomInline(b) {
+  var wrap;
+  if (b.rails.length > 0) {
+    wrap = document.createElement('div'); wrap.className = 'pt-block pt-quote-block';
+    var rail = document.createElement('div'); rail.className = 'pt-quote-rail';
+    wrap.appendChild(rail);
+    var content = document.createElement('div'); content.className = 'pt-quote-content';
+    ptFillInline(content, b);
+    wrap.appendChild(content);
+  } else if (b.mt) {
+    wrap = document.createElement('div'); wrap.className = 'pt-block pt-list-item';
+    if (b.ml && b.ml > 0) wrap.style.paddingLeft = b.ml + 'px';
+    var marker = document.createElement('span'); marker.className = 'pt-marker'; marker.textContent = b.mt;
+    wrap.appendChild(marker);
+    var content2 = document.createElement('div'); content2.className = 'pt-list-content';
+    ptFillInline(content2, b);
+    wrap.appendChild(content2);
+  } else {
+    wrap = document.createElement('div'); wrap.className = 'pt-block';
+    if (b.cl && b.cl > 0) wrap.style.paddingLeft = b.cl + 'px';
+    ptFillInline(wrap, b);
+  }
+  return wrap;
+}
+
+function ptFillInline(container, b) {
+  var lhClass = b.lh >= 26 ? ' pt-line-h1' : b.lh >= 22 ? ' pt-line-h2' : '';
+  for (var li = 0; li < b.lines.length; li++) {
+    var row = document.createElement('div'); row.className = 'pt-line' + lhClass;
+    row.appendChild(ptFrags(b.lines[li].frags));
+    container.appendChild(row);
+  }
+}
+
+function ptDomCode(b) {
+  var d = document.createElement('div'); d.className = 'pt-block';
+  if (b.rails.length > 0) {
+    var qw = document.createElement('div'); qw.className = 'pt-quote-block';
+    var rail = document.createElement('div'); rail.className = 'pt-quote-rail';
+    qw.appendChild(rail);
+    var inner = document.createElement('div'); inner.className = 'pt-quote-content';
+    inner.appendChild(ptCodeBox(b));
+    qw.appendChild(inner);
+    d.appendChild(qw);
+  } else {
+    d.appendChild(ptCodeBox(b));
+  }
+  return d;
+}
+
+function ptCodeBox(b) {
+  var wrap = document.createElement('div'); wrap.className = 'pt-code-wrap';
+  if (b.lang) wrap.dataset.lang = b.lang;
+  wrap.dataset.raw = (b.rawText != null ? b.rawText : (b.lines || []).map(function(l){return l.text;}).join('\n'));
+
+  var box = document.createElement('div'); box.className = 'pt-code-box';
+  for (var li = 0; li < b.lines.length; li++) {
+    var row = document.createElement('div'); row.className = 'pt-code-line';
+    row.textContent = b.lines[li].text; box.appendChild(row);
+  }
+
+  var topBar = document.createElement('div'); topBar.className = 'pt-code-actions pt-code-actions-top';
+  var botBar = document.createElement('div'); botBar.className = 'pt-code-actions pt-code-actions-bottom';
+  var isHtml = (typeof window.isHtmlCodeBlock === 'function') ? window.isHtmlCodeBlock(b.lang, wrap.dataset.raw) : (String(b.lang||'').toLowerCase() === 'html');
+  if (isHtml && typeof window.makeCodeActionBtn === 'function') {
+    topBar.appendChild(window.makeCodeActionBtn('preview', wrap));
+  }
+  if (typeof window.makeCodeActionBtn === 'function') {
+    topBar.appendChild(window.makeCodeActionBtn('copy', wrap));
+    // Only add bottom Copy when the block is tall enough that the top one isn't obviously within reach.
+    if ((b.lines || []).length > 4) botBar.appendChild(window.makeCodeActionBtn('copy', wrap));
+  }
+  wrap.appendChild(topBar);
+  wrap.appendChild(box);
+  if (botBar.childNodes.length) wrap.appendChild(botBar);
+  return wrap;
+}
+
+function ptFillTableCell(cellEl, cell) {
+  var lines = cell.lines || [];
+  for (var li = 0; li < lines.length; li++) {
+    var row = document.createElement('div'); row.className = 'pt-table-line';
+    row.appendChild(ptFrags(lines[li]));
+    cellEl.appendChild(row);
+  }
+}
+function ptDomTable(b) {
+  var d = document.createElement('div'); d.className = 'pt-block';
+  var scroller = document.createElement('div'); scroller.className = 'pt-table-wrap';
+  var table = document.createElement('table'); table.className = 'pt-table';
+  var thead = document.createElement('thead');
+  var hr = document.createElement('tr');
+  for (var i = 0; i < b.header.length; i++) {
+    var th = document.createElement('th');
+    if (b.header[i].align) th.style.textAlign = b.header[i].align;
+    ptFillTableCell(th, b.header[i]);
+    hr.appendChild(th);
+  }
+  thead.appendChild(hr);
+  table.appendChild(thead);
+  var tbody = document.createElement('tbody');
+  for (var r = 0; r < b.rows.length; r++) {
+    var tr = document.createElement('tr');
+    for (var c = 0; c < b.rows[r].length; c++) {
+      var td = document.createElement('td');
+      if (b.rows[r][c].align) td.style.textAlign = b.rows[r][c].align;
+      ptFillTableCell(td, b.rows[r][c]);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  scroller.appendChild(table);
+  if (b.rails.length > 0) {
+    var qw = document.createElement('div'); qw.className = 'pt-quote-block';
+    var rail = document.createElement('div'); rail.className = 'pt-quote-rail';
+    qw.appendChild(rail);
+    var inner = document.createElement('div'); inner.className = 'pt-quote-content';
+    inner.appendChild(scroller);
+    qw.appendChild(inner);
+    d.appendChild(qw);
+  } else {
+    d.appendChild(scroller);
+  }
+  return d;
+}
+
+function ptDomRule() {
+  var d = document.createElement('div'); d.className = 'pt-block';
+  var r = document.createElement('div'); r.className = 'pt-rule-line';
+  d.appendChild(r); return d;
+}
+})();
+</script>
+<!-- Pyodide loader is injected dynamically by ensurePyodide() with CDN-host fallback
+     (PYODIDE_CDN_HOSTS below) — no static tag, so a slow/blocked primary CDN
+     (cdn.jsdelivr.net is throttled or blocked on some networks, notably mainland
+     China) can no longer stall the Python runtime load. -->
+<link id="hljsTheme" crossorigin="anonymous" rel="stylesheet" href="vendor/github-dark.min.css">
+<script crossorigin="anonymous" src="vendor/highlight.min.js"></script>
+<link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="harness.css">
+<script>
+(function() {
+  var t = localStorage.getItem('ba_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  var hl = document.getElementById('hljsTheme');
+  if (hl && t === 'light') hl.href = 'vendor/github.min.css';
+})();
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('ba_theme', next); } catch {}
+  var hl = document.getElementById('hljsTheme');
+  if (hl) hl.href = 'vendor/github' + (next === 'light' ? '' : '-dark') + '.min.css';
+  updateThemeLabel(next);
+}
+function updateThemeLabel(theme) {
+  var isLight = theme === 'light';
+  var btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
+  btn.setAttribute('title', isLight ? 'Switch to dark theme' : 'Switch to light theme');
+  var use = btn.querySelector('use');
+  if (use) use.setAttribute('href', isLight ? '#i-moon' : '#i-sun');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  updateThemeLabel(cur);
+});
+</script>
+<script>
+/* Service worker registration, and keeping it current.
+ *
+ * Registering once and never checking again is how a static site goes stale:
+ * the browser only re-fetches sw.js on its own schedule, so a tab left open —
+ * which is creel's normal mode, since the fleet lives in tabs — can serve a
+ * months-old bundle. So: check on load, on returning to the tab, and hourly.
+ *
+ * A worker that installs must also be allowed to TAKE OVER. An update sits in
+ * `waiting` until every tab of the origin closes, which for this app may be
+ * never, so a waiting worker is told to skip waiting immediately.
+ *
+ * What this deliberately does NOT do is reload the page. creel tabs run
+ * agents; reloading one mid-turn throws away a conversation and, for a fleet
+ * worker, abandons a claimed task. The new worker takes over future requests,
+ * the flag below records that the running page is now older than what is
+ * deployed, and deciding what to do about it belongs to the operator (or, per
+ * creel-ick, to an agent that saves its state first).
+ */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      function promote(worker) {
+        if (!worker) return;
+        // Only meaningful once installed, and only when something is already
+        // controlling this page — otherwise this IS the first worker, and
+        // there is no "update" to announce.
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          worker.postMessage('SKIP_WAITING');
+          window.CREEL_UPDATE_READY = true;
+          window.dispatchEvent(new CustomEvent('creel-update-ready'));
+        }
+      }
+      promote(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        var w = reg.installing;
+        if (w) w.addEventListener('statechange', function () { promote(w); });
+      });
+
+      var check = function () { reg.update().catch(function () {}); };
+      check();
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') check();
+      });
+      setInterval(check, 60 * 60 * 1000);
+    }).catch(function () {});
+  });
+}
+</script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M20 17.5a4.5 4.5 0 0 0-1.5-8.76A6 6 0 0 0 6.1 10.2 3.5 3.5 0 0 0 6.5 17.5H20Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7 7 0 1 0 11.5 11.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a7.8 7.8 0 0 0 .05-6l-2.1.2a6.9 6.9 0 0 0-1.1-1.1l.2-2.1a7.8 7.8 0 0 0-6-.05l-.9 1.9a6.9 6.9 0 0 0-1.6 0l-.9-1.9a7.8 7.8 0 0 0-6 .05l.2 2.1a6.9 6.9 0 0 0-1.1 1.1L2.6 9a7.8 7.8 0 0 0 .05 6l2.1-.2a6.9 6.9 0 0 0 1.1 1.1l-.2 2.1a7.8 7.8 0 0 0 6 .05l.9-1.9a6.9 6.9 0 0 0 1.6 0l.9 1.9a7.8 7.8 0 0 0 6-.05l-.2-2.1a6.9 6.9 0 0 0 1.1-1.1l2.1.2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M10.3 3.2 1.7 19.2A2 2 0 0 0 3.4 22h17.2a2 2 0 0 0 1.7-2.8L13.7 3.2a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 12-14h-7l-1-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 7l1-3h14l1 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 7h18l-1 5H4L3 7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M5 12v9h14v-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 21v-6h6v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 1 1 16.1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 11v8c0 1.7 3.6 3 8 3s8-1.3 8-3v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11h19l-2 10H5L3 11Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 13h8M8 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-clipboard-list" viewBox="0 0 24 24"><path d="M9 2h6v4H9V2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 11h10M7 15h10M7 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 11l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-2-2 3-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 6l1 16h10l1-16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-minimize-2" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M14 4c3 0 6 3 6 6-4.5 6-9.5 9-14 10 1-4.5 4-9.5 10-14Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 15l-2 2c-1 1-3 1-4 0 0-1 0-3 1-4l2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15 9h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M8 5a3 3 0 0 1 5-1 3 3 0 0 1 3 3v10a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 5a3 3 0 0 0-3 3v1a3 3 0 0 0 0 6v1a3 3 0 0 0 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8l-5.5 7L8 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l12 7-12 7V5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M14 4l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 10l6-6 6 6-2 2H6l2-2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 14v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-square" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-check-square" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8L15 7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 4h16v16H4V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 8l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 14h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-antenna" viewBox="0 0 24 24"><path d="M12 20v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 13a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h5a4 4 0 0 0 0-8h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 10h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M9.5 6.5h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M14.5 6.5h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M16.5 10h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 4c-2 0-3 1-3 3v3c0 1-1 2-2 2 1 0 2 1 2 2v3c0 2 1 3 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4c2 0 3 1 3 3v3c0 1 1 2 2 2-1 0-2 1-2 2v3c0 2-1 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11h0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M21 16l-5-5-4 4-2-2-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 19h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 17V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17V7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 17v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 7h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 7v14h14V7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 11h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 5v14M17 5v14M2 9h20M2 15h20" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19a2 2 0 0 1 2-2h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 17V4a2 2 0 0 1 2-2h12v18H8a2 2 0 0 0-2 2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-file-pen" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 15l6-6 2 2-6 6-3 1 1-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+
+</svg>
+
+
+<div id="mobileBackdrop" onclick="closeMobileDrawers()"></div>
+
+<div class="app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="panel-toggle-btn" id="toggleLeft" onclick="togglePanel('left')" title="Toggle left panel" aria-label="Toggle left panel">&#x2039;</button>
+    <div class="top-bar-center">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Page with folded corner -->
+        <path d="M5 3 H15 L19 7 V20 A1 1 0 0 1 18 21 H5 A1 1 0 0 1 4 20 V4 A1 1 0 0 1 5 3 Z"
+              fill="url(#op-pg)" stroke="url(#op-bd)" stroke-width="1.1" stroke-linejoin="round"/>
+        <path d="M15 3 V7 H19" stroke="url(#op-bd)" stroke-width="1.1" fill="none" stroke-linejoin="round"/>
+        <!-- Neural spark / agent core -->
+        <circle cx="11.5" cy="13" r="2.6" fill="url(#op-core)"/>
+        <circle cx="7"  cy="10" r="0.9" fill="#ff6b35"/>
+        <circle cx="16" cy="11" r="0.9" fill="#00d4ff"/>
+        <circle cx="8"  cy="17" r="0.9" fill="#aa66ff"/>
+        <circle cx="15" cy="17" r="0.9" fill="#00ff88"/>
+        <path d="M7 10 L11.5 13 L16 11 M8 17 L11.5 13 L15 17"
+              stroke="url(#op-ln)" stroke-width="0.9" stroke-linecap="round" fill="none" opacity="0.85"/>
+        <defs>
+          <linearGradient id="op-pg" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ff6b35" stop-opacity="0.14"/>
+            <stop offset="1" stop-color="#ff3399" stop-opacity="0.05"/>
+          </linearGradient>
+          <linearGradient id="op-bd" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ff8040"/>
+            <stop offset="1" stop-color="#ff3399"/>
+          </linearGradient>
+          <linearGradient id="op-ln" x1="7" y1="10" x2="16" y2="17" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ff8040" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#aa66ff" stop-opacity="0.9"/>
+          </linearGradient>
+          <radialGradient id="op-core" cx="40%" cy="35%">
+            <stop stop-color="#ffb070"/>
+            <stop offset="1" stop-color="#cc1f77"/>
+          </radialGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">creel</span>
+    </div>
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-text" id="statusText" data-i18n="status.ready">Ready</span>
+    <div class="top-right">
+      <span class="provider-badge" id="providerBadge"><select id="providerSelect" aria-label="Provider" class="provider-select" title="Provider"><option value="">provider...</option></select> / <select id="modelSelect" class="model-select" aria-label="Model"><option value="">model...</option></select></span>
+      <span class="think-badge" id="thinkBadge" title="Thinking level" data-i18n-title="think.title"><select id="thinkSelect" aria-label="Thinking level" class="think-select" onchange="setThinkingLevel(this.value)"><option value="auto" data-i18n="think.auto">Auto</option><option value="none" data-i18n="think.none">None</option><option value="low" data-i18n="think.low">Low</option><option value="medium" data-i18n="think.medium">Medium</option><option value="high" data-i18n="think.high">High</option><option value="xhigh" data-i18n="think.xhigh">XHigh</option><option value="max" data-i18n="think.max">Max</option></select></span>
+      <span class="loop-badge" id="loopBadge">Loop: 0</span>
+      <span class="loop-badge" id="tokenBadge">Tokens: 0</span>
+      <button class="top-btn top-btn-primary" id="newThreadBtn" onclick="newConversation()" title="New thread (Ctrl/Cmd+Shift+O)" data-i18n-title="btn.newThreadTitle" aria-label="New thread"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="btn.newThread">New</span></button>
+      <span style="position:relative;display:inline-block">
+        <button class="top-btn hide-mobile" id="exportBtn" onclick="toggleExportMenu()" data-i18n="btn.export" aria-haspopup="menu">Export</button>
+        <div id="exportMenu" role="menu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:6px;min-width:180px;z-index:150;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+          <button class="top-btn" role="menuitem" onclick="downloadAll('markdown')" style="display:block;width:100%;text-align:left;margin-bottom:4px" data-i18n="export.markdown">Markdown (.md)</button>
+          <button class="top-btn" role="menuitem" onclick="downloadAll('pdf')" style="display:block;width:100%;text-align:left" data-i18n="export.pdf">PDF</button>
+        </div>
+      </span>
+      <button class="top-btn hide-mobile top-btn-icon" id="planBtn" onclick="togglePlanMode()" title="Plan Mode: block writes, require approval before execution" data-i18n-title="btn.planTitle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span data-i18n="btn.plan">Plan</span></button>
+      <button class="top-btn hide-mobile top-btn-icon" id="ralphBtn" onclick="toggleRalphMode()" title="Ralph Loop: unattended continue-until-done mode"><span>Ralph</span></button>
+      <button class="top-btn hide-mobile top-btn-icon" id="memBtn" onclick="openMemoryModal()" title="Memory: facts persisted across conversations" data-i18n-title="btn.memoryTitle" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a4 4 0 0 0-4 4 4 4 0 0 0-4 4 4 4 0 0 0 2 3.46A4 4 0 0 0 8 22a4 4 0 0 0 4-2 4 4 0 0 0 4 2 4 4 0 0 0 2-8.54A4 4 0 0 0 20 10a4 4 0 0 0-4-4 4 4 0 0 0-4-4Z"/><path d="M12 6v16M8 10h0M16 10h0M9 14h6"/></svg><span data-i18n="btn.memory">Memory</span></button>
+      <span style="position:relative;display:inline-block">
+        <button class="top-btn hide-mobile" id="syncBtn" onclick="toggleSyncMenu()" title="Cloud sync to S3-compatible bucket" data-i18n-title="btn.syncTitle"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg> <span data-i18n="btn.sync">Sync</span></button>
+        <div id="syncMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:6px;min-width:240px;z-index:150;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+          <button class="top-btn" id="syncPushBtn" onclick="onSyncPushClick()" style="display:block;width:100%;text-align:left;margin-bottom:4px">&#x2B06; <span data-i18n="btn.syncPush">Push now</span></button>
+          <button class="top-btn" id="syncPullBtn" onclick="onSyncPullClick()" style="display:block;width:100%;text-align:left;margin-bottom:4px">&#x2B07; <span data-i18n="btn.syncPull">Pull now</span></button>
+        <div id="syncProgress" style="display:none;padding:4px 6px;border-top:1px solid var(--border);margin-top:4px"></div>
+          <div id="syncStatus" style="font-size:10px;color:var(--text-dim);padding:4px 6px;border-top:1px solid var(--border);margin-top:4px" data-i18n="sync.notConfigured">Not configured.</div>
+        </div>
+      </span>
+      <span style="position:relative;display:inline-block">
+        <button class="top-btn" id="moreBtn" onclick="toggleMoreMenu()" title="More actions" data-i18n-title="btn.moreTitle" aria-haspopup="menu" aria-expanded="false" aria-label="More actions">&#x22EF;<span data-i18n="btn.more"> More</span></button>
+        <div id="moreMenu" role="menu" style="display:none;position:absolute;top:calc(100% + var(--space-2));right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-3);min-width:200px;z-index:150;box-shadow:0 4px 16px rgba(0,0,0,0.4)"></div>
+      </span>
+      <button class="top-btn" onclick="openSettingsModal()" title="LLM & Tavily settings" data-i18n-title="btn.settingsTitle"><svg class="ui-icon" aria-hidden="true"><use href="#i-settings"></use></svg> <span data-i18n="btn.settings">Settings</span></button>
+      <button class="top-btn top-btn-icon" id="langBtn" onclick="toggleLanguage()" title="Switch language / 切换语言" data-i18n-title="btn.langTitle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span data-role="lang-label">EN</span></button>
+      <button class="top-btn top-btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark theme" data-i18n-title="btn.themeTitle"><svg class="ui-icon" aria-hidden="true"><use href="#i-moon"></use></svg></button>
+    </div>
+    </div>
+    <button class="panel-toggle-btn" id="toggleRight" onclick="togglePanel('right')" title="Toggle right panel" aria-label="Toggle right panel">&#x203A;</button>
+  </div>
+
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <!-- Conversations -->
+    <div class="panel-section" data-section="conversations">
+      <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-message-circle"></use></svg></span> <span data-i18n="section.conversations">CONVERSATIONS</span></span><span style="display:flex;gap:2px" onclick="event.stopPropagation()"><button class="skill-install-btn" style="flex:none;margin:0;padding:2px 8px" onclick="newConvFolder()" title="New folder" data-i18n-title="action.newConvFolder"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></button><button class="skill-install-btn conv-search-trigger" id="convSearchToggle" style="flex:none;margin:0;padding:2px 8px" onclick="toggleConvSearch()" title="Search conversations" data-i18n-title="conv.openSearch"><svg class="ui-icon" aria-hidden="true"><use href="#i-search"></use></svg></button><button class="skill-install-btn" style="flex:none;margin:0;padding:2px 8px" onclick="newConversation()"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="action.newConv">New</span></button></span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div class="conv-search" id="convSearchRow">
+          <label class="conv-search-box" for="convSearchInput">
+            <svg class="ui-icon" aria-hidden="true"><use href="#i-search"></use></svg>
+            <input id="convSearchInput" type="search" placeholder="Search conversations..." data-i18n-placeholder="conv.searchPh" oninput="onConvSearchInput(this.value)">
+            <button class="conv-search-clear" id="convSearchClear" onclick="clearConvSearch()" title="Clear search" data-i18n-title="conv.clearSearch">&times;</button>
+          </label>
+        </div>
+        <div class="conv-list-meta" id="convListMeta"></div>
+        <div class="conv-list" id="convList" onscroll="onConvListScroll()" ondragover="onConvListDragOver(event)" ondragleave="onConvListDragLeave(event)" ondrop="onConvDropToRoot(event)"></div>
+      </div>
+    </div>
+
+    <!-- Context -->
+    <div class="panel-section" data-section="system-prompt" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-text"></use></svg></span> <span data-i18n="section.systemPrompt">SYSTEM PROMPT</span>
+        <span class="sp-actions" onclick="event.stopPropagation()">
+          <button class="skill-install-btn" id="spEditBtn" onclick="toggleSysPromptEdit()"><svg class="ui-icon" aria-hidden="true"><use href="#i-pencil"></use></svg> <span data-i18n="action.edit">Edit</span></button>
+          <button class="skill-install-btn" id="spResetBtn" onclick="resetSysPrompt()" title="Reset to default" data-i18n-title="action.resetDefault" aria-label="Reset system prompt to default">&#x21BA;</button>
+        </span>
+        <span class="section-arrow">&#x25BC;</span>
+      </div>
+      <div class="section-body">
+        <textarea class="context-editor" id="contextEditor" readonly aria-label="System prompt"></textarea>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="panel-section" data-section="skills" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.skills">SKILLS</span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div class="skills-list" id="skillsList"></div>
+        <div class="skill-install-bar">
+          <button class="skill-install-btn" onclick="openSkillModal('market')"><svg class="ui-icon" aria-hidden="true"><use href="#i-store"></use></svg> <span data-i18n="skills.market">Market</span></button>
+          <button class="skill-install-btn" onclick="openSkillModal('file')"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg> <span data-i18n="skills.file">.skill/.zip</span></button>
+          <button class="skill-install-btn" onclick="openSkillModal('github')"><svg class="ui-icon" aria-hidden="true"><use href="#i-globe"></use></svg> <span data-i18n="skills.github">GitHub</span></button>
+          <button class="skill-install-btn" onclick="openSkillModal('create')"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="skills.create">Create</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Swarms (custom roles for the Agent Swarm runtime) -->
+    <div class="panel-section" data-section="swarm-roles" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.swarmRoles">SWARMS</span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div class="skills-list" id="swarmRolesList"></div>
+        <div class="skill-install-bar">
+          <button class="skill-install-btn" onclick="openSwarmRoleModal('create')"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="swarms.create">Create</span></button>
+          <button class="skill-install-btn" onclick="importSwarmRolesJsonPrompt()"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg> <span data-i18n="swarms.import">Import</span></button>
+          <button class="skill-install-btn" onclick="exportSwarmRolesJson()"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-text"></use></svg> <span data-i18n="swarms.export">Export</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Files -->
+    <div class="panel-section" data-section="files">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></span> <span data-i18n="section.files">FILES</span></span>
+        <span style="display:flex;gap:2px" onclick="event.stopPropagation()">
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feExpandAll()" title="Expand all" data-i18n-title="action.expandAll">&#x25BC;</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feCollapseAll()" title="Collapse all" data-i18n-title="action.collapseAll">&#x25B6;</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feNewFileIn('/')" title="New file" data-i18n-title="action.newFile">+</button>
+          <button class="skill-install-btn" style="flex:none;margin:0;padding:1px 6px" onclick="feNewFolderIn('/')" title="New folder" data-i18n-title="action.newFolder"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder"></use></svg></button>
+        </span>
+        <span class="section-arrow">&#x25BC;</span>
+      </div>
+      <div class="section-body">
+        <div class="fe-tree" id="fileTree"></div>
+      </div>
+    </div>
+    <!-- Files actions docked to bottom of left panel -->
+    <div class="fe-bottom-stack" id="feBottomStack">
+      <div class="fe-select-bar" id="feSelectBar" style="display:none">
+        <span class="fe-select-count"><span id="feSelectCount">0</span> <span data-i18n="fe.selected">selected</span></span>
+        <button class="skill-install-btn" onclick="feDeleteSelected()" title="Delete selected" data-i18n-title="fe.deleteSelectedTitle" style="color:var(--accent-red)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button>
+        <button class="skill-install-btn" onclick="feDownloadSelectedZip()" title="Download selected as .zip" data-i18n-title="fe.downloadZipTitle">&#x2B07; <span data-i18n="fe.downloadZip">ZIP</span></button>
+        <button class="skill-install-btn" onclick="feClearSelection()" title="Clear selection" data-i18n-title="fe.clearSelection"><svg class="ui-icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+      </div>
+      <div class="fe-upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" multiple onchange="handleUpload(event)">
+        <span class="fe-upload-label" data-i18n="upload.drop">Drop files or click to upload</span>
+        <button class="skill-install-btn fe-upload-folder-btn" onclick="event.stopPropagation();document.getElementById('folderInput').click()" data-i18n="upload.folder">Folder</button>
+      </div>
+    </div>
+    <input type="file" id="folderInput" webkitdirectory directory multiple onchange="handleFolderUpload(event)" style="display:none">
+  </div>
+
+  <!-- Left Resize Handle -->
+  <div class="resize-handle" id="resizeLeft"></div>
+
+  <!-- Center Panel -->
+  <div class="center-panel">
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg msg-system"><div class="msg-body" data-i18n="agent.init">Agent initialized. Upload files and type a task to begin.</div></div>
+    </div>
+    <div class="chat-input-wrap" style="position:relative">
+      <div class="input-chips" id="inputChips"></div>
+      <div class="at-dropdown" id="atDropdown"></div>
+      <div class="chat-input-area" id="chatInputArea">
+        <button class="attach-btn" title="Attach files" data-i18n-title="input.attach"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg><input type="file" multiple onchange="handleInputUpload(event)"></button>
+        <textarea id="userInput" placeholder="Type message..." aria-label="Message to the agent" rows="1" onkeydown="handleInputKey(event)" oninput="handleInputChange(this)" data-i18n-placeholder="input.placeholder"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="handleSend()" aria-label="Send message">&#x25B6;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Resize Handle -->
+  <div class="resize-handle" id="resizeRight"></div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <!-- Tools -->
+    <div class="panel-section" data-section="tools">
+      <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-wrench"></use></svg></span> <span data-i18n="section.tools">TOOLS</span></span><button class="skill-install-btn" style="flex:none;margin:0;padding:2px 8px" onclick="event.stopPropagation();openMcpToolModal()" data-i18n="action.addMcp">+ MCP</button><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div class="tools-grid" id="toolsGrid"></div>
+      </div>
+    </div>
+    <!-- Web Search -->
+    <div class="panel-section" data-section="web-search" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)">
+        <span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-globe"></use></svg></span> <span data-i18n="section.webSearch">WEB SEARCH</span></span>
+        <span class="ws-status" id="wsStatus" onclick="event.stopPropagation()" data-i18n="ws.noKey">no key</span>
+        <span class="section-arrow">&#x25BC;</span>
+      </div>
+      <div class="section-body">
+        <div class="ws-config">
+          <div class="ws-row">
+            <select class="ws-select" id="wsDepth" aria-label="Web search depth" title="Search depth">
+              <option value="basic">basic</option>
+              <option value="advanced">advanced</option>
+            </select>
+            <select class="ws-select" id="wsMaxResults" aria-label="Web search max results" style="width:50px" title="Max results">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+            </select>
+            <input class="ws-input" id="wsQuery" placeholder="Test query..." data-i18n-placeholder="ws.testQuery">
+            <button class="ws-btn" onclick="wsTestSearch()" title="Run test search">&#x25BA;</button>
+          </div>
+          <div class="ws-results" id="wsResults"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Todos -->
+    <div class="panel-section" data-section="todos" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg></span> <span data-i18n="section.todos">TODOS</span></span><span id="todoCounts" style="flex:none;font-size:10px;color:var(--text-dim);margin-right:6px"></span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div id="todosArea"></div>
+      </div>
+    </div>
+    <!-- Sub-agents -->
+    <div class="panel-section" data-section="sub-agents" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.subAgents">SUB-AGENTS</span></span><span id="subAgentCounts" style="flex:none;font-size:10px;color:var(--text-dim);margin-right:6px"></span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div id="subAgentsArea"></div>
+      </div>
+    </div>
+    <!-- Hooks -->
+    <div class="panel-section" data-section="hooks" data-tier="more" hidden>
+      <div class="section-title" onclick="toggleSection(this)"><span style="display:flex;align-items:center;gap:6px"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span> <span data-i18n="section.hooks">HOOKS</span></span><button class="skill-install-btn" style="flex:none;margin:0;padding:2px 8px" onclick="event.stopPropagation();openHookModal()" data-i18n="action.addHook">+ Add</button><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div id="hooksArea"></div>
+      </div>
+    </div>
+    <!-- Context -->
+    <!-- Sections the operator has not asked for are hidden, not deleted;
+         panelMoreChips lists them and one click brings any of them back. -->
+    <div class="panel-more" id="panelMore">
+      <button type="button" class="panel-more-btn" id="panelMoreToggle" aria-expanded="false"
+              onclick="togglePanelMore()" data-i18n="panel.more">More sections</button>
+      <div class="panel-more-chips" id="panelMoreChips" hidden></div>
+    </div>
+
+    <div class="panel-section" data-section="memory" style="flex:1">
+      <div class="section-title" onclick="toggleSection(this)"><span class="icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg></span> <span data-i18n="section.memory">CONTEXT</span><span class="section-arrow">&#x25BC;</span></div>
+      <div class="section-body">
+        <div class="memory-stats">
+          <div class="mem-stat"><div class="val" id="memMsgCount">0</div><div class="lbl" data-i18n="mem.messages">Messages</div></div>
+          <div class="mem-stat"><div class="val" id="memTokenCount">0</div><div class="lbl" data-i18n="mem.tokens">Tokens</div></div>
+        </div>
+        <div class="memory-bar"><div class="fill" id="memoryFill" style="width:0%"></div></div>
+        <div class="memory-log" id="memoryLog"></div>
+        <button class="compact-btn" onclick="compactMemory()"><svg class="ui-icon" aria-hidden="true"><use href="#i-minimize-2"></use></svg> <span data-i18n="mem.autoCompact">Compact Context</span></button>
+        <button class="compact-btn" onclick="resetConversationContext()"><svg class="ui-icon" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> <span data-i18n="mem.resetContext">Reset Context</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- File Viewer Overlay -->
+<div class="file-viewer-overlay" id="fileViewer">
+  <div class="fv-resize-handle" id="fvResizeHandle"></div>
+  <div class="fv-header">
+    <span class="fv-path" id="fvPath"></span>
+    <div style="display:flex;gap:6px">
+      <button class="top-btn" onclick="downloadCurrentFile()">&#x2B07; Download</button>
+      <button class="fv-close" onclick="closeFileViewer()">&times;</button>
+    </div>
+  </div>
+  <div class="fv-content" id="fvContent"></div>
+</div>
+
+<!-- Skill Install Modal -->
+<div class="modal-overlay" id="skillModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span data-i18n="skillModal.title">Install Skill</span></h3>
+      <button class="modal-close" onclick="closeSkillModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <button class="modal-tab active" onclick="switchSkillTab('market',this)"><svg class="ui-icon" aria-hidden="true"><use href="#i-store"></use></svg> <span data-i18n="skillModal.tab.market">Market</span></button>
+        <button class="modal-tab" onclick="switchSkillTab('file',this)"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg> <span data-i18n="skillModal.tab.file">File</span></button>
+        <button class="modal-tab" onclick="switchSkillTab('github',this)"><svg class="ui-icon" aria-hidden="true"><use href="#i-globe"></use></svg> <span data-i18n="skillModal.tab.github">GitHub</span></button>
+        <button class="modal-tab" onclick="switchSkillTab('create',this)"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="skillModal.tab.create">Create</span></button>
+      </div>
+      <div class="install-progress" id="skillInstallProgress"><div id="skillInstallProgressText">Installing...</div><div class="bar"><div class="fill" id="skillInstallProgressFill"></div></div></div>
+
+      <!-- Marketplace Tab -->
+      <div class="tab-content active" id="tab-market">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span><span data-i18n="skillModal.registryUrl">Registry URL</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="skillModal.registryHint">(JSON index)</span></span>
+          <button type="button" class="modal-btn secondary" onclick="loadMarketplace(true)" style="padding:2px 10px;font-size:10px">&#x21BB; <span data-i18n="skillModal.refresh">Refresh</span></button>
+        </label>
+        <input type="text" id="mpRegistryUrl" placeholder="https://raw.githubusercontent.com/sligter/onepagent-skills/main/registry.json">
+        <input type="text" id="mpSearch" placeholder="Search name / description / tag..." data-i18n-placeholder="skillModal.searchPh" oninput="renderMarketplaceList()" style="margin-bottom:8px">
+        <div id="mpStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+        <div id="mpList" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
+      <!-- File Import Tab -->
+      <div class="tab-content" id="tab-file">
+        <div class="skill-file-drop" id="skillFileDrop">
+          <input type="file" accept=".skill,.zip,.json,.md" onchange="handleSkillFile(event)">
+          <span data-i18n="skillModal.fileDrop">Drop .skill, .zip, .json, or SKILL.md here</span>
+        </div>
+        <div id="skillFilePreview" style="display:none;margin-bottom:12px"></div>
+      </div>
+
+      <!-- GitHub Tab -->
+      <div class="tab-content" id="tab-github">
+        <label data-i18n="skillModal.githubUrl">GitHub Repository URL</label>
+        <input type="text" id="skillGithubUrl" placeholder="https://github.com/user/repo or user/repo">
+        <label data-i18n="skillModal.githubBranch">Branch (optional)</label>
+        <input type="text" id="skillGithubBranch" placeholder="main" value="main">
+        <label data-i18n="skillModal.githubPath">Skill directory path (optional)</label>
+        <input type="text" id="skillGithubPath" placeholder="e.g. .skills/calculator (auto-detects SKILL.md)">
+        <button class="modal-btn primary" id="skillGithubInstallBtn" onclick="importFromGithub(this)" style="width:100%"><svg class="ui-icon" aria-hidden="true"><use href="#i-download"></use></svg> <span data-i18n="skillModal.githubFetch">Fetch &amp; Install</span></button>
+      </div>
+
+      <!-- Create Tab -->
+      <div class="tab-content" id="tab-create">
+        <label data-i18n="skillModal.createName">Skill Name</label>
+        <input type="text" id="skillCreateName" placeholder="my-custom-skill">
+        <label data-i18n="skillModal.createIcon">Icon (icon)</label>
+        <input type="text" id="skillCreateIcon" placeholder="i:bolt" value="i:bolt" style="width:60px">
+        <label data-i18n="skillModal.createDesc">Description</label>
+        <input type="text" id="skillCreateDesc" placeholder="What this skill does" data-i18n-placeholder="skillModal.createDescPh">
+        <label data-i18n="skillModal.createTrigger">Trigger Pattern (regex, optional)</label>
+        <input type="text" id="skillCreateTrigger" placeholder="e.g. review|code review|PR" data-i18n-placeholder="skillModal.createTriggerPh">
+        <label data-i18n="skillModal.createBody">SKILL.md Body (instructions for the agent)</label>
+        <textarea id="skillCreatePrompt" placeholder="Markdown instructions loaded when skill triggers. Keep concise — context window is shared." data-i18n-placeholder="skillModal.createBodyPh"></textarea>
+        <label data-i18n="skillModal.createTool">Custom Tool (JSON, optional)</label>
+        <textarea id="skillCreateTool" placeholder='[{"name":"my_tool","description":"...","parameters":{...},"handler":"return ..."}]' style="min-height:60px"></textarea>
+        <button class="modal-btn primary" onclick="createSkill()" style="width:100%;margin-top:4px"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="skillModal.createBtn">Create Skill</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MCP Tool Modal -->
+<div class="modal-overlay" id="mcpToolModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-wrench"></use></svg> <span data-i18n="mcpModal.title">Add Custom MCP Tool</span></h3>
+      <button class="modal-close" onclick="closeMcpToolModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="mcp-tabs" style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:10px">
+        <button class="mcp-tab-btn active" data-mcp-tab="server" onclick="switchMcpTab('server')" data-i18n="mcpModal.tabServer">Import Server</button>
+        <button class="mcp-tab-btn" data-mcp-tab="tool" onclick="switchMcpTab('tool')" data-i18n="mcpModal.tabTool">Custom Tool</button>
+      </div>
+      <div class="mcp-tab-pane" data-mcp-pane="server">
+        <label data-i18n="mcpModal.corsProxy">CORS proxy (optional)</label>
+        <input type="text" id="mcpCorsProxy" placeholder="https://your-proxy.workers.dev/ or https://proxy.example.com/?url={url}" onchange="onMcpCorsProxyChange(this.value)">
+        <div style="font-size:10px;color:var(--text-dim);margin:-4px 0 8px;line-height:1.4" data-i18n="mcpModal.corsHint">Most MCP servers don't send CORS headers for browsers. If a direct connection fails with a CORS error, set a proxy URL here — it's prepended to the target URL (use {url} for query-param style). A 20-line Cloudflare Worker is enough.</div>
+        <label data-i18n="mcpModal.importJsonLabel">Paste <code>mcpServers</code> JSON config</label>
+        <textarea id="mcpServerJson" style="min-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px" placeholder='{&#10;  "mcpServers": {&#10;    "example": {&#10;      "type": "streamable_http",&#10;      "url": "https://mcp.example.com/mcp",&#10;      "token": "optional-bearer-token"&#10;    }&#10;  }&#10;}'></textarea>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="modal-btn primary" onclick="onImportMcpServersClick()" style="flex:1">&#x2B07; <span data-i18n="mcpModal.importServer">Import &amp; Connect</span></button>
+        </div>
+        <div style="margin-top:12px;padding:8px;border:1px dashed var(--border);border-radius:4px">
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;font-weight:600" data-i18n="mcpModal.addManual">Or add a single server manually</div>
+          <label data-i18n="mcpModal.srvName">Name</label>
+          <input type="text" id="mcpSrvName" placeholder="my-server">
+          <div style="display:flex;gap:6px">
+            <div style="flex:none">
+              <label data-i18n="mcpModal.srvType">Transport</label>
+              <select id="mcpSrvType" aria-label="MCP server transport" class="modal-select"><option value="streamable_http">streamable_http</option><option value="sse">sse</option></select>
+            </div>
+            <div style="flex:1">
+              <label data-i18n="mcpModal.srvUrl">URL</label>
+              <input type="text" id="mcpSrvUrl" placeholder="https://mcp.example.com/mcp">
+            </div>
+          </div>
+          <label data-i18n="mcpModal.srvToken">Bearer token (optional)</label>
+          <input type="text" id="mcpSrvToken" placeholder="sk-..." autocomplete="off">
+          <button class="modal-btn primary" onclick="onAddMcpServerManualClick()" style="margin-top:6px;width:100%"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="mcpModal.addServer">Add Server</span></button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <label data-i18n="mcpModal.serversInstalled">Connected Servers</label>
+          <div id="mcpServerList" style="font-size:11px;color:var(--text-dim)" data-i18n="mcpModal.noneInstalled">None</div>
+        </div>
+      </div>
+      <div class="mcp-tab-pane" data-mcp-pane="tool" style="display:none">
+        <label data-i18n="mcpModal.name">Tool Name</label>
+        <input type="text" id="mcpToolName" placeholder="e.g. web_search, send_email" data-i18n-placeholder="mcpModal.namePh">
+        <label data-i18n="mcpModal.desc">Description</label>
+        <input type="text" id="mcpToolDesc" placeholder="What this tool does" data-i18n-placeholder="mcpModal.descPh">
+        <label data-i18n="mcpModal.params">Parameters (JSON Schema)</label>
+        <textarea id="mcpToolParams" placeholder='{"type":"object","properties":{"query":{"type":"string","description":"Search query"}},"required":["query"]}' style="min-height:80px"></textarea>
+        <label data-i18n="mcpModal.url">Server URL (MCP endpoint, optional)</label>
+        <input type="text" id="mcpToolUrl" placeholder="https://mcp-server.example.com/tool">
+        <label data-i18n="mcpModal.handler">Handler JS (if no server URL, executed in browser)</label>
+        <textarea id="mcpToolHandler" placeholder="// input is the tool parameters object&#10;return 'Result: ' + input.query;" style="min-height:60px"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="modal-btn primary" onclick="addMcpTool()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="mcpModal.addTool">Add Tool</span></button>
+          <button class="modal-btn secondary" onclick="closeMcpToolModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <label data-i18n="mcpModal.installed">Installed Custom Tools</label>
+          <div id="mcpToolList" style="font-size:11px;color:var(--text-dim)" data-i18n="mcpModal.noneInstalled">None</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="width:clamp(320px,94vw,680px)">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-settings"></use></svg> <span data-i18n="settings.title">Settings</span></h3>
+      <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label data-i18n="settings.providerProfiles">Provider Profiles</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+        <select id="setProviderProfile" aria-label="Provider profile" onchange="onProviderProfileSelect()" style="flex:1;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px">
+          <option value="">loading...</option>
+        </select>
+        <button type="button" class="modal-btn secondary" onclick="newProviderProfile()" style="padding:6px 10px;font-size:11px">+ <span data-i18n="settings.newProvider">New</span></button>
+        <button type="button" class="modal-btn secondary" onclick="deleteCurrentProviderProfile()" style="padding:6px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,107,107,.35)">&times; <span data-i18n="settings.deleteProvider">Delete</span></button>
+      </div>
+      <label data-i18n="settings.providerName">Provider Name</label>
+      <input type="text" id="setProviderName" placeholder="My gateway / OpenAI / Anthropic compat" style="margin-bottom:12px">
+      <label data-i18n="settings.providerType">Provider Type</label>
+      <select id="setProvider" aria-label="Provider type" onchange="onProviderTypeChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:12px">
+        <option value="anthropic_compat">anthropic-compatible</option>
+        <option value="openai_compat">openai-compatible</option>
+      </select>
+      <label><span data-i18n="settings.endpoint">API Endpoint</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.endpointHint">(base URL, e.g. https://api.anthropic.com)</span></label>
+      <input type="text" id="setEndpoint" placeholder="https://api.anthropic.com">
+      <label data-i18n="settings.apiKey">LLM API Key</label>
+      <input type="password" id="setApiKey" placeholder="sk-...">
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        <span><span data-i18n="settings.availableModels">Available Models</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.availableModelsHint">(from API; hold Ctrl/Cmd to multi-select)</span></span>
+        <button type="button" class="modal-btn secondary" onclick="fetchModelsIntoSettings()" style="padding:2px 10px;font-size:10px">&#x21BB; <span data-i18n="settings.fetchFromApi">Fetch from API</span></button>
+      </label>
+      <select id="setAvailableModels" aria-label="Available models" multiple size="6" style="width:100%;padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:6px"></select>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <input type="text" id="setCustomModel" placeholder="custom-model-id" data-i18n-placeholder="settings.customModelPh" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomModelToList();}" style="flex:1;margin-bottom:0">
+        <button type="button" class="modal-btn secondary" onclick="addCustomModelToList()" style="padding:4px 10px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.addModel">Add</span></button>
+        <button type="button" class="modal-btn secondary" onclick="addSelectedModelsToList()" style="padding:4px 10px;font-size:10px">&#x21A1; <span data-i18n="settings.addSelected">Add Selected</span></button>
+      </div>
+      <label><span data-i18n="settings.selectedModels">Selected Models</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.selectedModelsHint">(one per line; edit freely)</span></label>
+      <textarea id="setModels" placeholder="claude-sonnet-4-20250514&#10;claude-opus-4-20250514" style="min-height:80px"></textarea>
+      <label><span data-i18n="settings.defaultModel">Default Model</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.defaultModelHint">(optional; first model used if empty)</span></label>
+      <input type="text" id="setDefaultModel" placeholder="claude-sonnet-4-20250514">
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin:10px 0 12px;background:var(--bg-root)">
+        <label style="margin-top:0"><span data-i18n="settings.mediaModels">Generation Models</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.mediaModelsHint">(one per line; optional)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label data-i18n="settings.imageModels">Image models</label><textarea id="setImageModels" placeholder="gpt-image-1&#10;dall-e-3" style="min-height:70px"></textarea></div>
+          <div><label data-i18n="settings.videoModels">Video models</label><textarea id="setVideoModels" placeholder="sora-2&#10;video-generation-model" style="min-height:70px"></textarea></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label data-i18n="settings.defaultImageModel">Default image model</label><input type="text" id="setDefaultImageModel" placeholder="gpt-image-1"></div>
+          <div><label data-i18n="settings.defaultVideoModel">Default video model</label><input type="text" id="setDefaultVideoModel" placeholder="sora-2"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label data-i18n="settings.imageGenerationEndpoint">Text-to-image endpoint</label><input type="text" id="setImageGenerationEndpoint" placeholder="/v1/images/generations"></div>
+          <div><label data-i18n="settings.imageEditEndpoint">Image-to-image endpoint</label><input type="text" id="setImageEditEndpoint" placeholder="/v1/images/edits"></div>
+        </div>
+        <label data-i18n="settings.videoGenerationEndpoint">Video generation endpoint</label>
+        <input type="text" id="setVideoGenerationEndpoint" placeholder="/v1/videos">
+        <label><span data-i18n="settings.videoStatusEndpoint">Video status endpoint</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.videoStatusEndpointHint">(optional; use {id})</span></label>
+        <input type="text" id="setVideoStatusEndpoint" placeholder="/v1/videos/{id}">
+      </div>
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        <span><span data-i18n="settings.contextLengths">Model Context Lengths</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.contextLengthsHint">(tokens per model)</span></span>
+        <button type="button" class="modal-btn secondary" onclick="syncModelContextsFromSelected()" style="padding:2px 10px;font-size:10px">&#x21A1; <span data-i18n="settings.mcImport">Import Selected</span></button>
+      </label>
+      <div id="setModelContextsList" class="mc-list"></div>
+      <div id="setModelContextsEmpty" class="mc-empty" data-i18n="settings.mcEmpty">No per-model limits set. Click &quot;Import Selected&quot; or add a row below.</div>
+      <div class="mc-add-row">
+        <input type="text" id="setMcNewModel" placeholder="model id" data-i18n-placeholder="settings.mcModelPh" list="setMcModelList" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('setMcNewValue').focus();}">
+        <datalist id="setMcModelList"></datalist>
+        <input type="number" id="setMcNewValue" placeholder="200000" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addModelContextFromInputs();}">
+        <button type="button" class="modal-btn secondary" onclick="addModelContextFromInputs()" style="padding:4px 10px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.addModel">Add</span></button>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:12px 0 10px"></div>
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        <span><span data-i18n="settings.reasoningContent">Reasoning Content Return</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.reasoningContentHint">(OpenAI-compatible reasoning_content)</span></span>
+        <button type="button" class="modal-btn secondary" onclick="syncReasoningContentFromSelected()" style="padding:2px 10px;font-size:10px">&#x21A1; <span data-i18n="settings.rcImport">Import Selected</span></button>
+      </label>
+      <div id="setReasoningContentList" class="rc-list"></div>
+      <div id="setReasoningContentEmpty" class="rc-empty" data-i18n="settings.rcEmpty">No per-model reasoning settings. Auto keeps DeepSeek and MiMo on, others off.</div>
+      <div class="rc-add-row">
+        <input type="text" id="setRcNewModel" placeholder="model id" data-i18n-placeholder="settings.mcModelPh" list="setRcModelList" onkeydown="if(event.key==='Enter'){event.preventDefault();addReasoningContentModelFromInputs();}">
+        <datalist id="setRcModelList"></datalist>
+        <select id="setRcNewMode" aria-label="Reasoning content mode" style="width:92px;padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:0">
+          <option value="auto">Auto</option>
+          <option value="on">On</option>
+          <option value="off">Off</option>
+        </select>
+        <button type="button" class="modal-btn secondary" onclick="addReasoningContentModelFromInputs()" style="padding:4px 10px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.addModel">Add</span></button>
+      </div>
+      <label><span data-i18n="settings.tavilyKey">Tavily API Key</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.tavilyKeyHint">(for Web Search)</span></label>
+      <input type="password" id="setTavilyKey" placeholder="tvly-...">
+      <div id="setStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-terminal"></use></svg> <span data-i18n="settings.sandboxHeader">Code Sandbox</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.sandboxHeaderHint">(where code-execution tools run)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setSandboxEnabled" onchange="onSandboxProviderChange()" style="width:auto;margin:0"> <span data-i18n="settings.sandboxEnable">ENABLE_SANDBOX — Enable sandbox environment for running code</span></label>
+      <label data-i18n="settings.sandboxPlatform">SANDBOX_PLATFORM</label>
+      <select id="setSandboxPlatform" aria-label="Sandbox platform" onchange="onSandboxProviderChange()" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:10px">
+        <option value="daytona">daytona</option>
+      </select>
+      <div id="setSandboxDaytonaBox" style="display:none;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg-root)">
+        <label data-i18n="settings.daytonaApiKey">DAYTONA_API_KEY</label>
+        <input type="password" id="setDaytonaApiKey" placeholder="dt-...">
+        <label data-i18n="settings.daytonaServerUrl">DAYTONA_SERVER_URL</label>
+        <input type="text" id="setDaytonaServerUrl" placeholder="https://app.daytona.io/api">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label><span data-i18n="settings.daytonaTimeout">DAYTONA_TIMEOUT</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.daytonaTimeoutHint">(seconds)</span></label>
+            <input type="number" id="setDaytonaTimeout" min="1" placeholder="180">
+          </div>
+          <div>
+            <label><span data-i18n="settings.daytonaImage">DAYTONA_IMAGE</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.daytonaImageHint">(optional)</span></label>
+            <input type="text" id="setDaytonaImage" placeholder="(empty = Daytona default)" data-i18n-placeholder="settings.daytonaImagePh">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div>
+            <label><span data-i18n="settings.daytonaAutoStop">DAYTONA_AUTO_STOP_INTERVAL</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.daytonaMinutes">(min)</span></label>
+            <input type="number" id="setDaytonaAutoStop" min="0" placeholder="5">
+          </div>
+          <div>
+            <label><span data-i18n="settings.daytonaAutoArchive">DAYTONA_AUTO_ARCHIVE_INTERVAL</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.daytonaMinutes">(min)</span></label>
+            <input type="number" id="setDaytonaAutoArchive" min="0" placeholder="5">
+          </div>
+          <div>
+            <label><span data-i18n="settings.daytonaAutoDelete">DAYTONA_AUTO_DELETE_INTERVAL</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.daytonaMinutes">(min)</span></label>
+            <input type="number" id="setDaytonaAutoDelete" min="0" placeholder="1440">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:4px" data-i18n="settings.sandboxNote">When remote sandbox is active, only Bash is exposed and it runs inside a Daytona Linux container. The in-page execution tools are hidden — invoke python3, node, pip, etc. via Bash. Read/Write/Edit target Daytona first; /foo.js and /home/daytona/foo.js refer to the same sandbox file. Files already mirrored from VFS are synced both ways after Bash; new sandbox files are imported only from /home/daytona/outputs. Put final results there.</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
+          <button type="button" class="modal-btn secondary" id="setSandboxTestBtn" onclick="testDaytonaSandbox()" style="padding:6px 10px;font-size:11px" data-i18n="settings.sandboxTest">Test sandbox</button>
+          <div id="setSandboxTestStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;flex:1;white-space:pre-wrap;word-break:break-word"></div>
+        </div>
+      </div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title">Diagnostics</summary>
+      <button type="button" class="modal-btn secondary" onclick="runFsDiagnostics()" style="width:100%;padding:8px 10px;font-size:11px;margin-bottom:6px" data-i18n="settings.runFsDiag">Run file system diagnostics</button>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-message-circle"></use></svg> <span data-i18n="settings.notificationsHeader">Notifications</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.notificationsHeaderHint">(browser permission required)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setTaskNotifications" style="width:auto;margin:0"> <span data-i18n="settings.taskNotificationsEnable">Notify when a conversation task finishes</span></label>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.taskNotificationsDesc">Uses browser notifications for completed or failed chat and media runs. Click a notification to reopen that conversation.</div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><span data-i18n="settings.ralphHeader">Ralph Loop</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.ralphHeaderHint">(unattended continue-until-done mode)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setRalphEnabled" style="width:auto;margin:0"> <span data-i18n="settings.ralphEnable">Enable Ralph Loop by default</span></label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.ralphMaxIter">Max Ralph iterations</label>
+        <input type="number" id="setRalphMaxIterations" min="1" max="20" placeholder="5" style="width:80px;margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin:0"><input type="checkbox" id="setRalphUnlimited" style="width:auto;margin:0" onchange="document.getElementById('setRalphMaxIterations').disabled=this.checked"> <span data-i18n="settings.ralphUnlimited">Unlimited</span></label>
+      </div>
+      <label style="margin-top:0" data-i18n="settings.ralphMarker">Ralph completion marker</label>
+      <input type="text" id="setRalphCompletionMarker" placeholder="RALPH_DONE" style="margin-bottom:6px">
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.ralphDesc">Unattended mode stops when the assistant outputs the completion marker. It will not approve Plan Mode or destructive human prompts.</div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span data-i18n="settings.swarmHeader">Agent Swarm</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.swarmHeaderHint">(parallel orchestrator-worker fanout)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmEnabled" style="width:auto;margin:0"> <span data-i18n-html="settings.swarmEnable">Enable Swarm (exposes <code>SwarmSpawn</code> tool to the lead agent)</span></label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.swarmConcurrency">Max concurrency</label>
+        <input type="number" id="setSwarmConcurrency" min="1" max="8" placeholder="3" style="width:70px;margin-bottom:0">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.swarmMaxWorkers">Max workers / turn</label>
+        <input type="number" id="setSwarmMaxWorkers" min="1" max="32" placeholder="8" style="width:70px;margin-bottom:0">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.swarmTotalBudget">Total token budget / turn</label>
+        <input type="number" id="setSwarmTotalBudget" min="10000" max="2000000" step="10000" placeholder="250000" style="width:120px;margin-bottom:0">
+      </div>
+      <label style="margin-top:0"><span data-i18n="settings.swarmWorkerModel">Worker model override</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.swarmWorkerModelHint">(empty = inherit lead model; use a cheaper model like haiku/sonnet to control cost)</span></label>
+      <input type="text" id="setSwarmWorkerModel" placeholder="claude-haiku-4-5 (or empty)" style="margin-bottom:6px">
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmAllowWrite" style="width:auto;margin:0"> <span data-i18n="settings.swarmAllowWrite">Allow write tools in worker roles (default off; safe roles are read-only)</span></label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.swarmMaxChain">Max handoff chain length</label>
+        <input type="number" id="setSwarmMaxHandoffChain" min="1" max="8" placeholder="3" style="width:70px;margin-bottom:0">
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n-html="settings.swarmDesc">Built-in roles: <b>researcher</b>, <b>critic</b>, <b>writer</b>, <b>coder</b> (all read-only). The lead agent can issue several <code>SwarmSpawn</code> calls in one turn — they run in parallel up to the concurrency cap. Workers can also chain via <code>SwarmHandoff</code> (researcher → critic → writer; coder → critic → writer). Cycles and depth-overflow are rejected. Workers cannot ask the user, use MCP, or spawn more workers. Plan Mode and Ralph Loop are honored as guards.</div>
+
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmRoleManagerEnabled" style="width:auto;margin:0"> <span data-i18n-html="settings.swarmRoleManagerEnabled">Allow agent to manage roles (exposes <code>RoleManager</code> tool to the lead)</span></label>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmAgentRolesPersist" style="width:auto;margin:0" onchange="_onAgentRolesPersistToggle()"> <span data-i18n="settings.swarmAgentRolesPersist">Persist agent-created roles (default off; otherwise they live only in memory)</span></label>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setSwarmAgentRolesPerConv" style="width:auto;margin:0" disabled> <span data-i18n="settings.swarmAgentRolesPerConv">Save per-conversation (instead of globally; only when persistence is on)</span></label>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.swarmAgentRolesHint">Agent-created roles appear in the Swarms sidebar with a blue [agent] badge. You can delete them like any custom role; built-in and user-authored roles are protected from RoleManager.</div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard-list"></use></svg> <span data-i18n="settings.cronHeader">Scheduled Tasks</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cronHeaderHint">(cron-driven prompts, tab-only)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setCronEnabled" style="width:auto;margin:0" onchange="_onCronEnabledToggle()"> <span data-i18n="settings.cronEnable">Enable scheduled tasks</span></label>
+      <div style="font-size:10px;color:var(--accent-yellow,var(--text-dim));line-height:1.5;margin-bottom:6px;border-left:2px solid var(--accent-yellow,var(--border));padding-left:8px" data-i18n="settings.cronWarning">Triggered tasks consume LLM tokens automatically. Tasks run only while this browser tab is open; closed tabs miss fires.</div>
+      <div id="cronTasksContainer" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;max-height:240px;overflow-y:auto"></div>
+      <button type="button" class="modal-btn secondary" onclick="openCronTaskModal(null)" style="width:100%;padding:6px 10px;font-size:11px;margin-bottom:6px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="settings.cronAddTask">Add task</span></button>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.cronDesc">5-field local-time cron: minute hour day-of-month month day-of-week. Each fire opens a fresh conversation. Ralph Loop has priority — fires that overlap a Ralph run are skipped and rolled forward.</div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-brain"></use></svg> <span data-i18n="settings.memHeader">Memory</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.memHeaderHint">(persists facts across conversations)</span></summary>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setMemEnabled" style="width:auto;margin:0"> <span data-i18n="settings.memEnable">Enable memory (default off)</span></label>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setMemAutoExtract" style="width:auto;margin:0" checked> <span data-i18n="settings.memAutoExtract">Auto-extract facts after each assistant turn (adds one lightweight LLM call)</span></label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);flex-shrink:0" data-i18n="settings.memTopN">Top-N memories to recall</label>
+        <input type="number" id="setMemMaxRecall" min="0" max="40" placeholder="8" style="width:80px;margin-bottom:0">
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:6px" data-i18n="settings.memDesc">Memory = Information + Time Label + Searchable Relationships. Records live in IndexedDB and sync via the cloud-sync layer below when configured.</div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-database"></use></svg> <span data-i18n="settings.stateHeader">State Repo</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.stateHeaderHint">(a private GitHub repo you own)</span></summary>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.stateDesc">Config, conversations, skills, memory and the quipu knowledge graph, pushed to a private repo as one commit. Uses the same GitHub token as the github_* tools. The repo must be private \u2014 creel refuses to push state to a public one.</div>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:8px"><input type="checkbox" id="setStateEnabled" style="width:auto;margin:0"> <span data-i18n="settings.stateEnable">Use the state repo as this browser's sync destination</span></label>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label data-i18n="settings.stateOwner">Owner</label>
+          <input type="text" id="setStateOwner" placeholder="(your GitHub login)" data-i18n-placeholder="settings.stateOwnerPh">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="settings.stateRepo">Repository</label>
+          <input type="text" id="setStateRepo" placeholder="creel-state">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label data-i18n="settings.stateBranch">Branch</label>
+          <input type="text" id="setStateBranch" placeholder="main">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="settings.statePrefix">Path prefix</label>
+          <input type="text" id="setStatePrefix" placeholder="state">
+        </div>
+      </div>
+      <label><span data-i18n="settings.statePassphrase">Encryption Passphrase</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.statePassphraseHint">(optional; losing it = losing the state)</span></label>
+      <input type="password" id="setStatePassphrase">
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setStateSecrets" style="width:auto;margin:0"> <span data-i18n="settings.stateSecrets">Also sync API keys (requires a passphrase)</span></label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button type="button" class="modal-btn secondary" onclick="testStateRepo()" style="flex:1;padding:6px 10px;font-size:11px" data-i18n="settings.stateTest">Check repo</button>
+      </div>
+      <div id="stateRepoStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg> <span data-i18n="settings.cloudHeader">Cloud Sync</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="settings.cloudHeaderHint">(S3-compatible \u2014 AWS, R2, MinIO, B2)</span></summary>
+      <label><span data-i18n="settings.s3Endpoint">Endpoint</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.s3EndpointHint">(e.g. https://s3.us-east-1.amazonaws.com)</span></label>
+      <input type="text" id="setS3Endpoint" placeholder="https://s3.us-east-1.amazonaws.com">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label data-i18n="settings.s3Region">Region</label>
+          <input type="text" id="setS3Region" placeholder="us-east-1">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="settings.s3Bucket">Bucket</label>
+          <input type="text" id="setS3Bucket" placeholder="my-onepagent-bucket">
+        </div>
+      </div>
+      <label><span data-i18n="settings.s3Prefix">Prefix</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.s3PrefixHint">(optional)</span></label>
+      <input type="text" id="setS3Prefix" placeholder="onepagent/">
+      <label data-i18n="settings.s3AccessKey">Access Key ID</label>
+      <input type="password" id="setS3AccessKey">
+      <label data-i18n="settings.s3SecretKey">Secret Access Key</label>
+      <input type="password" id="setS3SecretKey">
+      <label><span data-i18n="settings.s3Passphrase">Encryption Passphrase</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="settings.s3PassphraseHint">(optional; losing it = losing backup)</span></label>
+      <input type="password" id="setS3Passphrase">
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="setS3AutoPush" style="width:auto;margin:0"> <span data-i18n="settings.s3AutoPush">Auto-push on every change (10s debounce)</span></label>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:10px"><input type="checkbox" id="setS3PathStyle" style="width:auto;margin:0" checked> <span data-i18n="settings.s3PathStyle">Use path-style URLs (required for MinIO / R2)</span></label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button type="button" class="modal-btn secondary" onclick="testS3Connection()" style="flex:1;padding:6px 10px;font-size:11px" data-i18n="settings.testConn">Test connection</button>
+        <button type="button" class="modal-btn secondary" onclick="showCorsHint()" style="flex:1;padding:6px 10px;font-size:11px" data-i18n="settings.showCors">Show CORS config</button>
+      </div>
+      <div id="s3Status" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+
+      </details>
+      <details class="settings-group">
+        <summary class="settings-group-title danger"><svg class="ui-icon" aria-hidden="true"><use href="#i-alert-triangle"></use></svg> <span data-i18n="settings.dangerHeader">Danger Zone</span></summary>
+      <div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-bottom:8px" data-i18n="settings.clearAllDesc">Delete all local settings, conversations, memories, skills, files, sync config, and cached data on this device.</div>
+      <button type="button" class="modal-btn secondary" onclick="clearAllAppData()" style="width:100%;padding:8px 10px;font-size:11px;color:var(--accent-red);border-color:rgba(255,107,107,.35)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg> <span data-i18n="settings.clearAllBtn">Clear all local data</span></button>
+
+      </details>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn primary" onclick="saveSettings()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
+        <button class="modal-btn secondary" onclick="closeSettingsModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-dim);line-height:1.5" data-i18n="settings.privacyNote">
+        Settings (including S3 credentials and encryption passphrase) are stored locally in your browser (localStorage). Keys never leave your machine except when sent directly to the configured API endpoints or S3 bucket.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Plan Approval Modal -->
+<div class="modal-overlay" id="planModal">
+  <div class="modal" style="width:clamp(320px,92vw,640px)">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard-list"></use></svg> <span data-i18n="planModal.title">Review Plan</span></h3>
+      <button class="modal-close" onclick="rejectPlan()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="planModalBody" style="max-height:50vh;overflow-y:auto;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;margin-bottom:12px;font-size:12px"></div>
+      <label><span data-i18n="planModal.feedback">Feedback</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="planModal.feedbackHint">(only used on Reject \u2014 tells the agent what to revise)</span></label>
+      <textarea id="planModalFeedback" placeholder="e.g. use threads instead of async; skip the cache layer" data-i18n-placeholder="planModal.feedbackPh" style="min-height:60px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn primary" onclick="approvePlan()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="planModal.approve">Approve &amp; Execute</span></button>
+        <button class="modal-btn secondary" onclick="rejectPlan()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-pencil"></use></svg> <span data-i18n="planModal.reject">Reject &amp; Revise</span></button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-dim);line-height:1.5" data-i18n="planModal.note">
+        Approve turns Plan Mode off and lets the agent execute write tools. Reject keeps Plan Mode on and returns your feedback so the agent can revise.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Human-in-the-loop Modal -->
+<div class="modal-overlay" id="hitlModal">
+  <div class="modal" style="width:clamp(320px,92vw,600px)">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-message-circle"></use></svg> <span data-i18n="hitlModal.title">Input Requested</span></h3>
+      <button class="modal-close" onclick="cancelHitlModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="hitlModalPrompt"></div>
+      <div id="hitlModalContext"></div>
+      <div id="hitlModalChoices"></div>
+      <label id="hitlModalResponseLabel" for="hitlModalResponse" data-i18n="hitlModal.response">Response</label>
+      <textarea id="hitlModalResponse" placeholder="Type your answer..." data-i18n-placeholder="hitlModal.responsePh"></textarea>
+      <div id="hitlModalStatus"></div>
+      <div id="hitlModalActions" style="display:flex;gap:8px;margin-top:8px">
+        <button id="hitlModalSubmit" class="modal-btn primary" onclick="submitHitlModal()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="hitlModal.submit">Submit</span></button>
+        <button class="modal-btn secondary" onclick="cancelHitlModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cron Task Editor Modal -->
+<div class="modal-overlay" id="cronTaskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard-list"></use></svg> <span id="cronTaskModalTitle" data-i18n="cronModal.addTitle">Add Scheduled Task</span></h3>
+      <button class="modal-close" onclick="closeCronTaskModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label data-i18n="cronModal.name">Name</label>
+      <input type="text" id="cronTaskName" placeholder="Daily news digest" data-i18n-placeholder="cronModal.namePh">
+
+      <label><span data-i18n="cronModal.cron">Cron expression</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="cronModal.cronHint">(minute hour day-of-month month day-of-week, local time)</span></label>
+      <div style="display:flex;gap:6px;margin-bottom:4px">
+        <input type="text" id="cronTaskCron" placeholder="3 9 * * *" style="flex:1;margin-bottom:0;font-family:'JetBrains Mono',monospace">
+        <select id="cronTaskPreset" aria-label="Scheduled task preset" onchange="_onCronPresetChange()" style="flex:0 0 auto;padding:4px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-size:11px">
+          <option value="" data-i18n="cronModal.preset">Preset…</option>
+          <option value="7 * * * *">Every hour</option>
+          <option value="3 9 * * *">Daily 09:00</option>
+          <option value="57 20 * * *">Daily 21:00</option>
+          <option value="3 9 * * 1-5">Weekday 09:00</option>
+          <option value="3 9 * * 1">Weekly Mon 09:00</option>
+          <option value="*/15 * * * *">Every 15 min</option>
+        </select>
+      </div>
+      <div id="cronTaskValidate" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+
+      <label><span data-i18n="cronModal.prompt">Prompt</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="cronModal.promptHint">(sent as the first user message in a fresh conversation)</span></label>
+      <textarea id="cronTaskPrompt" spellcheck="false" style="min-height:80px" placeholder="Search the past 24 hours of AI news and write a 5-bullet digest." data-i18n-placeholder="cronModal.promptPh"></textarea>
+
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:6px"><input type="checkbox" id="cronTaskRecurring" style="width:auto;margin:0" checked> <span data-i18n="cronModal.recurring">Recurring (uncheck for a single fire then auto-delete)</span></label>
+
+      <div style="display:flex;gap:8px">
+        <div style="flex:2">
+          <label><span data-i18n="cronModal.modelOverride">Model override</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="cronModal.modelOverrideHint">(empty = inherit)</span></label>
+          <input type="text" id="cronTaskModelOverride" placeholder="claude-haiku-4-5">
+        </div>
+        <div style="flex:1">
+          <label data-i18n="cronModal.maxRunMinutes">Max minutes</label>
+          <input type="number" id="cronTaskMaxRunMinutes" min="1" max="120" placeholder="10">
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:10px"><input type="checkbox" id="cronTaskEnabled" style="width:auto;margin:0" checked> <span data-i18n="cronModal.enabled">Enabled</span></label>
+
+      <div id="cronTaskModalStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn primary" onclick="saveCronTaskFromModal()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
+        <button class="modal-btn secondary" onclick="closeCronTaskModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hook Editor Modal -->
+<div class="modal-overlay" id="hookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span id="hookModalTitle" data-i18n="hookModal.addTitle">Add Hook</span></h3>
+      <button class="modal-close" onclick="closeHookModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label data-i18n="hookModal.name">Name</label>
+      <input type="text" id="hookName" placeholder="log-all-tools" data-i18n-placeholder="hookModal.namePh">
+      <label data-i18n="hookModal.event">Event</label>
+      <select id="hookEvent" aria-label="Hook event" style="width:100%;padding:8px 10px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:12px">
+        <option value="pre_tool">pre_tool &mdash; before a tool runs (can block / modify input)</option>
+        <option value="post_tool">post_tool &mdash; after a tool runs (can modify output)</option>
+        <option value="on_error">on_error &mdash; tool returned an error (can recover)</option>
+        <option value="on_user_submit">on_user_submit &mdash; user sent a message (can block / rewrite)</option>
+        <option value="on_assistant_response">on_assistant_response &mdash; assistant finished a turn</option>
+        <option value="on_stop">on_stop &mdash; agent loop finished</option>
+        <option value="pre_swarm_spawn">pre_swarm_spawn &mdash; before a swarm worker spawns (can block / modify input)</option>
+        <option value="post_swarm_spawn">post_swarm_spawn &mdash; after a swarm worker finishes (audit / accounting)</option>
+        <option value="pre_cron_fire">pre_cron_fire &mdash; before a scheduled task fires (can block)</option>
+        <option value="post_cron_fire">post_cron_fire &mdash; after a scheduled task fires (audit)</option>
+      </select>
+      <label><span data-i18n="hookModal.handler">Handler</span> <span style="text-transform:none;color:var(--text-dim)" data-i18n="hookModal.handlerHint">(JS body; receives <code>ctx</code>; see hints below)</span></label>
+      <textarea id="hookCode" spellcheck="false" style="min-height:160px;font-family:'JetBrains Mono',monospace" placeholder="// ctx has { name, input, output, toolUseId, isError, error, text, content, loopCount, totalTokens } depending on event.
+// Return values:
+//   { note: 'msg' }           -> logged to Memory panel
+//   { block: true, reason }   -> block the tool / user submit
+//   { overrideInput: {...} }  -> pre_tool: replace input
+//   { overrideOutput: '...' } -> post_tool / on_error: replace output
+//   { overrideText: '...' }   -> on_user_submit: rewrite text
+// Example:
+// if (ctx.name === 'Bash') return { block: true, reason: 'no bash' };"></textarea>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:10px"><input type="checkbox" id="hookEnabled" style="width:auto;margin:0" checked> <span data-i18n="hookModal.enabled">Enabled</span></label>
+      <div id="hookModalStatus" style="font-size:10px;color:var(--text-dim);min-height:14px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn primary" onclick="saveHookFromModal()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
+        <button class="modal-btn secondary" onclick="closeHookModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-dim);line-height:1.5">
+        Hooks run with the same power as JSExec. They can read and modify agent state. Errors in a hook are swallowed and logged &mdash; they never break the agent loop.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Swarm Role Editor Modal -->
+<div class="modal-overlay" id="swarmRoleModal">
+  <div class="modal" style="width:clamp(320px,94vw,720px)">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg> <span id="swarmRoleModalTitle" data-i18n="swarmRoleModal.addTitle">Add Custom Role</span></h3>
+      <button class="modal-close" onclick="closeSwarmRoleModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label><span data-i18n="swarmRoleModal.id">Role ID</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.idHint">(kebab-case; cannot conflict with built-ins; not editable later)</span></label>
+      <input type="text" id="swarmRoleId" placeholder="my-analyst">
+      <label data-i18n="swarmRoleModal.name">Name</label>
+      <input type="text" id="swarmRoleName" placeholder="My Analyst">
+      <label data-i18n="swarmRoleModal.description">Description</label>
+      <input type="text" id="swarmRoleDescription" placeholder="One-line summary of what this role is good at">
+      <label data-i18n="swarmRoleModal.systemPrompt">System prompt (role guidance)</label>
+      <textarea id="swarmRoleSystemPrompt" spellcheck="false" style="min-height:140px;font-family:'JetBrains Mono',monospace" placeholder="You are a focused worker for ... Use tools X / Y. Stop when ..."></textarea>
+      <label><span data-i18n="swarmRoleModal.allowedTools">Allowed base tools</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.allowedToolsHint">(SwarmSpawn / RunSubAgent are blocked to prevent recursion; bb_*, SwarmHandoff, memory tools auto-grant)</span></label>
+      <div id="swarmRoleToolsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;margin-bottom:8px;max-height:180px;overflow-y:auto"></div>
+      <label><span data-i18n="swarmRoleModal.bindSkills">Bind skills</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.bindSkillsHint">(adds each skill's tools to this worker; skill.active is irrelevant)</span></label>
+      <div id="swarmRoleSkillsList" style="padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;margin-bottom:8px;max-height:140px;overflow-y:auto;font-size:11px"></div>
+      <label><span data-i18n="swarmRoleModal.customTools">Custom tool names</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.customToolsHint">(comma-separated; use this to grant access to MCP tools or any tool not listed above)</span></label>
+      <input type="text" id="swarmRoleCustomTools" placeholder="my_mcp_tool, another_tool">
+      <label><span data-i18n="swarmRoleModal.allowedHandoffs">Allowed handoffs</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.allowedHandoffsHint">(this worker can pass control to any of these via SwarmHandoff)</span></label>
+      <div id="swarmRoleHandoffsList" style="padding:6px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;margin-bottom:8px;max-height:120px;overflow-y:auto;font-size:11px"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0;flex-shrink:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary)" data-i18n="swarmRoleModal.maxSteps">Max steps</label>
+        <input type="number" id="swarmRoleMaxSteps" min="1" max="30" placeholder="6" style="width:70px;margin:0">
+        <label style="margin:0;flex-shrink:0;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary)" data-i18n="swarmRoleModal.tokenBudget">Token budget</label>
+        <input type="number" id="swarmRoleTokenBudget" min="5000" max="200000" step="5000" placeholder="60000" style="width:100px;margin:0">
+      </div>
+      <label><span data-i18n="swarmRoleModal.defaultModel">Default model</span> <span style="text-transform:none;color:var(--text-dim);font-weight:400" data-i18n="swarmRoleModal.defaultModelHint">(optional; overrides the global worker model for this role)</span></label>
+      <input type="text" id="swarmRoleDefaultModel" placeholder="claude-haiku-4-5 (or empty)">
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-secondary);margin-bottom:10px"><input type="checkbox" id="swarmRoleEnabled" style="width:auto;margin:0" checked> <span data-i18n="swarmRoleModal.enabled">Enabled (visible to lead via SwarmSpawn)</span></label>
+      <div id="swarmRoleModalStatus" style="font-size:10px;color:var(--accent-red);min-height:14px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn primary" onclick="saveSwarmRoleFromModal()" style="flex:1"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg> <span data-i18n="modal.save">Save</span></button>
+        <button class="modal-btn secondary" onclick="closeSwarmRoleModal()" style="flex:1" data-i18n="modal.cancel">Cancel</button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-dim);line-height:1.5" data-i18n="swarmRoleModal.note">
+        Custom roles are visible to the lead agent only when Agent Swarm is enabled in Settings. Plan Mode and the global allowWriteRoles switch still apply on top of any tool you grant here.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Memory Viewer Modal -->
+<div class="modal-overlay" id="memoryModal">
+  <div class="modal" style="width:clamp(320px,96vw,860px)">
+    <div class="modal-header">
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#i-brain"></use></svg> <span data-i18n="memoryModal.title">Memory</span> <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">Information + Time + Relationships</span></h3>
+      <button class="modal-close" onclick="closeMemoryModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input type="text" id="memSearchInput" placeholder="Search content, tags, type\u2026" data-i18n-placeholder="memoryModal.searchPh" oninput="renderMemoryList()" style="flex:1;min-width:160px;margin-bottom:0">
+        <select id="memFilterType" aria-label="Filter memories by type" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+          <option value="">all types</option>
+          <option value="fact">fact</option>
+          <option value="preference">preference</option>
+          <option value="event">event</option>
+          <option value="skill">skill</option>
+          <option value="note">note</option>
+        </select>
+        <select id="memFilterSource" aria-label="Filter memories by source" onchange="renderMemoryList()" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+          <option value="">any source</option>
+          <option value="auto">auto</option>
+          <option value="tool">tool</option>
+          <option value="manual">manual</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0;font-size:10px;color:var(--text-secondary);margin:0;white-space:nowrap"><input type="checkbox" id="memShowRetired" onchange="renderMemoryList()" style="width:auto;margin:0"> <span data-i18n="memoryModal.showRetired">Show retired</span></label>
+      </div>
+      <div id="memTagChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="memStats" style="font-size:10px;color:var(--text-dim);margin-bottom:6px"></div>
+      <div id="memList" style="max-height:55vh;overflow-y:auto;padding-right:4px"></div>
+
+      <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">
+        <label style="font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0;font-size:12px" data-i18n="memoryModal.addHeader">Add memory manually</label>
+        <textarea id="memAddContent" placeholder="e.g. User prefers pytest over unittest for new Python projects." style="min-height:60px"></textarea>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="memAddTags" placeholder="tags: python, testing" style="flex:1;min-width:160px;margin-bottom:0">
+          <select id="memAddType" aria-label="New memory type" style="padding:6px 8px;background:var(--bg-root);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:11px">
+            <option value="fact">fact</option>
+            <option value="preference">preference</option>
+            <option value="event">event</option>
+            <option value="skill">skill</option>
+            <option value="note">note</option>
+          </select>
+          <button type="button" class="modal-btn primary" onclick="memAddFromUI()" style="padding:6px 14px;font-size:11px"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"></use></svg> <span data-i18n="modal.add">Add</span></button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button type="button" class="modal-btn secondary" onclick="memExport()" style="flex:1;padding:6px 10px;font-size:11px">&#x2B07; Export JSON</button>
+        <button type="button" class="modal-btn secondary" onclick="memImport()" style="flex:1;padding:6px 10px;font-size:11px">&#x2B06; Import JSON</button>
+        <button type="button" class="modal-btn secondary" onclick="memClearAll()" style="flex:1;padding:6px 10px;font-size:11px;color:var(--accent-red)"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg> <span data-i18n="memoryModal.clearAll">Clear all</span></button>
+        <button type="button" class="modal-btn secondary" onclick="closeMemoryModal()" style="flex:1;padding:6px 10px;font-size:11px" data-i18n="modal.close">Close</button>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text-dim);line-height:1.5">
+        Memories carry a time label and tags. They are injected into the system prompt at the start of each turn ranked by recency, tag overlap, and keyword match. Pinned memories are never auto-pruned.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HTML Preview Modal -->
+<div class="html-modal-overlay" id="htmlModal" onclick="if(event.target===this)closeHtmlModal()">
+  <div class="html-modal">
+    <div class="html-modal-header">
+      <span style="font-size:16px"><svg class="ui-icon" aria-hidden="true"><use href="#i-globe"></use></svg></span>
+      <span class="html-modal-path" id="htmlModalPath"></span>
+      <div class="html-modal-tabs">
+        <button class="html-modal-tab active" onclick="switchHtmlModalTab('preview',this)">Preview</button>
+        <button class="html-modal-tab" onclick="switchHtmlModalTab('source',this)">Source</button>
+      </div>
+      <button class="top-btn" id="htmlModalDownload" onclick="downloadHtmlModal()">&#x2B07; Download</button>
+      <button class="html-modal-close" onclick="closeHtmlModal()">&times;</button>
+    </div>
+    <div class="html-modal-body">
+      <iframe class="html-modal-preview" id="htmlModalPreview" sandbox="allow-scripts allow-same-origin"></iframe>
+      <div class="md-modal-preview" id="mdModalPreview" style="display:none"></div>
+      <div class="html-modal-source" id="htmlModalSource"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Feature flags first: the harness script below reads CREEL_FEATURES while
+     defining its tool lists, so this must already have run. -->
+<script src="creel-features.js"></script>
+<!-- The harness itself, extracted from this file (creel-yny). Classic scripts
+     sharing one global scope: THE ORDER IS SEMANTICS. See any part's header. -->
+<script src="harness/01-i18n.js"></script>
+<script src="harness/02-config.js"></script>
+<script src="harness/03-sandbox-daytona.js"></script>
+<script src="harness/04-swarm.js"></script>
+<script src="harness/05-blob-store.js"></script>
+<script src="harness/06-conversation-store.js"></script>
+<script src="harness/07-skills.js"></script>
+<script src="harness/08-runtimes-node.js"></script>
+<script src="harness/09-tools-remote.js"></script>
+<script src="harness/10-skills-import.js"></script>
+<script src="harness/11-mcp-servers.js"></script>
+<script src="harness/12-provider-ui.js"></script>
+<script src="harness/13-sync-core.js"></script>
+<script src="harness/14-sync-push-pull.js"></script>
+<script src="harness/15-memory-store.js"></script>
+<script src="harness/16-hooks-cron.js"></script>
+<script src="harness/17-swarm-role-editor.js"></script>
+<script src="harness/18-tool-impl.js"></script>
+<script src="harness/19-role-manager.js"></script>
+<script src="harness/20-file-explorer.js"></script>
+<script src="harness/21-html-preview.js"></script>
+<script src="harness/22-memory-ui.js"></script>
+<script src="harness/23-sse-parsers.js"></script>
+<script src="harness/24-chat-ui.js"></script>
+<script src="harness/25-input.js"></script>
+<script src="harness/26-layout.js"></script>
+<script src="quipu-backend.js"></script>
+<script src="github-backend.js"></script>
+<script src="state-backend.js"></script>
+<script src="beads-store.js"></script>
+<script src="beads-backend.js"></script>
+<script src="local-backend.js"></script>
+<script src="quipu-explorer.js"></script>
+<script src="creel-device.js"></script>
+<script src="creel-fleet.js"></script>
+<script src="creel-fleet-log.js"></script>
+<script src="creel-fleet-tools.js"></script>
+<script src="creel-fleet-dashboard.js"></script>
+<script src="creel-locator.js"></script>
+<script src="creel-self.js"></script>
+<script src="creel-ui-tools.js"></script>
+<script src="creel-world-model.js"></script>
+<script src="browser-backend.js"></script>
+<script src="measurement-backend.js"></script>
+<script src="reconnect.js"></script>
+</body>
+</html>

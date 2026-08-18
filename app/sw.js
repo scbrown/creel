@@ -6,12 +6,13 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v23';
+const CACHE_VERSION = 'creel-v24';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
   './',
   './index.html',
+  './thread.html',
   './onepagent.html',
   './logo.svg',
   './manifest.webmanifest',
@@ -226,7 +227,7 @@ async function networkFirstHTML(event) {
     return res;
   } catch (_) {
     const cached = await cache.match(event.request)
-      || await cache.match('./onepagent.html')
+      || await cache.match('./thread.html')
       || await cache.match('./index.html');
     if (cached) return cached;
     return new Response('Offline', { status: 503, statusText: 'Offline' });

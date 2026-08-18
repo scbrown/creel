@@ -35,7 +35,7 @@ const ORIGIN = 'http://localhost:8420';
 function makeWindow() {
   const listeners = [];
   const win = {
-    location: { origin: ORIGIN, href: `${ORIGIN}/onepagent.html` },
+    location: { origin: ORIGIN, href: `${ORIGIN}/thread.html` },
     addEventListener: (t, fn) => { if (t === 'message') listeners.push(fn); },
     postMessage(data) {
       setImmediate(() => listeners.forEach((fn) => fn({ source: win, origin: ORIGIN, data })));
@@ -100,7 +100,7 @@ function bootWorker() {
    *  `sender` is either a URL string (connector-style, from that tab) or a
    *  full sender object — pass { id: EXT_ID } to speak as the extension's own
    *  popup, which is the second trust path the worker allows. */
-  const send = (op, args, sender = `${ORIGIN}/onepagent.html`) => new Promise((resolve) => {
+  const send = (op, args, sender = `${ORIGIN}/thread.html`) => new Promise((resolve) => {
     const senderObj = typeof sender === 'string'
       ? { tab: { url: sender } }
       : sender;
@@ -138,7 +138,7 @@ const check = async (name, fn) => {
   vm.runInContext(CONNECTOR_JS, connectorSandbox);
   await new Promise((r) => setImmediate(r));   // let the lost hello go by
 
-  // Now the page's server loads, as it does in onepagent.html: dead last.
+  // Now the page's server loads, as it does in thread.html: dead last.
   let server = null;
   const pageSandbox = {
     window: win,
@@ -202,7 +202,7 @@ const check = async (name, fn) => {
 
   // ── the worker half: the origin guard, op by op ──────────────────
   const site = worker.addTab('https://example.com/');
-  const creelTab = worker.addTab(`${ORIGIN}/onepagent.html`);
+  const creelTab = worker.addTab(`${ORIGIN}/thread.html`);
 
   await check('a sender that is not on a creel origin is refused outright', async () => {
     const r = await worker.send('list_tabs', {}, 'https://evil.example/');
@@ -231,7 +231,7 @@ const check = async (name, fn) => {
   });
 
   await check('opening or navigating TO a creel origin is refused', async () => {
-    const a = await worker.send('open_tab', { url: `${ORIGIN}/onepagent.html` });
+    const a = await worker.send('open_tab', { url: `${ORIGIN}/thread.html` });
     assert.strictEqual(a.ok, false);
     const b = await worker.send('navigate', { url: 'http://127.0.0.1:8420/x', tabId: site.id });
     assert.strictEqual(b.ok, false);

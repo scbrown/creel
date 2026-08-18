@@ -2,7 +2,7 @@
  *
  * Tabs are the bobbins. The platform does the scheduler's hard parts:
  *   work queue      → IndexedDB ('creel_fleet'), shared by every same-origin tab
- *   spawning        → window.open('onepagent.html#creel-agent=<id>')
+ *   spawning        → window.open('thread.html#creel-agent=<id>')
  *   liveness        → Web Locks: each agent tab holds 'creel-agent-<id>' for
  *                     its lifetime; the lock vanishing = the tab died
  *   fleet bus       → BroadcastChannel 'creel-fleet'
@@ -136,7 +136,7 @@
   }
 
   function spawnWindow(id, kind = 'agent') {
-    const w = window.open(`onepagent.html#creel-${kind}=${id}`, '_blank');
+    const w = window.open(`thread.html#creel-${kind}=${id}`, '_blank');
     return !!w;
   }
 

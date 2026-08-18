@@ -54,7 +54,7 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
     CSS: { escape: (s) => String(s).replace(/[^\w-]/g, '\\$&') },
     getComputedStyle: () => ({ visibility: 'visible', display: 'block' }),
     navigator: {},                      // no locks → no root election, no quipu seeding
-    location: { hash, origin: 'http://localhost:8420', href: `http://localhost:8420/onepagent.html${hash}` },
+    location: { hash, origin: 'http://localhost:8420', href: `http://localhost:8420/thread.html${hash}` },
     sessionStorage: {
       getItem: (k) => (store.has(k) ? store.get(k) : null),
       setItem: (k, v) => store.set(k, String(v)),
@@ -74,7 +74,7 @@ function bootTab({ hash = '', title = 'creel' } = {}) {
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
 
-  // The bits of the harness (onepagent.html) that creel-self.js reaches for.
+  // The bits of the harness (thread.html) that creel-self.js reaches for.
   const registered = new Map();
   sandbox.CreelInpage = { register: (url, server) => registered.set(url, server) };
   sandbox.mcpServers = [{ id: 'mcp_quipu_inpage', name: 'quipu', type: 'inpage', enabled: true }];

@@ -6,7 +6,7 @@
  * agents (fleet_device, ui_tabs/ui_describe rows) so a burst can plan around
  * it instead of discovering the limit the hard way.
  *
- * Pure and dependency-free. Loads before creel-fleet.js in onepagent.html;
+ * Pure and dependency-free. Loads before creel-fleet.js in thread.html;
  * also CommonJS-exports so `node tests/test-device.js` can exercise it.
  */
 (() => {

@@ -15,7 +15,7 @@
   'use strict';
 
   const FLEET = window.CreelFleetInternal;
-  if (!FLEET) throw new Error('creel-fleet-tools.js loaded before creel-fleet.js — check the script order in onepagent.html');
+  if (!FLEET) throw new Error('creel-fleet-tools.js loaded before creel-fleet.js — check the script order in thread.html');
   const {
     BC, DIGEST_ID, DRAIN_ID, MY_TASK_ID, MY_WORKER_ID, myLabelPromise,
     putTask, getTask, allTasks, delTask, genId, notify,

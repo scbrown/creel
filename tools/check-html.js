@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* creel — tools/check-html.js: parse the inline <script> blocks of an HTML file.
  *
- * `just check` used to skip app/onepagent.html on the grounds that it is
+ * `just check` used to skip app/thread.html on the grounds that it is
  * vendored and its scripts are inline. Both halves of that stopped being true:
  * creel edits it constantly, and "inline" is a reason to reach for a parser,
  * not a reason to ship unparsed. A syntax error in a 16k-line inline script

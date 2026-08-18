@@ -16,7 +16,7 @@
   'use strict';
 
   const SELF = window.CreelSelfInternal;
-  if (!SELF) throw new Error('creel-ui-tools.js loaded before creel-self.js — check the script order in onepagent.html');
+  if (!SELF) throw new Error('creel-ui-tools.js loaded before creel-self.js — check the script order in thread.html');
   const { TAB_ID, AGENT_ID, CreelSelf, flash, identity, matchesMe, remoteCall, roster } = SELF;
   // ── 3b. the 'ui' server: creel configures creel ──────────────────
   function activeProfile() {

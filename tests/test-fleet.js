@@ -70,7 +70,7 @@ const ready = (page) => page.waitForFunction(
 
 /** Open a worker tab and neutralise its send before it can claim anything. */
 async function newWorker(browser, id) {
-  const page = await browser.newPage(`/onepagent.html#creel-worker=${id}`);
+  const page = await browser.newPage(`/thread.html#creel-worker=${id}`);
   await page.evaluate(stubSend);
   await ready(page);
   return page;
@@ -122,7 +122,7 @@ async function untilAny(pages, fn, message, timeout = 30000) {
   const browser = await Browser.launch({ root: APP });
 
   // The dashboard tab: an ordinary page, which is what an operator has.
-  const dash = await browser.newPage('/onepagent.html');
+  const dash = await browser.newPage('/thread.html');
   await dash.evaluate(stubSend);
   await ready(dash);
   const fleet = fleetCall(dash);

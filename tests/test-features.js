@@ -41,7 +41,7 @@ const scriptSrcs = (page) => page.evaluate(
   const browser = await Browser.launch({ root: APP });
 
   // ── the default surface: Python off ──────────────────────────────
-  const off = await browser.newPage('/onepagent.html');
+  const off = await browser.newPage('/thread.html');
   await off.waitForFunction(() => !!window.CreelUi, { message: 'creel boot' });
 
   await check('python is off by default', async () => {
@@ -232,7 +232,7 @@ const scriptSrcs = (page) => page.evaluate(
   await off.close();
 
   // ── the same page with the flag on ───────────────────────────────
-  const on = await browser.newPage('/onepagent.html#creel-features=' + encodeURIComponent('{"python":true}'));
+  const on = await browser.newPage('/thread.html#creel-features=' + encodeURIComponent('{"python":true}'));
   await on.waitForFunction(() => !!window.CreelUi, { message: 'creel boot (python on)' });
 
   await check('the flag is a switch, not a demolition: Python comes back', async () => {
@@ -244,7 +244,7 @@ const scriptSrcs = (page) => page.evaluate(
   });
 
   await check('an unknown flag name is ignored rather than invented', async () => {
-    const page = await browser.newPage('/onepagent.html#creel-features=' + encodeURIComponent('{"nonsense":true}'));
+    const page = await browser.newPage('/thread.html#creel-features=' + encodeURIComponent('{"nonsense":true}'));
     await page.waitForFunction(() => !!window.CREEL_FEATURES, { message: 'flags' });
     const keys = await page.evaluate(() => Object.keys(window.CREEL_FEATURES));
     assert.ok(!keys.includes('nonsense'), 'an unknown flag was accepted');

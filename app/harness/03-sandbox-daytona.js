@@ -1,12 +1,12 @@
 /* creel harness — part 3 of 26: sandbox-daytona
  *
- * Extracted verbatim from app/onepagent.html (creel-yny). These are CLASSIC
+ * Extracted verbatim from app/thread.html (creel-yny). These are CLASSIC
  * scripts, deliberately not modules: classic scripts share one global lexical
  * environment, so top-level const/let and function declarations stay visible
  * across every part and to the inline onclick= handlers in the markup. That
  * shared scope is what let the split be mechanical rather than a rewrite.
  *
- * THE LOAD ORDER IN onepagent.html IS PART OF THE SEMANTICS. Do not reorder
+ * THE LOAD ORDER IN thread.html IS PART OF THE SEMANTICS. Do not reorder
  * the tags, do not add defer or async, and do not move a declaration across a
  * file boundary without checking what reads it while the page is loading.
  *

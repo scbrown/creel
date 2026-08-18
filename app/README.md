@@ -132,7 +132,7 @@ Any static file server works:
 just serve          # from the repo root
 ```
 
-Then open `http://localhost:8420/onepagent.html`, set a provider
+Then open `http://localhost:8420/thread.html`, set a provider
 (Settings → API Endpoint + key), and add MCP tools.
 
 ## DeepSeek

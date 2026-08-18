@@ -16,7 +16,7 @@
   const LS_KEY = 'creel_beads_store';
 
   // Harness VFS first; localStorage mirror as fallback. vfsRead/vfsWrite are
-  // globals in onepagent.html (see the VIRTUAL FILESYSTEM section).
+  // globals in thread.html (see the VIRTUAL FILESYSTEM section).
   function browserAdapter() {
     const useVfs = typeof vfsRead === 'function' && typeof vfsWrite === 'function';
     const readMirror = () => {

@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const APP = path.join(__dirname, '..', 'app');
-const html = fs.readFileSync(path.join(APP, 'onepagent.html'), 'utf8');
+const html = fs.readFileSync(path.join(APP, 'thread.html'), 'utf8');
 const sw = fs.readFileSync(path.join(APP, 'sw.js'), 'utf8');
 
 const problems = [];
@@ -44,7 +44,7 @@ for (const m of html.matchAll(/<link[^>]*\bhref="([^"]+\.css)"/g)) refs.push(m[1
 for (const ref of refs) {
   if (/^(https?:)?\/\//.test(ref)) continue;              // remote, not ours to cache
   if (!fs.existsSync(path.join(APP, ref))) {
-    problems.push(`onepagent.html references ${ref}, which does not exist`);
+    problems.push(`thread.html references ${ref}, which does not exist`);
     continue;
   }
   if (!appShell.has(ref)) {

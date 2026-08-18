@@ -13,7 +13,7 @@
   'use strict';
 
   const SELF = window.CreelSelfInternal;
-  if (!SELF) throw new Error('creel-world-model.js loaded before creel-self.js — check the script order in onepagent.html');
+  if (!SELF) throw new Error('creel-world-model.js loaded before creel-self.js — check the script order in thread.html');
   const { CreelSelf, CreelUi, electRoot } = SELF;
 
   // ── 2. seed the world model into the shared quipu store ──────────

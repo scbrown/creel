@@ -75,7 +75,7 @@ A static page that runs agent loops in browser tabs. No server, no build step â€
 
 | | |
 |---|---|
-| `app/onepagent.html` | markup and an ordered stack of script tags |
+| `app/thread.html` | markup and an ordered stack of script tags |
 | `app/harness/01..26-*.js` | the harness itself, split out of that page |
 | `app/harness.css` | the page's stylesheet |
 | `app/creel-*.js` | creel's own layers: self/ui, fleet, locator, device |

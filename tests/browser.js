@@ -138,7 +138,7 @@ class Browser {
 
   /** Open a tab at a path under the served app root, and wait for it to be
    *  interactive. Returns a Page. */
-  async newPage(pathAndHash = '/onepagent.html') {
+  async newPage(pathAndHash = '/thread.html') {
     const url = `${this.origin}${pathAndHash}`;
     const { targetId } = await this.send('Target.createTarget', { url });
     const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true });

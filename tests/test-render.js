@@ -75,7 +75,7 @@ function driveThrottle(costMs, chunks) {
   }
 
   const browser = await Browser.launch({ root: APP });
-  const page = await browser.newPage('/onepagent.html');
+  const page = await browser.newPage('/thread.html');
   await page.waitForFunction(() => typeof window.renderMdThrottled === 'function',
     { message: 'the harness renderer' });
 

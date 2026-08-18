@@ -23,7 +23,7 @@ const assert = require('node:assert');
 const APP = path.join(__dirname, '..', 'app');
 const HARNESS = path.join(APP, 'harness');
 const SOURCES = [
-  path.join(APP, 'onepagent.html'),
+  path.join(APP, 'thread.html'),
   ...fs.readdirSync(HARNESS).filter((f) => f.endsWith('.js')).sort().map((f) => path.join(HARNESS, f)),
 ];
 const HTML = SOURCES.map((f) => fs.readFileSync(f, 'utf8')).join('\n');

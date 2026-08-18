@@ -173,7 +173,7 @@
 
   // ── keep-alive integration with streaming ────────────────────────
   // Patch into the global isGenerating flag changes by polling. This avoids
-  // modifying the monolithic onepagent.html. A MutationObserver on the status
+  // modifying the monolithic thread.html. A MutationObserver on the status
   // bar would also work but polling is simpler and cheaper here.
   var lastGeneratingState = false;
   function pollStreamingState() {

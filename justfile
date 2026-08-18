@@ -18,7 +18,7 @@ check:
     # onepagent.html began as a vendored fork, but creel edits it constantly
     # and its scripts are inline — so they get parsed too, or a syntax error
     # in 16k lines only shows up as a blank page.
-    node tools/check-html.js app/onepagent.html extension/popup.html
+    node tools/check-html.js app/thread.html extension/popup.html
     # The harness is a stack of ordered parts; a part the service worker does
     # not know about works for whoever added it and breaks offline for everyone.
     node tools/check-shell.js

@@ -34,7 +34,7 @@
   window.CREEL_BUILD = 'creel-v17 (2026-08-13, measurement harness)';
 
   /* Registry for in-page MCP servers ("the inpage transport"). Each handler
-   * implements handle(jsonRpcBody) -> response|null. onepagent.html routes
+   * implements handle(jsonRpcBody) -> response|null. thread.html routes
    * `type: 'inpage'` servers here by their `url` (e.g. 'inpage:github'). */
   window.CreelInpage = {
     handlers: {},

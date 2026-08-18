@@ -6,7 +6,7 @@
  * state somewhere durable that the operator owns: a private repo, theirs, one
  * commit per push.
  *
- * It is not a second sync engine. The v2 engine in onepagent.html is already
+ * It is not a second sync engine. The v2 engine in thread.html is already
  * the right shape — a manifest naming content-addressed objects and blobs, an
  * AES-GCM envelope, hash dedup so a push uploads only what changed — and only
  * its transport was S3-shaped. This module is the other transport, plugged in

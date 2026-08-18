@@ -20,7 +20,7 @@
   'use strict';
 
   const FLEET = window.CreelFleetInternal;
-  if (!FLEET) throw new Error('creel-fleet-log.js loaded before creel-fleet.js — check the script order in onepagent.html');
+  if (!FLEET) throw new Error('creel-fleet-log.js loaded before creel-fleet.js — check the script order in thread.html');
   const { getTask, putTask, notify, MY_TASK_ID, MY_WORKER_ID } = FLEET;
   // ── fleet work log (creel-vis) ────────────────────────────────────
   // Every task transition (claimed/done/failed/requeued/aborted) is
@@ -72,7 +72,7 @@
   }
 
   // creel-sbx: read the harness's token counters (top-level `let` globals in
-  // onepagent.html — classic scripts share the global lexical scope). They are
+  // thread.html — classic scripts share the global lexical scope). They are
   // cumulative for the tab's session; the delta between a task's start and its
   // fleet_report is that task's token spend. Guarded so a stale harness build
   // (no counters yet) degrades to zeros instead of throwing.

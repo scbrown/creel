@@ -149,7 +149,7 @@ function installFakeGitHub() {
   }
 
   const browser = await Browser.launch({ root: APP });
-  const page = await browser.newPage('/onepagent.html');
+  const page = await browser.newPage('/thread.html');
   await page.waitForFunction(() => !!window.CreelState, { message: 'state backend' });
 
   /** Call a state_* tool the way an agent's MCP client would. */
@@ -388,7 +388,7 @@ function installFakeGitHub() {
   });
 
   await check('two tabs get two slices, and neither is the other', async () => {
-    const other = await browser.newPage('/onepagent.html#creel-agent=beta1');
+    const other = await browser.newPage('/thread.html#creel-agent=beta1');
     await other.waitForFunction(() => !!window.CreelState, { message: 'state backend' });
     const mine = await page.evaluate(() => CreelState.tabScope());
     const theirs = await other.evaluate(() => CreelState.tabScope());

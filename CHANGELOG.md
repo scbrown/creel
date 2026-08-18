@@ -2,6 +2,34 @@
 
 All notable changes land directly on `main`. Format: date, then grouped changes.
 
+## 2026-08-18 (later)
+
+### The interface stops shouting (creel-hkl, creel-d0d, creel-ovp, creel-jpi, creel-xeg)
+- **Rules first** — `docs/ui.md`. Capability is not a button; an active mode is
+  always visible; a destructive action is never more prominent than its
+  constructive neighbour. Spacing, type, radius and colour tokens in
+  `app/harness.css` so there is something to design against.
+- **Dracula**, official values, for the dark theme. Four greys carry elevation;
+  each accent has a fixed meaning (orange agent, cyan human, green healthy,
+  red refusal, purple interactive, yellow attention).
+- **Header: 16 controls → 5.** The rest *move* into one overflow menu — same
+  element, id, handler and accessible name — so any `ui_click` that worked
+  before still works. A control announcing an active mode comes back out.
+- **New thread** is now a header action and `Ctrl/Cmd+Shift+O`, instead of a
+  small `+` three levels inside a collapsible panel.
+- **`onepagent.html` → `thread.html`**, and the page is creel rather than
+  OnePagent. The old path stays as a redirect that preserves the hash, because
+  it is what bookmarks and installed PWAs use and `#creel-agent=<id>` is what
+  makes a spawned tab a fleet worker. The button linking to the upstream fork
+  is gone; the MIT attribution in the prose stays, because that is what it is.
+
+### The streaming renderer was eating the main thread (creel-z96)
+Measured: `renderMd` re-renders the whole accumulated message (117ms at 40KB,
+248ms at 80KB) and the throttle re-queued it 50ms after the last render
+*started*. Streaming a 167KB answer spent 2545ms on the main thread at a 58%
+duty cycle. The interval now follows measured cost: 683ms, 25% duty, bounded
+by construction rather than degrading with length.
+
 ## 2026-08-18
 
 ### The leave guard now protects unpushed state, not activity
@@ -135,7 +163,7 @@ learned is not worth running — and gains attribution instead: each tab stamps
 fleet-wide.
 
 ### The 16.7k-line inline script is 26 ordered parts (creel-yny)
-`app/onepagent.html`: 19134 → 1523 lines. The harness lives in `app/harness/`
+`app/thread.html`: 19134 → 1523 lines. The harness lives in `app/harness/`
 as classic scripts sharing one global scope; the stylesheet is
 `app/harness.css`. Cuts were made only at banner comments, each part verified
 to parse alone, and the set verified to concatenate back byte for byte.
@@ -171,14 +199,14 @@ was only ordering.
   (`bd_ready` / `bd_list` / `bd_show` / `bd_create` / `bd_update` / `bd_close`).
 - `tools/bd.js` — Node CLI mirror of the in-page API.
 - `tests/test-beads.js` — lifecycle + validation tests.
-- Wired into `onepagent.html` and `justfile`.
+- Wired into `thread.html` and `justfile`.
 
 ### Fleet context isolation fix
 Spawned agent/worker tabs inherit the per-origin conversation store
 (IndexedDB + `localStorage.ba_active_conv`), so a fleet tab used to boot
 into the operator's active conversation and `injectTask` appended the task
 brief at the end of the whole orchestrator thread.
-- `onepagent.html` — `IS_FLEET_TAB` const; `loadConvHistory` boots fleet
+- `thread.html` — `IS_FLEET_TAB` const; `loadConvHistory` boots fleet
   tabs into a fresh conversation; `newConversation` never writes the shared
   `ba_active_conv` from a fleet tab.
 - `app/creel-fleet.js` — `isolateContext()` guard at `start()` so even a
