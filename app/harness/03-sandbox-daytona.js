@@ -713,16 +713,44 @@ function populateModelDropdown(models) {
 // each other's pending render (a single global slot let run B's chunk drop
 // run A's pending text).
 const _renderPendingMap = new Map(); // el -> { text, timer }
+
+/* How long the last full re-render of this element took (creel-z96).
+ *
+ * renderMd re-parses and re-renders the WHOLE accumulated message, so its cost
+ * grows with the answer: measured at ~22ms for 10KB, 117ms at 40KB, 248ms at
+ * 80KB. A fixed 50ms interval therefore inverts partway through a long reply —
+ * each render takes longer than the gap before the next one is scheduled, the
+ * main thread saturates, and the interface stops responding exactly when the
+ * answer gets interesting. Streaming to 11KB already cost 625ms of main thread
+ * across 100 renders.
+ *
+ * So the interval follows the cost instead of ignoring it: wait a multiple of
+ * what the last render took, which holds rendering to roughly a quarter of the
+ * main thread no matter how long the message grows. A WeakMap because the
+ * pending record is deleted after each render, and concurrent conversation
+ * streams must not inherit each other's timing. */
+const _renderCost = new WeakMap();
+const RENDER_DUTY = 3;        // wait ~3x the last render → ≤25% of the thread
+const RENDER_MIN_MS = 50;     // unchanged for short messages: still smooth
+const RENDER_MAX_MS = 1000;   // never look frozen, however big the message
+
 function renderMdThrottled(el, text) {
   let p = _renderPendingMap.get(el);
   if (!p) { p = { text, timer: null }; _renderPendingMap.set(el, p); }
   p.text = text;
   if (p.timer) return;
+  const cost = _renderCost.get(el) || 0;
+  const delay = Math.min(RENDER_MAX_MS, Math.max(RENDER_MIN_MS, Math.round(cost * RENDER_DUTY)));
   p.timer = setTimeout(() => {
     p.timer = null;
     const cur = _renderPendingMap.get(el);
-    if (cur) { renderMd(el, cur.text); _renderPendingMap.delete(el); }
-  }, 50);
+    if (cur) {
+      const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      renderMd(el, cur.text);
+      _renderCost.set(el, (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0);
+      _renderPendingMap.delete(el);
+    }
+  }, delay);
 }
 function flushRender(el) {
   if (el) {
