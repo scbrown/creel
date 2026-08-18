@@ -4,6 +4,34 @@ All notable changes land directly on `main`. Format: date, then grouped changes.
 
 ## 2026-08-18
 
+### The service worker could strand users on an old build (deploy staleness)
+`install` did `await cache.addAll(APP_SHELL)` and called `skipWaiting()` only
+afterwards. `cache.addAll` is atomic across all 71 shell URLs — including a
+3.3MB wasm — so one 404, one flaky response or one timeout rejected the whole
+call, failed the install, and left the **previous** worker serving its old
+cache. Reloading did not help, because a reload does not evict a controlling
+worker: the deploy was green, the site correct, and the browser kept showing
+the old build, silently.
+
+`skipWaiting()` now runs first, before any await, and precaching is per entry
+so one unreachable asset costs that asset rather than the entire update —
+everything in the shell is reachable over the network anyway. An incomplete
+precache is logged instead of being indistinguishable from "no update yet".
+
+The page half was missing too: it registered once and never called
+`registration.update()`, so a long-lived tab — creel's normal mode, since the
+fleet lives in tabs — never checked again, and `sw.js` listened for
+`SKIP_WAITING` that nothing ever sent, so an installed worker waited forever.
+It now checks on load, on returning to the tab, and hourly, and promotes a
+waiting worker. It deliberately does **not** reload: creel tabs run agents, and
+reloading one mid-turn discards a conversation or abandons a claimed fleet
+task. It sets `window.CREEL_UPDATE_READY` and fires `creel-update-ready`
+instead, which is what creel-vup and creel-ick build on.
+
+`tests/test-sw.js` runs the app against a shell list naming a file that does
+not exist, and asserts the worker takes over anyway.
+
+
 ### Fleet leasing has a test, and it found a bug (creel-psr)
 `tests/test-fleet.js` opens real tabs and lets them race — real Web Locks,
 real IndexedDB, real BroadcastChannel, only `handleSend` stubbed. It pins

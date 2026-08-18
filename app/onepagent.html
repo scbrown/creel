@@ -452,9 +452,51 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
+/* Service worker registration, and keeping it current.
+ *
+ * Registering once and never checking again is how a static site goes stale:
+ * the browser only re-fetches sw.js on its own schedule, so a tab left open —
+ * which is creel's normal mode, since the fleet lives in tabs — can serve a
+ * months-old bundle. So: check on load, on returning to the tab, and hourly.
+ *
+ * A worker that installs must also be allowed to TAKE OVER. An update sits in
+ * `waiting` until every tab of the origin closes, which for this app may be
+ * never, so a waiting worker is told to skip waiting immediately.
+ *
+ * What this deliberately does NOT do is reload the page. creel tabs run
+ * agents; reloading one mid-turn throws away a conversation and, for a fleet
+ * worker, abandons a claimed task. The new worker takes over future requests,
+ * the flag below records that the running page is now older than what is
+ * deployed, and deciding what to do about it belongs to the operator (or, per
+ * creel-ick, to an agent that saves its state first).
+ */
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').catch(function() {});
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      function promote(worker) {
+        if (!worker) return;
+        // Only meaningful once installed, and only when something is already
+        // controlling this page — otherwise this IS the first worker, and
+        // there is no "update" to announce.
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          worker.postMessage('SKIP_WAITING');
+          window.CREEL_UPDATE_READY = true;
+          window.dispatchEvent(new CustomEvent('creel-update-ready'));
+        }
+      }
+      promote(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        var w = reg.installing;
+        if (w) w.addEventListener('statechange', function () { promote(w); });
+      });
+
+      var check = function () { reg.update().catch(function () {}); };
+      check();
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') check();
+      });
+      setInterval(check, 60 * 60 * 1000);
+    }).catch(function () {});
   });
 }
 </script>

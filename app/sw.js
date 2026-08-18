@@ -6,7 +6,7 @@
  *   - Anything else (APIs, auth, no-store, POST): pass through untouched.
  * Bump CACHE_VERSION whenever the app shell changes to evict old caches.
  */
-const CACHE_VERSION = 'creel-v22';
+const CACHE_VERSION = 'creel-v23';
 const CACHE_NAME = `onepagent-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -137,16 +137,37 @@ const APP_SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.locati
 const CDN_URLS = new Set(CDN_PREFETCH);
 
 self.addEventListener('install', (event) => {
+  // FIRST, and before any await: a worker that cannot take over is worse than
+  // one with an incomplete cache. This used to sit at the end of the async
+  // block below, after `cache.addAll(APP_SHELL)` — and addAll is atomic, so a
+  // single 404, a flaky CDN response, or a timeout on the 3.3MB wasm rejected
+  // the whole call, failed the install, and left the PREVIOUS worker serving
+  // its old cache indefinitely. Reloading did not help: a reload does not
+  // evict a controlling worker. The site deployed correctly and the browser
+  // kept showing the old one.
+  self.skipWaiting();
+
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(APP_SHELL);
+    // Per entry, not addAll. Precaching is an offline optimisation, not a
+    // correctness requirement — everything here is also reachable over the
+    // network by the fetch handlers below. So one asset that cannot be
+    // fetched costs exactly that asset, not the entire update.
+    const failed = [];
+    await Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => failed.push(url))));
+    if (failed.length) {
+      // Say so. The old behaviour's worst property was silence: an install
+      // that failed looked exactly like a browser that had not updated yet.
+      console.warn(`[sw ${CACHE_VERSION}] activated with ${failed.length} of `
+        + `${APP_SHELL.length} shell assets uncached (they will be fetched from the `
+        + `network as needed):`, failed);
+    }
     await Promise.all(CDN_PREFETCH.map(async (url) => {
       try {
         const res = await fetch(url, { mode: 'no-cors', cache: 'no-cache' });
         await cache.put(url, res);
       } catch (_) { /* offline at install — will populate later via runtime cache */ }
     }));
-    self.skipWaiting();
   })());
 });
 
@@ -163,6 +184,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  // Let the page ask what it is running, so an update notice can name a
+  // version rather than asserting one vaguely exists.
+  if (event.data === 'VERSION') event.source?.postMessage({ type: 'sw-version', version: CACHE_VERSION });
 });
 
 self.addEventListener('fetch', (event) => {
