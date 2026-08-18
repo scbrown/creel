@@ -4,24 +4,54 @@
  * inline <style>, which made the markup around it unreadable and meant the
  * browser could not cache it separately from a page that changes constantly.
  */
+/* ── Dracula (creel-d0d) ──────────────────────────────────────────
+ *
+ * The official palette, unmodified, because the value of a known palette is
+ * that it is known — a hand-tuned near-miss reads as a mistake. Backgrounds
+ * are its four established greys, deepest first, so depth is expressed by
+ * elevation rather than by drawing more borders.
+ *
+ * The accents keep their creel meanings: orange is agent action, cyan is
+ * human action (the flash rings in creel-self.js are already these two),
+ * green is healthy, red is refusal or danger, purple is the interactive
+ * accent. See docs/ui.md for when each is allowed.
+ */
 :root {
-  --bg-root: #0a0a0f;
-  --bg-panel: #12121a;
-  --bg-card: #1a1a2e;
-  --bg-hover: #22223a;
-  --border: #2a2a3e;
-  --border-active: #3d3d5c;
-  --text-primary: #e0e0e8;
-  --text-secondary: #8888a0;
-  --text-dim: #555568;
-  --accent-orange: #ff6b35;
-  --accent-blue: #5b8af5;
-  --accent-green: #00ff88;
-  --accent-red: #ff4466;
-  --accent-purple: #aa66ff;
-  --accent-cyan: #00d4ff;
-  --accent-yellow: #ffd700;
-  --accent-pink: #ff3399;
+  --bg-root: #21222c;          /* Dracula darker  — the page floor */
+  --bg-panel: #282a36;         /* Dracula bg      — panels and chrome */
+  --bg-card: #343746;          /* Dracula lighter — raised surfaces */
+  --bg-hover: #44475a;         /* Dracula current-line */
+  --border: #44475a;
+  --border-active: #6272a4;    /* Dracula comment */
+  --text-primary: #f8f8f2;     /* Dracula foreground */
+  --text-secondary: #a4accd;
+  --text-dim: #6272a4;         /* Dracula comment — the dimmest legible tone */
+  --accent-orange: #ffb86c;
+  --accent-blue: #bd93f9;      /* Dracula has no blue; purple is its lead accent */
+  --accent-green: #50fa7b;
+  --accent-red: #ff5555;
+  --accent-purple: #bd93f9;
+  --accent-cyan: #8be9fd;
+  --accent-yellow: #f1fa8c;
+  --accent-pink: #ff79c6;
+
+  /* ── Scales (creel-hkl) ────────────────────────────────────────
+   * Spacing and type were ad-hoc: every new control picked its own padding
+   * and font-size, which is why more surface always meant more noise. These
+   * are the only values anything should use. */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 10px;
+  --space-5: 14px;
+  --space-6: 20px;
+  --text-xs: 10px;             /* badges, hints, metadata */
+  --text-sm: 11px;             /* controls and labels — the workhorse */
+  --text-md: 12px;             /* section headers, emphasis */
+  --text-lg: 14px;             /* body copy in the transcript */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
   /* Overlay tints adapt to theme (light-on-dark here, dark-on-light below) */
   --overlay-soft: rgba(255,255,255,0.03);
   --overlay-med: rgba(255,255,255,0.06);
@@ -61,6 +91,7 @@ html[data-theme="light"] {
   --reasoning-bg: #fffaf0;
   --reasoning-border: rgba(166,121,0,0.25);
 }
+/* The scales are theme-independent: a spacing step is not a colour. */
 html[data-theme="light"] body { background: var(--bg-root); }
 html[data-theme="light"] .status-dot { box-shadow: 0 0 6px rgba(0,200,120,0.5); }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -793,3 +824,24 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(
 .settings-group[open] > .settings-group-title::after { transform: rotate(90deg); }
 .settings-group-title.danger { color: var(--accent-red); }
 .settings-group > *:not(summary) { margin-top: 6px; }
+
+/* ── Primary action in the header (creel-jpi) ──────────────────────
+ * New thread is the most common intent in a chat harness, so it is the one
+ * header control that reads as an action rather than as a setting. Its
+ * destructive neighbour (Clear) is deliberately NOT styled this way — see the
+ * rule in docs/ui.md about relative prominence. */
+.top-btn-primary {
+  background: var(--bg-hover);
+  border-color: var(--border-active);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.top-btn-primary:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+}
+
+/* Controls that have moved into the overflow menu lay out as menu rows. */
+#moreMenu .top-btn { display: block; }
+#moreMenu > span { display: block; position: static !important; }
+#moreMenu > span > div { position: static !important; box-shadow: none; }

@@ -155,6 +155,80 @@ const scriptSrcs = (page) => page.evaluate(
     assert.strictEqual(remembered.length, 1, 'opening a settings group was not remembered');
   });
 
+  await check('the header is down to a handful of controls (creel-ovp)', async () => {
+    const visible = await off.evaluate(() => [...document.querySelectorAll('.top-right > button, .top-right > span > button')]
+      .filter((b) => b.offsetParent !== null && !document.getElementById('moreMenu').contains(b))
+      .map((b) => (b.getAttribute('aria-label') || b.textContent).trim()));
+    assert.ok(visible.length <= 6, `header shows ${visible.length} controls: ${visible.join(' | ')}`);
+    assert.ok(visible.some((n) => /new/i.test(n)), 'no New thread action in the default header');
+    assert.ok(visible.some((n) => /settings/i.test(n)), 'settings should stay reachable directly');
+    assert.ok(visible.some((n) => /more/i.test(n)), 'no overflow control, so the rest is unreachable');
+  });
+
+  await check('nothing was deleted — the rest moved into one menu', async () => {
+    const inMenu = await off.evaluate(() => {
+      toggleMoreMenu();
+      return [...document.getElementById('moreMenu').querySelectorAll('button')]
+        .map((b) => b.id).filter(Boolean);
+    });
+    for (const id of ['exportBtn', 'planBtn', 'ralphBtn', 'syncBtn', 'langBtn', 'themeToggleBtn']) {
+      assert.ok(inMenu.includes(id), `${id} vanished instead of moving: ${inMenu.join(',')}`);
+    }
+  });
+
+  await check('a control keeps its identity when it moves, so ui_click still drives it', async () => {
+    // The controls MOVE rather than being duplicated, so the handler and the
+    // accessible name are the originals — an agent that could click it before
+    // can still click it.
+    const ok = await off.evaluate(() => {
+      const b = document.getElementById('themeToggleBtn');
+      const before = document.documentElement.getAttribute('data-theme');
+      b.click();
+      const after = document.documentElement.getAttribute('data-theme');
+      b.click();
+      return before !== after;
+    });
+    assert.strictEqual(ok, true, 'a moved control lost its handler');
+  });
+
+  await check('an active mode comes back out of the menu', async () => {
+    // Hiding a mode that is ON is worse than showing a button that is off.
+    const where = await off.evaluate(() => {
+      const btn = document.getElementById('planBtn');
+      btn.classList.add('active');
+      renderHeaderOverflow();
+      const inMenu = document.getElementById('moreMenu').contains(btn);
+      btn.classList.remove('active');
+      renderHeaderOverflow();
+      return { activeInMenu: inMenu, dormantInMenu: document.getElementById('moreMenu').contains(btn) };
+    });
+    assert.strictEqual(where.activeInMenu, false, 'an active mode stayed hidden in the overflow menu');
+    assert.strictEqual(where.dormantInMenu, true, 'a dormant control should live in the menu');
+  });
+
+  await check('a new thread is one click, and one keystroke (creel-jpi)', async () => {
+    const r = await off.evaluate(() => {
+      let called = 0;
+      const real = window.newConversation;
+      window.newConversation = () => { called++; };
+      document.getElementById('newThreadBtn').click();
+      const byClick = called;
+      document.dispatchEvent(new KeyboardEvent('keydown',
+        { key: 'O', ctrlKey: true, shiftKey: true, bubbles: true }));
+      const byKey = called - byClick;
+      window.newConversation = real;
+      return { byClick, byKey };
+    });
+    assert.strictEqual(r.byClick, 1, 'the New button did not start a thread');
+    assert.strictEqual(r.byKey, 1, 'Ctrl/Cmd+Shift+O did not start a thread');
+  });
+
+  await check('no link to the upstream repo remains (creel-xeg)', async () => {
+    const links = await off.evaluate(() => [...document.querySelectorAll('a[href]')].map((a) => a.href));
+    const upstream = links.filter((h) => /sligter|OnePagent/i.test(h));
+    assert.deepStrictEqual(upstream, [], 'still linking at the fork this no longer is');
+  });
+
   await off.close();
 
   // ── the same page with the flag on ───────────────────────────────

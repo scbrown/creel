@@ -429,6 +429,116 @@ window.creelShouldWarnOnLeave = function creelShouldWarnOnLeave() {
   return false;
 };
 // END creelShouldWarnOnLeave
+/* ── Header overflow (creel-ovp) ──────────────────────────────────
+ *
+ * The top bar carried sixteen controls, most of which an operator touches
+ * once a month. The rarely-used ones MOVE into one menu rather than being
+ * duplicated there: same element, same id, same handler, same accessible
+ * name, so every ui_click that worked before still works — it just has to
+ * open the menu first, exactly as a human does.
+ *
+ * Two things stay out regardless of this list: anything showing an ACTIVE
+ * mode, because hiding a mode that is on is worse than showing a button that
+ * is off (see docs/ui.md), and the primary actions the default surface is
+ * built around.
+ */
+const HEADER_OVERFLOW = ['exportBtn', 'planBtn', 'ralphBtn', 'memBtn', 'syncBtn', 'langBtn', 'themeToggleBtn'];
+
+/** A control that is announcing an active mode stays in the header. */
+function _headerControlIsActive(el) {
+  if (!el) return false;
+  if (el.classList.contains('active') || el.getAttribute('aria-pressed') === 'true') return true;
+  // The sync button grows a dot when state is unpushed — that is a live state,
+  // not a dormant action.
+  if (el.querySelector('.sync-dirty-dot')) return true;
+  return false;
+}
+
+/* Each control's home, captured the first time it is seen — while everything
+ * is still in the header. Recomputing it later walks up from inside the menu
+ * and finds the menu's OWN wrapper, which then gets appended into itself. */
+const _headerHomes = new Map();   // id -> { holder, parent, next }
+
+function _headerHome(id, btn) {
+  let home = _headerHomes.get(id);
+  if (!home) {
+    // A button with a dropdown lives in a positioned span; move the pair.
+    const holder = btn.closest('.top-right > span') || btn;
+    home = { holder, parent: holder.parentNode, next: holder.nextSibling };
+    _headerHomes.set(id, home);
+  }
+  return home;
+}
+
+function renderHeaderOverflow() {
+  const menu = document.getElementById('moreMenu');
+  if (!menu) return;
+  for (const id of HEADER_OVERFLOW) {
+    const btn = document.getElementById(id);
+    if (!btn) continue;
+    const { holder } = _headerHome(id, btn);
+    const active = _headerControlIsActive(btn);
+    const inMenu = menu.contains(holder);
+    if (active && inMenu) {
+      const home = _headerHome(id, btn);
+      home.parent.insertBefore(holder, home.next);
+      btn.style.width = '';
+      btn.style.textAlign = '';
+    } else if (!active && !inMenu) {
+      // Hidden controls (memBtn ships display:none until memory is on) stay
+      // hidden — the menu must not resurrect them.
+      menu.appendChild(holder);
+      holder.style.display = '';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.style.marginBottom = 'var(--space-2)';
+    }
+  }
+}
+
+function toggleMoreMenu() {
+  const menu = document.getElementById('moreMenu');
+  const btn = document.getElementById('moreBtn');
+  if (!menu || !btn) return;
+  const open = menu.style.display !== 'block';
+  menu.style.display = open ? 'block' : 'none';
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (!open) return;
+  const away = (e) => {
+    if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+      menu.style.display = 'none';
+      btn.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', away);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', away), 0);
+}
+
+/* Starting a new thread is the most common intent here, so it also gets a
+ * keyboard route that does not depend on the left panel being open
+ * (creel-jpi). Ctrl/Cmd+Shift+O — the same shape other tools use for it. */
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
+    e.preventDefault();
+    if (typeof newConversation === 'function') newConversation();
+  }
+});
+
+try {
+  renderHeaderOverflow();
+  /* Modes toggle at runtime, so this cannot be decided once at boot — but it
+   * must not become a timer moving DOM around in every tab either, fleet
+   * workers included. React to the things that actually change a mode: a
+   * click in the header (that is how every one of them is toggled), and the
+   * state-changed hook the sync marker already fires. The slow interval is
+   * only a backstop for a mode flipped by an agent through some other path. */
+  const bar = document.querySelector('.top-right');
+  if (bar) bar.addEventListener('click', () => setTimeout(renderHeaderOverflow, 0));
+  const prevHook = window.__creelStateChanged;
+  window.__creelStateChanged = () => { try { prevHook?.(); } finally { renderHeaderOverflow(); } };
+  setInterval(renderHeaderOverflow, 15000);
+} catch (e) { console.warn('header overflow init failed', e); }
+
 // Show the unpushed marker as soon as the page is up — a tab that reloads
 // with state still unpushed should say so without being clicked first.
 try { if (typeof _renderDirtyIndicator === 'function') _renderDirtyIndicator(); } catch { /* optional */ }
