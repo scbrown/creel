@@ -43,12 +43,15 @@ sync-locator:
 test: check
     node tests/test-beads.js
     node tests/test-device.js
+    node tests/test-governor.js
+    node tests/test-admission-probe.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
     node tests/test-features.js
     node tests/test-state.js
     node tests/test-fleet.js
+    node tests/test-governor-browser.js
     node tests/test-sw.js
     node tests/test-render.js
     node tests/test-compact.js
@@ -57,11 +60,13 @@ test: check
     node tests/test-ui-surfaces.js
     node tests/test-bridge-browser.js
 
-# Just the fast ones — routing, the bridge handshake, the beads store, and
-# device classification, against a DOM stub / temp dir.
+# Just the fast ones — routing, the bridge handshake, the beads store,
+# device classification and the budget governor, against a DOM stub / temp dir.
 test-unit: check
     node tests/test-beads.js
     node tests/test-device.js
+    node tests/test-governor.js
+    node tests/test-admission-probe.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
@@ -74,6 +79,7 @@ test-ui: check
     node tests/test-features.js
     node tests/test-state.js
     node tests/test-fleet.js
+    node tests/test-governor-browser.js
     node tests/test-sw.js
     node tests/test-render.js
     node tests/test-compact.js

@@ -33,22 +33,39 @@
     if (!overlay) return;
     const list = overlay.querySelector('#creelFleetList');
     const report = await statusReport();
+    // One resolveCaps for the whole render (aegis-edp2n.3). It used to be called
+    // twice, which was harmless when the answer was arithmetic on a device cap
+    // and is not now that it reads a budget: two calls can straddle a fresh
+    // provider reading and put a chip and its own caption into disagreement.
+    const caps = await resolveCaps();
+    const gov = caps.governor;
     const chip = overlay.querySelector('#creelFleetChip');
     if (chip) {
-      const caps = await resolveCaps();
-      const atCap = caps.running >= caps.cap;
-      chip.textContent = `${caps.device === 'mobile' ? '📱' : caps.device === 'tablet' ? '📟' : '🖥️'} ${caps.device} · ${caps.running}/${caps.cap} tabs`;
-      chip.style.cssText = 'font-size:11px;border:1px solid ' + (atCap ? '#8a6a2a' : '#2a2a3a')
-        + ';border-radius:10px;padding:2px 8px;color:' + (atCap ? '#e0af68' : '#8892a4') + ';';
-      chip.title = `concurrent agent tabs capped at ${caps.cap} on ${caps.device} — ${caps.free} free`;
+      const atCap = caps.free <= 0;
+      // The verdict earns the chip's colour: an amber chip that means "the
+      // week's budget is spent" must not look like one that means "close a tab".
+      const tone = gov && gov.verdict === 'refuse' ? '#ff8080'
+        : (atCap || (gov && gov.alarm)) ? '#e0af68' : '#8892a4';
+      const mark = gov && gov.alarm ? ' ⚠' : '';
+      chip.textContent = `${caps.device === 'mobile' ? '📱' : caps.device === 'tablet' ? '📟' : '🖥️'} ${caps.device} · ${caps.running}/${caps.cap} tabs${mark}`;
+      chip.style.cssText = 'font-size:11px;border:1px solid ' + (tone === '#8892a4' ? '#2a2a3a' : '#8a6a2a')
+        + ';border-radius:10px;padding:2px 8px;color:' + tone + ';';
+      chip.title = gov
+        ? `${gov.verdict.toUpperCase()} — ${gov.reason}${gov.alarm ? `\n${gov.alarm}` : ''}`
+        : `concurrent agent tabs capped at ${caps.cap} on ${caps.device} — ${caps.free} free`;
     }
     const capnote = overlay.querySelector('#creelFleetCapNote');
     if (capnote) {
-      const caps = await resolveCaps();
-      capnote.textContent = caps.free > 0
-        ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device} (cap ${caps.cap})`
-        : `at the ${caps.cap}-tab cap on ${caps.device} — spawns stay queued until a slot frees`;
-      capnote.style.color = caps.free > 0 ? '#8892a4' : '#e0af68';
+      // Say WHY, not just how many. A caption reading "0 slots free" when the
+      // budget is exhausted sends an operator to close tabs that are not the
+      // problem — and the governor already knows the sentence that is true.
+      capnote.textContent = gov
+        ? (gov.alarm ? `${gov.reason} — ${gov.alarm}` : gov.reason)
+        : (caps.free > 0
+          ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device} (cap ${caps.cap})`
+          : `at the ${caps.cap}-tab cap on ${caps.device} — spawns stay queued until a slot frees`);
+      capnote.style.color = gov && gov.verdict === 'refuse' ? '#ff8080'
+        : (caps.free > 0 && !(gov && gov.alarm)) ? '#8892a4' : '#e0af68';
     }
     list.textContent = '';
     if (!report.length) {

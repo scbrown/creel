@@ -585,6 +585,20 @@ async function fetchWithRetry(url, options = {}, retryOptions = {}) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const resp = await fetch(url, options);
+      // aegis-edp2n.3: the provider's own rate-limit headers ride back on every
+      // model call, and they are the only usage signal in a browser that is the
+      // PROVIDER'S accounting rather than ours. Read here because this is the
+      // one chokepoint every model call passes through; the governor decides
+      // whether the response is the model endpoint's and ignores it otherwise.
+      // Never throws into the caller — a governor that can break a model call
+      // is a worse problem than an ungoverned burst.
+      try {
+        if (typeof window !== 'undefined' && window.CreelGovernor) {
+          window.CreelGovernor.observe(url, resp, {
+            llmUrl: (typeof getLLMUrl === 'function') ? getLLMUrl() : '',
+          });
+        }
+      } catch { /* the governor is advisory; the call is not */ }
       if (!isRetryableStatus(resp.status) || attempt >= retries) return resp;
       lastError = new Error(`HTTP ${resp.status}`);
       try { await resp.arrayBuffer(); } catch {}

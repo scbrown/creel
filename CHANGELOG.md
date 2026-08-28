@@ -2,6 +2,72 @@
 
 All notable changes land directly on `main`. Format: date, then grouped changes.
 
+## 2026-08-28
+
+### The budget governor: provider windows and the device cap compose (aegis-edp2n.3)
+Creel had half an admission policy. The device-class tab cap was consulted by
+every spawn path; the provider's usage window was not visible at all. A phone
+that holds three tabs and a key 96% through its weekly budget are two different
+reasons not to spawn, and only one of them was being checked.
+
+`app/creel-governor.js` composes both into one verdict — `admit`, `refuse` or
+`unknown` — wired in at `resolveCaps`, the seam every spawn path already went
+through, so the whole surface is governed by construction rather than by
+remembering to add it at a fourth call site.
+
+- **Two answers, deliberately.** `verdict` is what is true about the budget;
+  `enforced` is what creel does about it. They differ exactly when the signal is
+  lost under the default `onSignalLost: warn` — the honest answer is "I cannot
+  tell" and the consequence is "run anyway, loudly", because no probe failure
+  may be able to stop a fleet. `freeze` is opt-in and is the only thing that
+  makes blindness block.
+- **Inert until a budget is declared.** No policy means it admits on the device
+  cap and says `governed: false` — it does not alarm. Shipping example tiers
+  would put every fresh install into SIGNAL LOST on its first pass, and an alarm
+  that fires on a clean install is one people learn to close.
+- **Per-window tiers, strictest wins, never an average.** The five-hour and
+  weekly budgets exhaust independently and refill days apart; averaging them
+  lets a fresh five-hour reading mask an exhausted week.
+- **A stale reading is not a reading.** Past `maxAgeS` it is SIGNAL LOST and
+  alarms every pass. The last percentage of a dead probe reads green forever.
+- **Creel's own token ledger is a lower bound, never a measurement.** It cannot
+  see the same key spent by a CLI or another profile, so it may REFUSE (a lower
+  bound above a wall is still above it) and may not by itself ADMIT. The
+  operator declaring `ledgerExclusive` is what promotes it, because only they
+  can know it.
+- **A refusal governs NEW tabs only.** `fleet_drain`, `fleet_report`,
+  `state_push` and `github_push` are never governed under any verdict, and
+  refused tasks stay queued rather than being dropped. The running tabs hold the
+  only copy of what they have done.
+- **Every refusal names its wall.** `provider-drain`, `provider-tier` or
+  `device-cap` — "no free slots" when the week is spent sends an operator to
+  close tabs that are not the problem.
+
+Readings come from the provider's own `*-ratelimit-*` response headers, read at
+the one fetch chokepoint every model call passes through. When an endpoint does
+not expose them to the page, that absence is recorded as a named error rather
+than left as an empty window.
+
+`fleet_governor` returns the record; the dashboard renders the same one; and
+`tools/creel-admission.js` prints it outside the browser for an installer to
+preflight — exit 0 admit, 1 policy refusal, 2 signal unavailable, 3 the probe
+could not run. 1 and 2 are separate because "the budget is spent" and "I cannot
+see the budget" call for opposite responses. Contract: `docs/governor.md`.
+
+70 checks across three suites, the third of which runs the real page in real
+Chromium — a governor that is correct and not connected refuses nothing, and
+that failure has no symptom.
+
+### The dirty-state marker lost a millisecond race
+`stateIsDirty()` compares two `Date.now()` stamps with `>`, so a push and an
+edit inside the same millisecond were indistinguishable and the edit's mark was
+lost. Measured: 199,991 of 200,000 push-then-edit pairs read CLEAN while
+genuinely dirty. That is the leave guard, so it failed in the direction that
+loses work, and it made `tests/test-state.js` fail about half the time. Each
+mark is now at least one tick past whichever stamp is newest; the wall clock
+still supplies the ordering whenever the marks are more than a millisecond
+apart, which is almost always.
+
 ## 2026-08-18 (later)
 
 ### Compaction forks a thread instead of rewriting one (creel-7xu)

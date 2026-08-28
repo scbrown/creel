@@ -21,9 +21,42 @@
     putTask, getTask, allTasks, delTask, genId, notify,
     digestAdd, requeueStale, statusReport, aliveLocks, isMeta,
     heldLease, releaseLease, claimNext, stopHeartbeat,
-    readTokenCounters, deviceInfo, tabCap, resolveCaps, spawnWindow,
+    readTokenCounters, deviceInfo, tabCap, runningCount, resolveCaps, spawnWindow,
     inbox, commsLog, logComms,
   } = FLEET;
+  // ── governor surfacing (aegis-edp2n.3) ───────────────────────────
+  // resolveCaps composes the provider budget with the device cap, so the
+  // number a spawn path acts on is already governed. What still has to be done
+  // HERE is telling the agent WHY, in the same breath as the refusal.
+  //
+  // "No free slots" sends an agent to wait for a tab to close. If the real
+  // answer is that the week's budget is spent, waiting changes nothing and the
+  // agent learns that only by burning another hour — so a refusal that names
+  // the device when the wall was the provider is worse than no reason at all.
+  function capHint(caps, tail) {
+    const v = caps && caps.governor;
+    if (v && v.admission.capSource !== 'device-cap') return v.reason;
+    return tail;
+  }
+
+  /** The alarm rides on EVERY fleet response while it stands, never once.
+   *  A blind governor that says so on the pass it went blind, and is silent
+   *  afterwards, is indistinguishable from a healthy one by the time anybody
+   *  reads it. */
+  function withAlarm(caps, out) {
+    const v = caps && caps.governor;
+    if (!v) return out;
+    if (v.alarm) out.governor_alarm = v.alarm;
+    // A summary only where there is nothing better. `fleet_device` spreads the
+    // whole resolveCaps result, so it already carries the FULL verdict — and
+    // overwriting that with three fields would quietly delete the evidence from
+    // the one reporting surface most likely to be asked for it.
+    if (out.governor === undefined) {
+      out.governor = { verdict: v.verdict, enforced: v.enforced, reason: v.reason };
+    }
+    return out;
+  }
+
   // ── in-page MCP server: 'fleet' ──────────────────────────────────
   const TOOLS = [
     {
@@ -38,6 +71,20 @@
           maxConcurrent: { type: 'integer', description: 'optional 1..24 override of the device tab cap (default: 3 mobile / 4 tablet / 8 desktop)' },
         },
         required: ['task'],
+      },
+    },
+    {
+      name: 'fleet_governor',
+      description: 'The admission verdict: whether the provider budget and this device\'s tab cap will admit another agent tab right now. Returns admit/refuse/unknown with the evidence behind it — each usage window\'s percentage, how fresh it is, which tier is engaged, and how many tab slots are free. Call it before planning a burst; a refusal here means new tabs, never the work already running (draining, reporting and pushing state are never governed). Pass pct/window to record a usage reading you can see and creel cannot, or policy to declare budget tiers.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          window: { type: 'string', description: 'five_hour | seven_day — the budget a recorded reading belongs to' },
+          pct: { type: 'number', description: 'percent of that window CONSUMED (0..100), read from the provider console' },
+          policy: { type: 'object', description: 'declare the budget policy: {windows:{five_hour:{tiers:[{at,maxTabs}|{at,drain:true}]}}, onSignalLost:"warn"|"freeze", tokenBudgets:{}, ledgerExclusive:bool}. Omit to leave it unchanged; the governor is inert until one is declared.' },
+          want: { type: 'integer', description: 'how many tabs the plan needs (default 1) — the verdict answers for that many' },
+        },
+        required: [],
       },
     },
     {
@@ -196,15 +243,15 @@
         else queued.push({ id, label });
       }
       notify();
-      return {
+      return withAlarm(caps, {
         spawned, queued, capped,
         device: caps.device, cap: caps.cap,
         hint: capped.length
-          ? `capped at ${caps.cap} concurrent agent tabs on ${caps.device} — ${caps.free} free; the rest stay queued until a slot frees`
+          ? capHint(caps, `capped at ${caps.cap} concurrent agent tabs on ${caps.device} — ${caps.free} free; the rest stay queued until a slot frees`)
           : queued.length
             ? 'popup blocked — the user can launch queued agents from the 🧺 fleet dashboard, or allow popups for this site'
             : undefined,
-      };
+      });
     },
 
     async fleet_status() {
@@ -250,6 +297,16 @@
       t.doneAt = Date.now();
       t.lastHeartbeat = null;
       await putTask(t);
+      // Feed the governor's local ledger (aegis-edp2n.3). This is creel counting
+      // creel's own spend, so it is a LOWER BOUND on the provider's number and
+      // is marked as one — it cannot see the same key spent by a CLI, another
+      // profile, or the operator's own tab. It is the fallback source, used only
+      // where the provider exposes no rate-limit headers.
+      try {
+        if (typeof window !== 'undefined' && window.CreelGovernor) {
+          window.CreelGovernor.recordSpend(t.totalTokens);
+        }
+      } catch { /* ledger is advisory; reporting the task is not */ }
       digestAdd(t.status === 'done' ? 'done' : 'failed', t, args.result);
       stopHeartbeat();
       notify();
@@ -285,28 +342,56 @@
         const wid = genId();
         (spawnWindow(wid, 'worker') ? spawned : blocked).push(wid);
       }
-      return {
+      return withAlarm(caps, {
         spawned: spawned.length,
         blocked: blocked.length,
         device: caps.device, cap: caps.cap,
         hint: want > count
-          ? `capped at ${caps.cap} concurrent agent tabs on ${caps.device} (${caps.free} free) — spawned ${count} of ${want}`
+          ? capHint(caps, `capped at ${caps.cap} concurrent agent tabs on ${caps.device} (${caps.free} free) — spawned ${count} of ${want}`)
           : blocked.length
             ? 'popup blocked — allow popups for this site, or spawn workers from the 🧺 fleet dashboard'
             : undefined,
-      };
+      });
     },
 
     async fleet_device(args) {
       const caps = await resolveCaps(args.maxConcurrent);
-      return {
+      return withAlarm(caps, {
         ...caps,
         tab_caps: (typeof window !== 'undefined' && window.CreelDevice && window.CreelDevice.TAB_CAPS)
           || { mobile: 3, tablet: 4, desktop: 8 },
         note: caps.free > 0
           ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device}`
-          : `at the ${caps.cap}-tab cap on ${caps.device} — further spawns stay queued`,
-      };
+          : capHint(caps, `at the ${caps.cap}-tab cap on ${caps.device} — further spawns stay queued`),
+      });
+    },
+
+    async fleet_governor(args) {
+      const gov = (typeof window !== 'undefined' && window.CreelGovernor) ? window.CreelGovernor : null;
+      if (!gov) throw new Error('the governor is not loaded — check the script order in thread.html (creel-governor.js loads before creel-fleet.js)');
+      const wrote = {};
+      // Write first, then read: an operator recording 92% wants the verdict
+      // that reading implies, not the one from before they said so.
+      if (args.policy !== undefined) {
+        gov.writePolicy(args.policy);      // throws with the offending key named
+        wrote.policy = true;
+      }
+      if (args.pct != null) {
+        const w = args.window || 'five_hour';
+        gov.recordManual(w, args.pct);
+        wrote.reading = { window: w, pct: Number(args.pct), source: 'manual' };
+      }
+      const d = deviceInfo();
+      const running = await runningCount();
+      const v = gov.admission({
+        device: d.kind, deviceCap: tabCap(), running,
+        want: Math.max(1, Number(args.want) || 1),
+      });
+      // The whole record, unabridged. An agent deciding whether to burst needs
+      // the evidence, not a summary of it — and this is the same object the
+      // dashboard renders and `tools/creel-admission.js` prints, so an agent
+      // and its operator can never be looking at two different answers.
+      return { ...v, wrote: Object.keys(wrote).length ? wrote : undefined };
     },
 
     async fleet_drain(args) {

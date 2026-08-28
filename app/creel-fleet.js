@@ -128,11 +128,35 @@
     }
     return running;
   }
+  // ── the admission seam (aegis-edp2n.3) ────────────────────────────
+  // Every spawn path already called resolveCaps to ask "how many tabs may I
+  // open", so this is the one place the provider budget has to be composed in.
+  // Doing it here rather than at each call site is deliberate: a governor
+  // wired into three of four spawn paths is not a governor, and the fourth is
+  // always the one somebody adds next week.
+  //
+  // `free` is what callers act on, so it carries the ENFORCED answer, not the
+  // honest one — under `onSignalLost: warn` a blind governor alarms and the
+  // fleet keeps running, which is the fail-safe direction. The honest answer
+  // travels beside it as `governor` for anything that wants to report rather
+  // than decide.
   async function resolveCaps(override) {
     const d = deviceInfo();
     const cap = tabCap(override);
     const running = await runningCount();
-    return { device: d.kind, cap, running, free: Math.max(0, cap - running) };
+    const gov = (typeof window !== 'undefined' && window.CreelGovernor) ? window.CreelGovernor : null;
+    if (!gov) return { device: d.kind, cap, running, free: Math.max(0, cap - running) };
+    const v = gov.admission({ device: d.kind, deviceCap: cap, running, want: 1 });
+    return {
+      device: d.kind,
+      // The COMPOSED cap, so a caller that only reads `cap` still reports the
+      // wall it will actually hit rather than the device's half of it.
+      cap: v.admission.maxTabs,
+      deviceCap: cap,
+      running,
+      free: v.enforced === 'block' ? 0 : v.admission.free,
+      governor: v,
+    };
   }
 
   function spawnWindow(id, kind = 'agent') {
@@ -553,7 +577,7 @@
     requeueStale, isDraining, statusReport,
     aliveLocks, heldTaskLocks, isMeta, wrapTask,
     heldLease, releaseLease, claimNext, startHeartbeat, stopHeartbeat,
-    readTokenCounters, deviceInfo, tabCap, resolveCaps, spawnWindow,
+    readTokenCounters, deviceInfo, tabCap, runningCount, resolveCaps, spawnWindow,
     inbox, commsLog, logComms, injectTask,
     agentBoot, workerBoot, refreshLiveMirror,
     CreelFleet,

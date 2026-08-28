@@ -63,6 +63,23 @@ and BYO-key storage in localStorage.
   the cap stay queued until a slot frees, `fleet_spawn` reports the cap
   in its result, `fleet_device` reports it on demand, and the dashboard
   shows a live `📱 mobile · 2/3 tabs` chip that flips amber at the cap.
+  **The budget governor** (`creel-governor.js`): the device cap is only
+  one of the two walls a burst hits, so the provider's usage windows are
+  composed with it into one `admit`/`refuse`/`unknown` verdict at the
+  same seam every spawn path already consulted. Tiers are declared per
+  window (five-hour and weekly exhaust independently, so the strictest
+  engaged tier wins and never an average); readings come from the
+  provider's own rate-limit headers where the endpoint exposes them, from
+  an operator reading, or from creel's own token ledger — which is
+  treated as a lower bound, because it cannot see the same key spent
+  elsewhere. A stale reading is SIGNAL LOST and alarms on every pass, but
+  never blocks by default: no probe failure may stop a fleet. A refusal
+  governs NEW tabs only — draining, reporting and pushing state are never
+  governed, and refused tasks stay queued. `fleet_governor` returns the
+  record, the dashboard renders the same one, and
+  `tools/creel-admission.js` prints it outside the browser for an
+  installer to preflight (exit 0 admit / 1 refuse / 2 unknown / 3 probe
+  error). Full contract in [`../docs/governor.md`](../docs/governor.md).
   **The main tab sees every fleet event**: each task transition
   (claimed / done / failed / requeued / aborted) is appended to a shared
   work log (`meta:digest`), and the main tab's agent automatically
