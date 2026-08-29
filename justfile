@@ -44,6 +44,7 @@ test: check
     node tests/test-beads.js
     node tests/test-device.js
     node tests/test-governor.js
+    node tests/test-setpoint.js
     node tests/test-admission-probe.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
@@ -66,6 +67,7 @@ test-unit: check
     node tests/test-beads.js
     node tests/test-device.js
     node tests/test-governor.js
+    node tests/test-setpoint.js
     node tests/test-admission-probe.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
