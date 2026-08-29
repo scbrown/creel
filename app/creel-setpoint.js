@@ -406,16 +406,32 @@
     const now = num(o.now, Math.floor(Date.now() / 1000));
     const declaration = o.declaration || readDeclaration();
     const state = o.state || lsGet(STATE_KEY, { integral: {}, prev: {} });
+    const windows = (o.verdict && o.verdict.provider && o.verdict.provider.windows) || {};
+    const sampleSignature = JSON.stringify(Object.entries(windows).map(([w, r]) => [
+      w, r && r.pct, r && r.at, r && r.resetAt, r && r.fresh, r && r.lowerBound,
+    ]));
+    let policy = o.policy || declaredPolicy(declaration, now);
+    // resolveCaps is a read seam, not a clock tick. Dashboard repaints and
+    // spawn preflights can inspect one provider sample many times; integrating
+    // each inspection would make controller gain depend on render frequency.
+    // A repeated sample still recomputes P, D and the live-agent fence, but its
+    // I contribution is zero.
+    if (state.sampleSignature === sampleSignature) {
+      policy = Object.freeze({
+        ...policy,
+        windows: Object.freeze(Object.fromEntries(Object.entries(policy.windows)
+          .map(([w, spec]) => [w, Object.freeze({ ...spec, ki: 0 })]))),
+      });
+    }
     const a = advise({
-      policy: o.policy || declaredPolicy(declaration, now), verdict: o.verdict,
+      policy, verdict: o.verdict,
       now, integral: state.integral || {}, prev: state.prev || {},
       burndown: o.burndown || [], liveAgents: o.liveAgents, fenceMax: o.fenceMax,
     });
     const prev = {};
-    const windows = (o.verdict && o.verdict.provider && o.verdict.provider.windows) || {};
     for (const [w, r] of Object.entries(windows)) if (r && r.pct != null && r.fresh) prev[w] = { pct: r.pct, at: now };
-    if (o.persist !== false) lsSet(STATE_KEY, { integral: a.integral, prev });
-    return { ...a, phase: now < declaration.activeUntil ? 'aggressive' : 'steady' };
+    if (o.persist !== false) lsSet(STATE_KEY, { integral: a.integral, prev, sampleSignature });
+    return { ...a, phase: now < declaration.activeUntil ? 'aggressive' : 'steady', sampleSignature };
   }
 
   const api = {

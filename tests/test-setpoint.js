@@ -89,6 +89,30 @@ async function main() {
   assert.deepStrictEqual(Object.keys(S.parsePolicy(null).windows), []);
   ok('an absent policy parses to the inert default');
 
+  const declaration = S.parseDeclaration({
+    activeUntil: NOW + WEEK,
+    active: { windows: { seven_day: { target: 100 } }, maxDelta: 2, deadband: 3 },
+    steady: { windows: { seven_day: { target: 80 } }, maxDelta: 1, deadband: 5 },
+  });
+  const liveVerdict = verdict(5, { remaining: half });
+  liveVerdict.provider.windows.seven_day.at = NOW;
+  const firstRead = S.recommend({
+    declaration, verdict: liveVerdict, now: NOW, liveAgents: 2, fenceMax: 8,
+    persist: false, state: {},
+  });
+  const repeatedRead = S.recommend({
+    declaration, verdict: liveVerdict, now: NOW + 10, liveAgents: 3, fenceMax: 8,
+    persist: false,
+    state: {
+      integral: firstRead.integral,
+      prev: { seven_day: { pct: 5, at: NOW } },
+      sampleSignature: firstRead.sampleSignature,
+    },
+  });
+  assert.deepStrictEqual(repeatedRead.integral, firstRead.integral,
+    'reading one fresh provider sample repeatedly must not advance I');
+  ok('repeated resolveCaps reads do not turn render frequency into integral gain');
+
   // ── the trajectory, and its two refusals ────────────────────────────
   assert.strictEqual(S.trajectory('seven_day', NOW + half, NOW, 90), 45);
   ok('halfway through the week the trajectory is half the target');
