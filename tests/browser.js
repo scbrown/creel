@@ -24,12 +24,19 @@ const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   '/usr/bin/chromium',
-  '/usr/bin/google-chrome',
 ];
 
 function findChrome() {
   for (const p of CHROME_CANDIDATES) {
     if (p && fs.existsSync(p)) return p;
+  }
+  const puppeteer = path.join(process.env.HOME || '', '.cache', 'puppeteer', 'chrome');
+  if (fs.existsSync(puppeteer)) {
+    const versions = fs.readdirSync(puppeteer).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+    for (const version of versions) {
+      const p = path.join(puppeteer, version, 'chrome-linux64', 'chrome');
+      if (fs.existsSync(p)) return p;
+    }
   }
   const dir = '/opt/pw-browsers';
   if (fs.existsSync(dir)) {
@@ -38,6 +45,7 @@ function findChrome() {
       if (fs.existsSync(p)) return p;
     }
   }
+  if (fs.existsSync('/usr/bin/google-chrome')) return '/usr/bin/google-chrome';
   return null;
 }
 
@@ -105,12 +113,13 @@ class Page {
 }
 
 class Browser {
-  constructor(proc, ws, fileServer, origin) {
+  constructor(proc, ws, fileServer, origin, extensionManifest = null) {
     this.proc = proc;
     this.ws = ws;
     this.fileServer = fileServer;
     this.extraServers = [];
     this.origin = origin;
+    this.extensionManifest = extensionManifest;
     this.seq = 0;
     this.pending = new Map();
     ws.onmessage = (e) => {
@@ -169,11 +178,21 @@ class Browser {
     const deadline = Date.now() + timeout;
     for (;;) {
       const { targetInfos } = await this.send('Target.getTargets');
-      const sw = targetInfos.find((t) => t.type === 'service_worker' && t.url.startsWith('chrome-extension://'));
-      if (sw) {
+      const workers = targetInfos.filter((t) => {
+        if (t.type !== 'service_worker' || !t.url.startsWith('chrome-extension://')) return false;
+        const script = this.extensionManifest?.background?.service_worker;
+        return !script || new URL(t.url).pathname === `/${script}`;
+      });
+      for (const sw of workers) {
         const { sessionId } = await this.send('Target.attachToTarget', { targetId: sw.targetId, flatten: true });
         await this.send('Runtime.enable', {}, sessionId);
-        return new Page(this, sessionId, sw.targetId);
+        const page = new Page(this, sessionId, sw.targetId);
+        if (!this.extensionManifest) return page;
+        const manifest = await page.evaluate(() => chrome.runtime?.getManifest?.() || null);
+        if (manifest?.name === this.extensionManifest.name && manifest?.version === this.extensionManifest.version) {
+          return page;
+        }
+        await this.send('Target.detachFromTarget', { sessionId });
       }
       if (Date.now() > deadline) throw new Error('the extension service worker never started');
       await new Promise((r) => setTimeout(r, 200));
@@ -195,7 +214,9 @@ class Browser {
       '--disable-dev-shm-usage', `--user-data-dir=${userDataDir}`,
     ];
     if (window) args.push(`--window-size=${window}`);
+    let extensionManifest = null;
     if (extension) {
+      extensionManifest = JSON.parse(fs.readFileSync(path.join(extension, 'manifest.json'), 'utf8'));
       args.push(`--disable-extensions-except=${extension}`, `--load-extension=${extension}`);
     }
     args.push('about:blank');
@@ -218,7 +239,7 @@ class Browser {
       ws.onopen = resolve;
       ws.onerror = () => reject(new Error('could not connect to chromium'));
     });
-    return new Browser(proc, ws, server, `http://127.0.0.1:${port}`);
+    return new Browser(proc, ws, server, `http://127.0.0.1:${port}`, extensionManifest);
   }
 }
 
