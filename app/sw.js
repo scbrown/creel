@@ -77,6 +77,7 @@ const APP_SHELL = [
   './beads-backend.js',
   './creel-device.js',
   './creel-governor.js',
+  './creel-setpoint.js',
   './creel-locator.js',
   './creel-ui-tools.js',
   './creel-world-model.js',
