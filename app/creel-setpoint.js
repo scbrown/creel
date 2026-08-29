@@ -71,12 +71,6 @@
   const HOLD_NO_SETPOINT = 'no-setpoint-declared';
   const HOLD_NO_RESET = 'no-reset-published';
 
-  const DEFAULT_DECLARATION = Object.freeze({
-    activeUntil: Math.floor(Date.parse('2026-09-01T00:00:00-04:00') / 1000),
-    active: Object.freeze({ windows: Object.freeze({ seven_day: Object.freeze({ target: 100 }) }), maxDelta: 2, deadband: 3 }),
-    steady: Object.freeze({ windows: Object.freeze({ seven_day: Object.freeze({ target: 80 }) }), maxDelta: 1, deadband: 5 }),
-  });
-
   class SetpointError extends Error {}
 
   function num(v, dflt) {
@@ -146,33 +140,6 @@
     }
     p.windows = Object.freeze(p.windows);
     return Object.freeze(p);
-  }
-
-  const DECLARATION_KEY = 'creel_setpoint';
-  const STATE_KEY = 'creel_setpoint_state';
-
-  function lsGet(key, dflt) {
-    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : dflt; } catch { return dflt; }
-  }
-  function lsSet(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; }
-  }
-  function parseDeclaration(raw) {
-    const d = raw == null ? DEFAULT_DECLARATION : raw;
-    if (!d || typeof d !== 'object') throw new SetpointError('setpoint declaration must be an object');
-    const activeUntil = num(d.activeUntil, NaN);
-    if (!(activeUntil > 0)) throw new SetpointError('setpoint.activeUntil must be an epoch-second timestamp');
-    return Object.freeze({ activeUntil, active: parsePolicy(d.active), steady: parsePolicy(d.steady) });
-  }
-  function readDeclaration() { return parseDeclaration(lsGet(DECLARATION_KEY, null)); }
-  function writeDeclaration(raw) {
-    const d = parseDeclaration(raw);
-    lsSet(DECLARATION_KEY, raw);
-    return d;
-  }
-  function declaredPolicy(declaration, now) {
-    const d = declaration || readDeclaration();
-    return now < d.activeUntil ? d.active : d.steady;
   }
 
   // ── the trajectory ────────────────────────────────────────────────────
@@ -401,31 +368,12 @@
     return out;
   }
 
-  function recommend(o) {
-    o = o || {};
-    const now = num(o.now, Math.floor(Date.now() / 1000));
-    const declaration = o.declaration || readDeclaration();
-    const state = o.state || lsGet(STATE_KEY, { integral: {}, prev: {} });
-    const a = advise({
-      policy: o.policy || declaredPolicy(declaration, now), verdict: o.verdict,
-      now, integral: state.integral || {}, prev: state.prev || {},
-      burndown: o.burndown || [], liveAgents: o.liveAgents, fenceMax: o.fenceMax,
-    });
-    const prev = {};
-    const windows = (o.verdict && o.verdict.provider && o.verdict.provider.windows) || {};
-    for (const [w, r] of Object.entries(windows)) if (r && r.pct != null && r.fresh) prev[w] = { pct: r.pct, at: now };
-    if (o.persist !== false) lsSet(STATE_KEY, { integral: a.integral, prev });
-    return { ...a, phase: now < declaration.activeUntil ? 'aggressive' : 'steady' };
-  }
-
   const api = {
     CONTRACT: 'creel.setpoint/1',
     DEFAULT_POLICY, WINDOW_LENGTH_S, SetpointError,
     HOLD_ON_TRAJECTORY, HOLD_SIGNAL_LOST, HOLD_LOWER_BOUND,
     HOLD_BURNDOWN, HOLD_NO_SETPOINT, HOLD_NO_RESET,
-    DEFAULT_DECLARATION, parsePolicy, parseDeclaration, readDeclaration,
-    writeDeclaration, declaredPolicy, trajectory, advise, recommend, explain, replay,
-    _keys: { DECLARATION_KEY, STATE_KEY },
+    parsePolicy, trajectory, advise, explain, replay,
   };
 
   if (typeof window !== 'undefined') window.CreelSetpoint = api;

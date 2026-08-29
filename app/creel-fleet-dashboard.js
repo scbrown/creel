@@ -52,7 +52,6 @@
         + ';border-radius:10px;padding:2px 8px;color:' + tone + ';';
       chip.title = gov
         ? `${gov.verdict.toUpperCase()} — ${gov.reason}${gov.alarm ? `\n${gov.alarm}` : ''}`
-          + (caps.controller ? `\n${window.CreelSetpoint.explain(caps.controller)}` : '')
         : `concurrent agent tabs capped at ${caps.cap} on ${caps.device} — ${caps.free} free`;
     }
     const capnote = overlay.querySelector('#creelFleetCapNote');
@@ -65,7 +64,6 @@
         : (caps.free > 0
           ? `${caps.free} tab slot${caps.free === 1 ? '' : 's'} free on ${caps.device} (cap ${caps.cap})`
           : `at the ${caps.cap}-tab cap on ${caps.device} — spawns stay queued until a slot frees`);
-      if (caps.controller) capnote.textContent += ` · ${window.CreelSetpoint.explain(caps.controller)}`;
       capnote.style.color = gov && gov.verdict === 'refuse' ? '#ff8080'
         : (caps.free > 0 && !(gov && gov.alarm)) ? '#8892a4' : '#e0af68';
     }
