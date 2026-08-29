@@ -73,6 +73,33 @@ async function main() {
   let n = 0;
   const ok = (name) => { n++; console.log('  ✓ ' + name); };
 
+  const declared = S.parseDeclaration(S.DECLARATION);
+  assert.strictEqual(declared.source, 'codex_app_server');
+  assert.strictEqual(declared.maxAgents, 9);
+  assert.strictEqual(S.activePolicy(declared, declared.aggressiveUntil - 1).phase, 'aggressive');
+  assert.strictEqual(S.activePolicy(declared, declared.aggressiveUntil).phase, 'steady');
+  assert.strictEqual(S.activePolicy(declared, declared.aggressiveUntil - 1).policy.windows.seven_day.target, 100);
+  assert.strictEqual(S.activePolicy(declared, declared.aggressiveUntil).policy.windows.seven_day.target, 90);
+  ok('the Codex declaration expires from aggressive 100% into the steady 90% band');
+
+  const liveVerdict = verdict(19, { resetAt: S.DECLARATION.aggressiveUntil });
+  const firstLive = S.recommend({
+    declaration: declared, verdict: liveVerdict, now: declared.aggressiveUntil - half,
+    liveAgents: 2, fenceMax: 8, persist: false, state: {},
+  });
+  const repeatLive = S.recommend({
+    declaration: declared, verdict: liveVerdict, now: declared.aggressiveUntil - half + 10,
+    liveAgents: 3, fenceMax: 8, persist: false,
+    state: {
+      integral: firstLive.integral,
+      prev: { seven_day: { pct: 19, at: declared.aggressiveUntil - half } },
+      sampleSignature: firstLive.sampleSignature,
+    },
+  });
+  assert.deepStrictEqual(repeatLive.integral, firstLive.integral,
+    'reading the same provider sample again must not advance I');
+  ok('repeated live-loop reads do not turn dashboard refreshes into integral gain');
+
   // ── policy validation ───────────────────────────────────────────────
   for (const [name, raw] of [
     ['non-object', 'nope'],

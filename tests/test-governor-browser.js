@@ -58,8 +58,8 @@ function fleetCall(page) {
 }
 
 const ready = (page) => page.waitForFunction(
-  () => !!window.CreelFleet && !!window.CreelFleet.debug && !!window.CreelGovernor,
-  { message: 'fleet + governor modules' });
+  () => !!window.CreelFleet && !!window.CreelFleet.debug && !!window.CreelGovernor && !!window.CreelSetpoint,
+  { message: 'fleet + governor + setpoint modules' });
 
 /** A policy with a drain tier, and a reading that engages whichever tier the
  *  case wants. Written through the tool surface, the way an operator would. */
@@ -88,19 +88,51 @@ const POLICY = {
     // become the next case's silent premise.
     const reset = () => page.evaluate(() => {
       for (const k of Object.values(window.CreelGovernor._keys)) localStorage.removeItem(k);
+      localStorage.removeItem(window.CreelSetpoint.POLICY_KEY);
+      localStorage.removeItem(window.CreelSetpoint.STATE_KEY);
     });
 
     await check('the governor loads in the page, before the fleet that consults it', async () => {
       const wired = await page.evaluate(() => ({
         governor: typeof window.CreelGovernor,
+        setpoint: typeof window.CreelSetpoint,
         contract: window.CreelGovernor && window.CreelGovernor.CONTRACT,
         // The fleet layer captured it at definition time; if the script order
         // in thread.html ever puts the fleet first, this is what notices.
         seam: typeof window.CreelFleetInternal.resolveCaps,
       }));
       assert.strictEqual(wired.governor, 'object', 'window.CreelGovernor is missing — check the script order in thread.html');
+      assert.strictEqual(wired.setpoint, 'object', 'window.CreelSetpoint is missing — check the script order in thread.html');
       assert.strictEqual(wired.contract, 'creel.admission/1');
       assert.strictEqual(wired.seam, 'function');
+    });
+
+    await check('live Codex reading emits a fenced controller recommendation and governs admission', async () => {
+      await reset();
+      await page.evaluate(() => {
+        window.__setpointLogs = [];
+        const prior = console.info;
+        console.info = (...args) => {
+          if (args[0] === '[creel:setpoint]') window.__setpointLogs.push(args.slice());
+          return prior.apply(console, args);
+        };
+      });
+      const now = Math.floor(Date.now() / 1000);
+      const policy = { windows: { seven_day: { tiers: [{ at: 10, maxTabs: 2 }] } } };
+      const v = await fleet('fleet_governor', {
+        policy, window: 'seven_day', pct: 19, resetAt: now + 3 * 86400,
+        source: 'codex_app_server',
+      });
+      assert.strictEqual(v.provider.windows.seven_day.source, 'codex_app_server');
+      assert.strictEqual(v.admission.maxTabs, 2, 'provider tier must differ from the static desktop cap');
+      assert.strictEqual(v.admission.capSource, 'provider-tier');
+      assert.strictEqual(v.controller.contract, 'creel.setpoint/1');
+      assert.strictEqual(v.controller.source, 'codex_app_server');
+      assert.strictEqual(v.controller.fenceMax, 8, 'device cap 8 is the tighter fence inside max_agents 9');
+      assert.ok(v.controller.advisory > 0, '19% with three days left must recommend growth');
+      const logs = await page.evaluate(() => window.__setpointLogs);
+      assert.ok(logs.some((row) => row[1].includes('"source":"codex_app_server"') && row[1].includes('"advisory":2')),
+        'the live recommendation must be logged with its source and value');
     });
 
     await check('fleet_governor answers, and is inert until a budget is declared', async () => {

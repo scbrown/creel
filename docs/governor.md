@@ -15,6 +15,39 @@ The governor composes both into one verdict.
 fleet_governor  →  { verdict: "admit" | "refuse" | "unknown", ... }
 ```
 
+## Setpoint advisory
+
+The tier governor is a brake. `creel-setpoint.js` adds the other half: a
+source-attributed PID-like advisory that compares actual utilisation with the
+trajectory needed to reach a target at reset. It is wired through
+`resolveCaps()`, so `fleet_governor`, `fleet_device`, every spawn path, and the
+dashboard consume the same recommendation under `controller`.
+
+The repository declaration currently names `codex_app_server`, targets 100%
+through the declared 2026-09-01 reset, and automatically returns to a steady
+90% target afterward. Its `maxAgents: 9` is an outer fence; the device cap,
+provider tiers, and provider drain can only tighten it. The controller never
+raises any of those limits and never changes `admission.free`.
+
+`fleet_governor` accepts a replacement `setpoint` declaration. A
+source-attributed reading supplies `pct`, `window`, `resetAt`, and `source`:
+
+```js
+fleet_governor({
+  window: 'seven_day',
+  pct: 19,
+  resetAt: 1788303600,
+  source: 'codex_app_server',
+})
+```
+
+Recommendations use contract `creel.setpoint/1`, persist their I/D state, and
+log only when the recommendation changes. Re-reading one provider sample does
+not advance the integrator: dashboard refresh frequency is not a control input.
+Signal loss, lower-bound-only readings, burndown, the device cap, `max_agents`,
+and provider drain all freeze or clamp growth with the reason carried in the
+record.
+
 That record is the same object for all three readers — the operator (the 🧺
 dashboard), agents (`fleet_governor`, and every `fleet_*` refusal), and anything
 outside the browser (`tools/creel-admission.js`). One contract, three readers: a

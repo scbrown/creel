@@ -54,6 +54,7 @@
     if (out.governor === undefined) {
       out.governor = { verdict: v.verdict, enforced: v.enforced, reason: v.reason };
     }
+    if (caps.controller) out.controller = caps.controller;
     return out;
   }
 
@@ -81,7 +82,10 @@
         properties: {
           window: { type: 'string', description: 'five_hour | seven_day — the budget a recorded reading belongs to' },
           pct: { type: 'number', description: 'percent of that window CONSUMED (0..100), read from the provider console' },
+          resetAt: { type: 'number', description: 'epoch seconds when the recorded window resets; required for a setpoint trajectory' },
+          source: { type: 'string', description: 'reading producer, e.g. codex_app_server; defaults to manual' },
           policy: { type: 'object', description: 'declare the budget policy: {windows:{five_hour:{tiers:[{at,maxTabs}|{at,drain:true}]}}, onSignalLost:"warn"|"freeze", tokenBudgets:{}, ledgerExclusive:bool}. Omit to leave it unchanged; the governor is inert until one is declared.' },
+          setpoint: { type: 'object', description: 'replace the setpoint declaration: {source,maxAgents,aggressiveUntil,aggressive:{windows:{seven_day:{target}}},steady:{...}}. The repository default names codex_app_server, targets 100% through the declared reset, then returns to a steady 90% band.' },
           want: { type: 'integer', description: 'how many tabs the plan needs (default 1) — the verdict answers for that many' },
         },
         required: [],
@@ -376,10 +380,16 @@
         gov.writePolicy(args.policy);      // throws with the offending key named
         wrote.policy = true;
       }
+      const setpoint = (typeof window !== 'undefined' && window.CreelSetpoint) ? window.CreelSetpoint : null;
+      if (args.setpoint !== undefined) {
+        if (!setpoint) throw new Error('the setpoint controller is not loaded — check script order');
+        setpoint.writeDeclaration(args.setpoint);
+        wrote.setpoint = true;
+      }
       if (args.pct != null) {
         const w = args.window || 'five_hour';
-        gov.recordManual(w, args.pct);
-        wrote.reading = { window: w, pct: Number(args.pct), source: 'manual' };
+        gov.recordManual(w, args.pct, { resetAt: args.resetAt, source: args.source });
+        wrote.reading = { window: w, pct: Number(args.pct), source: args.source || 'manual', resetAt: args.resetAt || null };
       }
       const d = deviceInfo();
       const running = await runningCount();
@@ -391,7 +401,11 @@
       // the evidence, not a summary of it — and this is the same object the
       // dashboard renders and `tools/creel-admission.js` prints, so an agent
       // and its operator can never be looking at two different answers.
-      return { ...v, wrote: Object.keys(wrote).length ? wrote : undefined };
+      const controller = setpoint ? setpoint.recommend({
+        verdict: v, liveAgents: running,
+        fenceMax: Math.min(tabCap(), setpoint.readDeclaration().maxAgents),
+      }) : undefined;
+      return { ...v, controller, wrote: Object.keys(wrote).length ? wrote : undefined };
     },
 
     async fleet_drain(args) {

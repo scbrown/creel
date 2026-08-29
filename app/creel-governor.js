@@ -602,7 +602,7 @@
     if (!(n >= 0 && n <= 100)) throw new GovernorError('pct must be a percentage 0..100');
     const store = lsGet(READINGS_KEY, {});
     store[window] = reading({
-      pct: n, at: num(opts.now, nowS()), source: 'manual',
+      pct: n, at: num(opts.now, nowS()), source: String(opts.source || 'manual'),
       resetAt: opts.resetAt == null ? null : num(opts.resetAt, null),
     });
     lsSet(READINGS_KEY, store);

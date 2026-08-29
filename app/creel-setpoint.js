@@ -71,6 +71,21 @@
   const HOLD_NO_SETPOINT = 'no-setpoint-declared';
   const HOLD_NO_RESET = 'no-reset-published';
 
+  const POLICY_KEY = 'creel_setpoint';
+  const STATE_KEY = 'creel_setpoint_state';
+  // Stiwi's 2026-08-29 directive: spend the Codex window rather than leaving
+  // ~82 points unused. The phase is deliberately dated; after the named reset
+  // it becomes the steady 90% band without somebody remembering to undo an
+  // emergency setting. `maxAgents` is the outer st governor fence, not a value
+  // this controller may raise.
+  const DECLARATION = Object.freeze({
+    source: 'codex_app_server',
+    maxAgents: 9,
+    aggressiveUntil: 1788303600, // 2026-09-01T23:00:00Z, the declared reset
+    aggressive: Object.freeze({ windows: Object.freeze({ seven_day: Object.freeze({ target: 100 }) }), maxDelta: 2, deadband: 3 }),
+    steady: Object.freeze({ windows: Object.freeze({ seven_day: Object.freeze({ target: 90 }) }), maxDelta: 1, deadband: 5 }),
+  });
+
   class SetpointError extends Error {}
 
   function num(v, dflt) {
@@ -140,6 +155,41 @@
     }
     p.windows = Object.freeze(p.windows);
     return Object.freeze(p);
+  }
+
+  function lsGet(key, dflt) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : dflt;
+    } catch { return dflt; }
+  }
+  function lsSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; }
+  }
+
+  /** The declaration surface. A local declaration replaces the repository
+   *  default as one atomic object; malformed input is refused before storage. */
+  function parseDeclaration(raw) {
+    if (!raw || typeof raw !== 'object') throw new SetpointError('setpoint declaration must be an object');
+    const maxAgents = num(raw.maxAgents, NaN);
+    const aggressiveUntil = num(raw.aggressiveUntil, NaN);
+    if (!(Number.isInteger(maxAgents) && maxAgents >= 0)) throw new SetpointError('setpoint.maxAgents must be a non-negative integer');
+    if (!(aggressiveUntil > 0)) throw new SetpointError('setpoint.aggressiveUntil must be an epoch timestamp');
+    if (!String(raw.source || '').trim()) throw new SetpointError('setpoint.source must name the live reading producer');
+    return Object.freeze({
+      source: String(raw.source), maxAgents, aggressiveUntil,
+      aggressive: parsePolicy(raw.aggressive), steady: parsePolicy(raw.steady),
+    });
+  }
+  function readDeclaration() { return parseDeclaration(lsGet(POLICY_KEY, DECLARATION)); }
+  function writeDeclaration(raw) {
+    const d = parseDeclaration(raw);
+    lsSet(POLICY_KEY, raw);
+    return d;
+  }
+  function activePolicy(declaration, now) {
+    const phase = now < declaration.aggressiveUntil ? 'aggressive' : 'steady';
+    return { phase, policy: declaration[phase] };
   }
 
   // ── the trajectory ────────────────────────────────────────────────────
@@ -368,12 +418,72 @@
     return out;
   }
 
+  /** Impure live edge: consume the governor record, carry I/D state across
+   *  calls, and persist the recommendation that every fleet reader receives. */
+  function recommend(o) {
+    o = o || {};
+    const now = num(o.now, Math.floor(Date.now() / 1000));
+    const declaration = o.declaration || readDeclaration();
+    const selected = activePolicy(declaration, now);
+    const state = o.state || lsGet(STATE_KEY, {});
+    const verdictWindows = (o.verdict && o.verdict.provider && o.verdict.provider.windows) || {};
+    const sampleSignature = JSON.stringify(Object.entries(verdictWindows).map(([w, r]) => [
+      w, r && r.pct, r && r.at, r && r.resetAt, r && r.fresh, r && r.lowerBound,
+    ]));
+    // resolveCaps is a hot read seam: dashboard paints and spawn preflights may
+    // call it several times for ONE provider sample. Advancing I on every read
+    // would turn UI refresh rate into controller gain. A repeated sample still
+    // recomputes the live-agent fence, but contributes no new integral.
+    let policy = selected.policy;
+    if (state.sampleSignature === sampleSignature) {
+      policy = Object.freeze({
+        ...selected.policy,
+        windows: Object.freeze(Object.fromEntries(Object.entries(selected.policy.windows)
+          .map(([w, spec]) => [w, Object.freeze({ ...spec, ki: 0 })]))),
+      });
+    }
+    const a = advise({
+      policy, verdict: o.verdict, now,
+      integral: state.integral || {}, prev: state.prev || {},
+      burndown: o.burndown || [], liveAgents: o.liveAgents,
+      fenceMax: o.fenceMax == null ? declaration.maxAgents : o.fenceMax,
+    });
+    const prev = {};
+    for (const [w, r] of Object.entries(verdictWindows)) {
+      if (r && r.pct != null && r.fresh) prev[w] = { pct: r.pct, at: now };
+    }
+    const out = {
+      ...a,
+      source: declaration.source,
+      phase: selected.phase,
+      aggressiveUntil: declaration.aggressiveUntil,
+      fenceMax: o.fenceMax == null ? declaration.maxAgents : o.fenceMax,
+      sampleSignature,
+    };
+    if (o.persist !== false) {
+      const signature = JSON.stringify({
+        source: out.source, phase: out.phase, advisory: out.advisory,
+        hold: out.hold, governing: out.governing, clampedBy: out.clampedBy,
+      });
+      if (state.signature !== signature && typeof console !== 'undefined' && console.info) {
+        console.info('[creel:setpoint]', JSON.stringify({
+          contract: out.contract, source: out.source, phase: out.phase,
+          advisory: out.advisory, aggressiveness: out.aggressiveness,
+          fenceMax: out.fenceMax, reason: out.reason,
+        }));
+      }
+      lsSet(STATE_KEY, { integral: a.integral, prev, last: out, signature, sampleSignature });
+    }
+    return out;
+  }
+
   const api = {
-    CONTRACT: 'creel.setpoint/1',
+    CONTRACT: 'creel.setpoint/1', POLICY_KEY, STATE_KEY, DECLARATION,
     DEFAULT_POLICY, WINDOW_LENGTH_S, SetpointError,
     HOLD_ON_TRAJECTORY, HOLD_SIGNAL_LOST, HOLD_LOWER_BOUND,
     HOLD_BURNDOWN, HOLD_NO_SETPOINT, HOLD_NO_RESET,
-    parsePolicy, trajectory, advise, explain, replay,
+    parsePolicy, parseDeclaration, readDeclaration, writeDeclaration,
+    activePolicy, trajectory, advise, explain, replay, recommend,
   };
 
   if (typeof window !== 'undefined') window.CreelSetpoint = api;

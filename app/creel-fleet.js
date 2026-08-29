@@ -147,6 +147,11 @@
     const gov = (typeof window !== 'undefined' && window.CreelGovernor) ? window.CreelGovernor : null;
     if (!gov) return { device: d.kind, cap, running, free: Math.max(0, cap - running) };
     const v = gov.admission({ device: d.kind, deviceCap: cap, running, want: 1 });
+    const setpoint = (typeof window !== 'undefined' && window.CreelSetpoint)
+      ? window.CreelSetpoint.recommend({
+        verdict: v, liveAgents: running,
+        fenceMax: Math.min(cap, window.CreelSetpoint.readDeclaration().maxAgents),
+      }) : null;
     return {
       device: d.kind,
       // The COMPOSED cap, so a caller that only reads `cap` still reports the
@@ -156,6 +161,7 @@
       running,
       free: v.enforced === 'block' ? 0 : v.admission.free,
       governor: v,
+      controller: setpoint,
     };
   }
 
@@ -583,4 +589,3 @@
     CreelFleet,
   });
 })();
-
