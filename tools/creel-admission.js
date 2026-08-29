@@ -50,6 +50,7 @@
 const fs = require('fs');
 const path = require('path');
 const G = require(path.join(__dirname, '..', 'app', 'creel-governor.js'));
+const S = require(path.join(__dirname, '..', 'app', 'creel-setpoint.js'));
 
 const USAGE = `creel-admission — will creel admit another agent tab?
 
@@ -190,8 +191,18 @@ function main(argv) {
   const exit = ungoverned ? 2
     : v.verdict === G.ADMIT ? 0 : v.verdict === G.REFUSE ? 1 : 2;
 
+  // Same controller module and declaration as the browser.  The host-side
+  // probe cannot read localStorage, so recommend() deliberately uses Creel's
+  // shipped DEFAULT_DECLARATION and does not persist integrator state.  It
+  // consumes the governor record; it does not form a second opinion.
+  const controller = S.recommend({
+    verdict: v, liveAgents: running, fenceMax: v.admission.maxTabs,
+    now, persist: false,
+  });
   const record = {
     ...v,
+    controller,
+    controller_line: S.explain(controller),
     probe: {
       tool: 'creel-admission',
       contract: G.CONTRACT,

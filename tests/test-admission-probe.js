@@ -103,6 +103,23 @@ async function main() {
   assert.match(inert.json.probe.note, /cannot read a provider budget/);
   ok('exit 0: no policy declared — admits, and says governed:false');
 
+  // The host-side reader cannot see browser localStorage, but a supplied
+  // provider sample is still evidence.  Creel's governor keeps admission
+  // ungoverned while the SAME setpoint module turns that evidence into the
+  // shipped advisory record.
+  const reset = NOW + 3 * 86400;
+  const advised = run('--pct', 'seven_day=19', '--reset', `seven_day=${reset}`,
+    '--cap', '9', '--running', '3', '--now', String(NOW), '--quiet');
+  assert.strictEqual(advised.code, 0);
+  assert.strictEqual(advised.json.governed, false,
+    'observed evidence must not silently declare an admission policy');
+  assert.strictEqual(advised.json.provider.windows.seven_day.pct, 19);
+  assert.ok(advised.json.controller.advisory > 0, advised.json.controller_line);
+  assert.match(advised.json.controller_line, /governor recommends \+\d/);
+  assert.strictEqual(advised.json.admission.maxTabs, 9,
+    'the advisory must not actuate or move the admission fence');
+  ok('headless record carries Creel controller_line without reimplementing it');
+
   const demanded = run('--quiet', '--require-governed', '--now', String(NOW));
   assert.strictEqual(demanded.code, 2, '--require-governed makes an undeclared budget an instrument answer');
   assert.strictEqual(demanded.json.verdict, 'admit', 'the RECORD still says what creel would do');

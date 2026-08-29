@@ -303,6 +303,12 @@
     const prevHeld = o.held || {};
 
     const declared = Object.keys(policy.windows);
+    // Evidence and policy are different axes.  A headless reader can be handed
+    // a real provider sample even when it cannot see a browser's localStorage
+    // policy.  Preserve that sample in the record without letting it govern
+    // admission; the setpoint controller is a consumer of evidence, while
+    // `declared` remains the only enabling act for the brake.
+    const observed = [...new Set([...declared, ...Object.keys(readings)])];
     const governed = declared.length > 0;
 
     const windows = {};
@@ -311,10 +317,10 @@
     const lowerBoundOnly = [];
     const held = {};
 
-    for (const w of declared) {
+    for (const w of observed) {
       const r = readings[w] || null;
       const why = lost(r, now, policy.maxAgeS);
-      const tiers = policy.windows[w].tiers;
+      const tiers = policy.windows[w] ? policy.windows[w].tiers : [];
 
       const row = {
         pct: r && why === '' ? r.pct : (r ? r.pct : null),
@@ -331,7 +337,7 @@
       };
 
       if (why !== '') {
-        signalLost.push(w);
+        if (declared.includes(w)) signalLost.push(w);
         windows[w] = row;
         continue;                       // a lost window engages nothing, and a
       }                                 // held tier does not survive blindness:
