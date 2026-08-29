@@ -1,0 +1,30 @@
+{
+  "provenance": {
+    "capturedAt": "2026-08-29T16:45:00Z",
+    "claude": "Prometheus range query over claude:usage_utilization_pct:max plus claude_usage_reset_timestamp_seconds and claude_usage_probe_timestamp_seconds",
+    "codex": "aegis-45vco parent ledger: CodexAppServerReader live account reading at 2026-08-29T06:09:00Z"
+  },
+  "codexUnderburn": {
+    "policy": {"windows": {"seven_day": {"target": 100, "kp": 0.35, "ki": 0.02, "kd": 0.3}}, "maxDelta": 2, "deadband": 3},
+    "samples": [
+      {"now": 1787983740, "provider": "codex", "window": "seven_day", "pct": 5, "fresh": true, "resetAt": 1788538520, "liveAgents": 5, "fenceMax": 6}
+    ]
+  },
+  "claudeSpike": {
+    "observedRegressionPctPerHour": 37.05184993972215,
+    "policy": {"windows": {"five_hour": {"target": 100, "kp": 0.35, "ki": 0.02, "kd": 0.3}}, "maxDelta": 2, "deadband": 3},
+    "samples": [
+      {"now": 1787565518, "provider": "claude", "window": "five_hour", "pct": 26, "fresh": true, "resetAt": 1787580600, "liveAgents": 4, "fenceMax": 6},
+      {"now": 1787569118, "provider": "claude", "window": "five_hour", "pct": 61, "fresh": true, "resetAt": 1787580600, "liveAgents": 4, "fenceMax": 6}
+    ]
+  },
+  "claudeStaleStretch": {
+    "policy": {"windows": {"seven_day": {"target": 90}}, "maxDelta": 2, "deadband": 3},
+    "samples": [
+      {"now": 1787627649, "provider": "claude", "window": "seven_day", "pct": 87, "fresh": true, "probeAgeS": 848, "resetAt": 1787698800, "liveAgents": 4, "fenceMax": 6},
+      {"now": 1787627949, "provider": "claude", "window": "seven_day", "pct": 87, "fresh": false, "probeAgeS": 1148, "resetAt": 1787698800, "liveAgents": 4, "fenceMax": 6},
+      {"now": 1787628849, "provider": "claude", "window": "seven_day", "pct": 87, "fresh": false, "probeAgeS": 2048, "resetAt": 1787698800, "liveAgents": 4, "fenceMax": 6},
+      {"now": 1787629149, "provider": "claude", "window": "seven_day", "pct": 87, "fresh": true, "probeAgeS": 247, "resetAt": 1787698800, "liveAgents": 4, "fenceMax": 6}
+    ]
+  }
+}

@@ -10,7 +10,11 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const S = require('../app/creel-setpoint.js');
+const RECORDED = JSON.parse(fs.readFileSync(
+  path.join(__dirname, 'fixtures', 'setpoint-recorded-history.json'), 'utf8'));
 
 const NOW = 1_756_000_000;
 const WEEK = 7 * 86400;
@@ -35,6 +39,29 @@ function verdict(pct, o) {
       signalLost: o.fresh === false ? ['seven_day'] : [],
     },
   };
+}
+
+/** Convert one provider-history ledger row into the governor record consumed by
+ *  the pure controller. The fixture deliberately stores the measurements flat:
+ *  provider history is evidence, while this nested record is a transport shape. */
+function recordedSample(row) {
+  const v = {
+    verdict: row.fresh ? 'admit' : 'unknown',
+    enforced: 'allow',
+    drain: { allowed: true },
+    admission: { capSource: 'device-cap' },
+    provider: {
+      name: row.provider,
+      windows: {},
+      lowerBoundOnly: [],
+      signalLost: row.fresh ? [] : [row.window],
+    },
+  };
+  v.provider.windows[row.window] = {
+    pct: row.pct, fresh: row.fresh, lowerBound: false,
+    resetAt: row.resetAt, error: row.fresh ? '' : `STALE probe age ${row.probeAgeS}s`,
+  };
+  return { ...row, verdict: v };
 }
 
 /** Target 90% by reset. Halfway through the week the trajectory is 45%. */
@@ -228,6 +255,59 @@ async function main() {
     'and alarms on every frozen pass, not just the first');
   assert.ok(advisories.slice(5).some((a) => a.advisory > 0), 'replay RESUMES after the signal returns');
   ok('replay: growth during under-burn, hold+alarm through a stale stretch, resume on recovery');
+
+  // ── RECORDED-HISTORY REPLAY: the actual acceptance corpus ───────────
+  // These rows are deliberately committed, small, and source-attributed rather
+  // than fetched live. A controller test that depends on today's Prometheus can
+  // pass on one history and silently exercise another tomorrow.
+  const codexHistory = RECORDED.codexUnderburn;
+  const codexReplay = S.replay(
+    S.parsePolicy(codexHistory.policy), codexHistory.samples.map(recordedSample));
+  assert.strictEqual(codexReplay[0].windows.seven_day.actual, 5);
+  assert.ok(codexReplay[0].advisory > 0,
+    `recorded Codex 5% under-burn must recommend growth, got ${codexReplay[0].advisory}`);
+  ok('recorded CodexAppServer 5% seven-day under-burn recommends GROWTH');
+
+  const spikeHistory = RECORDED.claudeSpike;
+  assert.ok(spikeHistory.observedRegressionPctPerHour >= 37,
+    'fixture provenance must retain the measured 37%/hr regression spike');
+  const spikeReplay = S.replay(
+    S.parsePolicy(spikeHistory.policy), spikeHistory.samples.map(recordedSample));
+  const spikeLast = spikeReplay[spikeReplay.length - 1];
+  const spikeFlatControl = S.advise({
+    policy: S.parsePolicy(spikeHistory.policy),
+    verdict: recordedSample(spikeHistory.samples[1]).verdict,
+    now: spikeHistory.samples[1].now,
+    liveAgents: spikeHistory.samples[1].liveAgents,
+    fenceMax: spikeHistory.samples[1].fenceMax,
+  });
+  assert.ok(spikeLast.windows.five_hour.burnPerHour >= 35,
+    'the recorded endpoints must remain a fast climb');
+  assert.ok(spikeLast.windows.five_hour.raw < spikeFlatControl.windows.five_hour.raw,
+    'the recorded spike must be more strongly damped than the same endpoint without history');
+  ok('recorded Claude 37%/hr case damps against the identical flat-history control');
+
+  const staleHistory = RECORDED.claudeStaleStretch;
+  const staleReplay = S.replay(
+    S.parsePolicy(staleHistory.policy), staleHistory.samples.map(recordedSample));
+  assert.notStrictEqual(staleReplay[0].hold, S.HOLD_SIGNAL_LOST,
+    'recorded pre-stale sample is usable');
+  assert.ok(staleReplay.slice(1, 3).every((a) =>
+    a.advisory === 0 && a.hold === S.HOLD_SIGNAL_LOST && /CONTROLLER FROZEN/.test(a.alarm)),
+  'both passes of the recorded stale stretch must freeze and alarm');
+  assert.notStrictEqual(staleReplay[3].hold, S.HOLD_SIGNAL_LOST,
+    'recorded fresh recovery must resume the controller');
+  ok('recorded Claude stale stretch freezes every pass and resumes on fresh recovery');
+
+  const underWithBurndown = {
+    ...codexHistory.samples[0], burndown: ['seven_day'],
+  };
+  const burnReplay = S.replay(
+    S.parsePolicy(codexHistory.policy), [recordedSample(underWithBurndown)]);
+  assert.ok(codexReplay[0].advisory > 0, 'control: recorded row grows without burndown');
+  assert.strictEqual(burnReplay[0].advisory, 0);
+  assert.strictEqual(burnReplay[0].hold, S.HOLD_BURNDOWN);
+  ok('recorded Codex growth row is clamped to zero while burndown is armed');
 
   // ── the record shape ────────────────────────────────────────────────
   for (const a of [under, blind, burn, inert, fenced]) {
