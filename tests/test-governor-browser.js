@@ -58,8 +58,8 @@ function fleetCall(page) {
 }
 
 const ready = (page) => page.waitForFunction(
-  () => !!window.CreelFleet && !!window.CreelFleet.debug && !!window.CreelGovernor,
-  { message: 'fleet + governor modules' });
+  () => !!window.CreelFleet && !!window.CreelFleet.debug && !!window.CreelGovernor && !!window.CreelSetpoint,
+  { message: 'fleet + governor + setpoint modules' });
 
 /** A policy with a drain tier, and a reading that engages whichever tier the
  *  case wants. Written through the tool surface, the way an operator would. */
@@ -88,6 +88,7 @@ const POLICY = {
     // become the next case's silent premise.
     const reset = () => page.evaluate(() => {
       for (const k of Object.values(window.CreelGovernor._keys)) localStorage.removeItem(k);
+      for (const k of Object.values(window.CreelSetpoint._keys)) localStorage.removeItem(k);
     });
 
     await check('the governor loads in the page, before the fleet that consults it', async () => {
@@ -101,6 +102,28 @@ const POLICY = {
       assert.strictEqual(wired.governor, 'object', 'window.CreelGovernor is missing — check the script order in thread.html');
       assert.strictEqual(wired.contract, 'creel.admission/1');
       assert.strictEqual(wired.seam, 'function');
+    });
+
+    await check('a live burn reading produces a legible advisory without changing admission', async () => {
+      await reset();
+      const now = Math.floor(Date.now() / 1000);
+      const declaration = {
+        activeUntil: now + 3 * 86400,
+        active: { windows: { seven_day: { target: 100 } }, maxDelta: 2, deadband: 3 },
+        steady: { windows: { seven_day: { target: 80 } }, maxDelta: 1, deadband: 5 },
+      };
+      const before = await fleet('fleet_governor', { policy: POLICY, want: 1 });
+      const live = await fleet('fleet_governor', {
+        setpoint: declaration, window: 'seven_day', pct: 19, resetAt: declaration.activeUntil, want: 1,
+      });
+      assert.strictEqual(live.wrote.reading.pct, 19);
+      assert.strictEqual(live.controller.phase, 'aggressive');
+      assert.ok(live.controller.advisory > 0, live.controller_line);
+      assert.match(live.controller_line, /recommends \+\d/);
+      assert.strictEqual(live.admission.maxTabs, before.admission.maxTabs,
+        'the advisory must not change the admission cap');
+      assert.strictEqual(live.admission.free, before.admission.free,
+        'the advisory must not change admission availability');
     });
 
     await check('fleet_governor answers, and is inert until a budget is declared', async () => {
@@ -213,8 +236,10 @@ const POLICY = {
         return { note: note && note.textContent, title: chip && chip.title };
       });
       const v = await fleet('fleet_governor');
-      assert.strictEqual(shown.note, v.reason,
-        'the operator caption and the agent verdict disagree — they must be one record');
+      assert.ok(shown.note.startsWith(v.reason),
+        'the operator caption must begin with the same governor verdict the agent sees');
+      assert.ok(shown.note.includes(v.controller_line),
+        'the operator caption must carry the same controller recommendation the agent sees');
       assert.match(shown.title, /REFUSE/);
     });
 

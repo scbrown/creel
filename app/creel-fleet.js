@@ -147,6 +147,9 @@
     const gov = (typeof window !== 'undefined' && window.CreelGovernor) ? window.CreelGovernor : null;
     if (!gov) return { device: d.kind, cap, running, free: Math.max(0, cap - running) };
     const v = gov.admission({ device: d.kind, deviceCap: cap, running, want: 1 });
+    const controller = (typeof window !== 'undefined' && window.CreelSetpoint)
+      ? window.CreelSetpoint.recommend({ verdict: v, liveAgents: running, fenceMax: v.admission.maxTabs })
+      : null;
     return {
       device: d.kind,
       // The COMPOSED cap, so a caller that only reads `cap` still reports the
@@ -154,8 +157,12 @@
       cap: v.admission.maxTabs,
       deviceCap: cap,
       running,
+      // Advisory-first: the controller is evidence for a human, never an
+      // admission input. Only the governor and the outer device/max_agents
+      // fence decide whether a new tab may start.
       free: v.enforced === 'block' ? 0 : v.admission.free,
       governor: v,
+      controller,
     };
   }
 
@@ -583,4 +590,3 @@
     CreelFleet,
   });
 })();
-
