@@ -80,6 +80,17 @@ and BYO-key storage in localStorage.
   `tools/creel-admission.js` prints it outside the browser for an
   installer to preflight (exit 0 admit / 1 refuse / 2 unknown / 3 probe
   error). Full contract in [`../docs/governor.md`](../docs/governor.md).
+  **The doctor is the readiness preflight**: `doctor_status` runs ten
+  checks — secure context, quipu WASM, provider credential, storage
+  persistence, unsynced state, service-worker freshness, popup
+  permission, extension bridge, state repo, and abandoned leases — and
+  returns one versioned `creel.doctor/1` record; `tools/creel-doctor.js`
+  prints it outside the browser (exit 0 ok / 1 required-fail / 2
+  required-unknown / 3 tool error). Only the first three checks are
+  required, absence reports `unknown` rather than `fail`, running it
+  mutates nothing, and no credential is ever in the record — only
+  whether one is set. Full contract in
+  [`../docs/doctor.md`](../docs/doctor.md).
   **The main tab sees every fleet event**: each task transition
   (claimed / done / failed / requeued / aborted) is appended to a shared
   work log (`meta:digest`), and the main tab's agent automatically

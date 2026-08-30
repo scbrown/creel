@@ -2,6 +2,46 @@
 
 All notable changes land directly on `main`. Format: date, then grouped changes.
 
+## 2026-08-30
+
+### The doctor: one preflight answer instead of ten scattered ones (aegis-edp2n.4)
+Creel had status tools and visible warnings but no consolidated readiness
+verdict. Each surface knew its own corner — the store knew about eviction, the
+fleet knew about leases, the state repo knew about its token — and nobody
+assembled them, so the operator did it by hand, from memory, differently each
+time.
+
+`app/creel-doctor.js` is that assembly: ten checks over secure context, quipu
+WASM, provider credential, storage persistence, unsynced state, service-worker
+freshness, popup permission, extension bridge, state repo, and abandoned fleet
+leases. One versioned `creel.doctor/1` record, three readers — the
+`doctor_status` in-page tool, `tools/creel-doctor.js` for an installer outside
+the browser (exit 0 ok / 1 required-fail / 2 required-unknown / 3 tool error),
+and `explain()` for a human. Full contract in [`docs/doctor.md`](docs/doctor.md).
+
+- **Absence is `unknown`, never `fail`.** A missing browser API leaves the field
+  absent and the check unknown. A doctor that reports a missing API as a failure
+  is diagnosing itself. `1` and `2` stay distinct because "it is broken" and "I
+  cannot see whether it is broken" call for opposite actions.
+- **Only three checks are required.** A blocked popup, a missing extension and
+  an unconfigured state repo are all fleets that work; failing an installer on
+  those makes the installer stop being read.
+- **Looking does not treat.** The doctor reads the fleet's own `staleLeases()`
+  predicate rather than re-deriving staleness, and requeues nothing it finds.
+- **Credentials are redacted at collection, not at render** — `collect()` only
+  ever reads `keyPresent`/`tokenPresent` booleans, so no secret is in the record
+  to leak. Proven against a real key read back through the tool path.
+- **Service-worker freshness is not a version compare.** `sw.js` counts
+  `creel-v26` and the page counts `creel-v17 (…)` — independent counters that
+  have never matched, so `activeVersion === pageBuild` reports STALE on every
+  healthy page. The verdict now comes from the browser's own update lifecycle
+  (`CREEL_UPDATE_READY`); the version strings stay as evidence. An advisory that
+  fires on every load trains the reader to skip it, so there is a regression
+  test pinning the healthy case.
+- **Popup permission is never self-probed** — opening a window to learn whether
+  windows open is treating the patient. `spawnWindow()` now remembers what a
+  real spawn observed, and the check stays `unknown` until one has happened.
+
 ## 2026-08-28
 
 ### The budget governor: provider windows and the device cap compose (aegis-edp2n.3)

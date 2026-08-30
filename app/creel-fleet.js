@@ -166,8 +166,24 @@
     };
   }
 
+  /* The last spawn's outcome, remembered.
+   *
+   * `window.open()` returning null is the ONLY honest evidence that popups are
+   * blocked — the Permissions API does not expose popup state, and probing by
+   * opening a window to see whether windows open is treating the patient. So the
+   * one moment the answer is knowable is a real spawn, and until now that
+   * boolean was consumed inline at each call site and thrown away.
+   *
+   * Kept deliberately as `null` until a spawn has actually been attempted, so
+   * the doctor reports `unknown` rather than inventing a pass for a fleet that
+   * has never tried to open anything. */
+  let lastSpawn = null;
+
+  function lastSpawnOutcome() { return lastSpawn; }
+
   function spawnWindow(id, kind = 'agent') {
     const w = window.open(`thread.html#creel-${kind}=${id}`, '_blank');
+    lastSpawn = { allowed: !!w, at: Date.now(), id, kind };
     return !!w;
   }
 
@@ -230,25 +246,48 @@
   /** Reset lease tasks whose worker died (running, but nobody holds the
    *  lock) OR whose worker is frozen (lock held but no heartbeat for
    *  STALE_HEARTBEAT_MS) back to queued. Returns the requeued ids. */
+  /** Which running leases have been ABANDONED — pure, no I/O, no mutation.
+   *
+   * Split out of requeueStale (aegis-edp2n.4) so the doctor can REPORT this
+   * without requeueing anything. requeueStale treats what it finds, and a
+   * diagnostic that changes fleet state as a side effect of being looked at is
+   * not a diagnostic. The alternative was a second copy of the predicate in
+   * creel-doctor.js, and two copies of a staleness rule disagree exactly when
+   * it matters — the same argument tools/creel-admission.js makes for not
+   * recomputing the governor.
+   *
+   * Returns [{ id, reason }] with reason in {'lock-released','heartbeat-stale'},
+   * the same strings requeueStale records on the task.
+   */
+  function staleLeases(tasks, locks, now) {
+    const out = [];
+    for (const t of tasks || []) {
+      if (!t || t.kind !== 'lease' || t.status !== 'running') continue;
+      const lockDead = !locks.has(t.id);
+      const heartbeatStale = !!t.lastHeartbeat && (now - t.lastHeartbeat > STALE_HEARTBEAT_MS);
+      if (lockDead || heartbeatStale) {
+        out.push({ id: t.id, reason: lockDead ? 'lock-released' : 'heartbeat-stale' });
+      }
+    }
+    return out;
+  }
+
   async function requeueStale() {
     const tasks = await allTasks();
     const locks = await heldTaskLocks();
-    const now = Date.now();
+    const stale = new Map(staleLeases(tasks, locks, Date.now()).map((s) => [s.id, s.reason]));
     const requeued = [];
     for (const t of tasks) {
-      if (t.kind !== 'lease' || t.status !== 'running') continue;
-      const lockDead = !locks.has(t.id);
-      const heartbeatStale = t.lastHeartbeat && (now - t.lastHeartbeat > STALE_HEARTBEAT_MS);
-      if (lockDead || heartbeatStale) {
-        t.status = 'queued';
-        t.requeues = (t.requeues || 0) + 1;
-        t.requeueReason = lockDead ? 'lock-released' : 'heartbeat-stale';
-        t.claimedBy = null;
-        t.lastHeartbeat = null;
-        await putTask(t);
-        FLEET.digestAdd('requeued', t, t.requeueReason || 'stale');
-        requeued.push(t.id);
-      }
+      const reason = stale.get(t.id);
+      if (!reason) continue;
+      t.status = 'queued';
+      t.requeues = (t.requeues || 0) + 1;
+      t.requeueReason = reason;
+      t.claimedBy = null;
+      t.lastHeartbeat = null;
+      await putTask(t);
+      FLEET.digestAdd('requeued', t, t.requeueReason || 'stale');
+      requeued.push(t.id);
     }
     if (requeued.length) notify();
     return requeued;
@@ -581,10 +620,10 @@
     BC, DB_NAME, DRAIN_ID, TASK_LOCK, LOCK_PREFIX,
     MY_TASK_ID, MY_WORKER_ID, myLabelPromise,
     putTask, getTask, allTasks, delTask, genId, notify,
-    requeueStale, isDraining, statusReport,
+    requeueStale, staleLeases, isDraining, statusReport,
     aliveLocks, heldTaskLocks, isMeta, wrapTask,
     heldLease, releaseLease, claimNext, startHeartbeat, stopHeartbeat,
-    readTokenCounters, deviceInfo, tabCap, runningCount, resolveCaps, spawnWindow,
+    readTokenCounters, deviceInfo, tabCap, runningCount, resolveCaps, spawnWindow, lastSpawnOutcome,
     inbox, commsLog, logComms, injectTask,
     agentBoot, workerBoot, refreshLiveMirror,
     CreelFleet,
