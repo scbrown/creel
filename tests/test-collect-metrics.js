@@ -72,6 +72,26 @@ const run = (args, env) => new Promise((resolve) => {
     ok(!/Unhandled|throw er/.test(r.stderr), 'no raw node stack reaches the caller');
   }
 
+  {
+    /* THE SECOND REGRESSION, and the reason the guards sit ABOVE the require.
+     * A checkout missing the borrowed driver fails at MODULE LOAD, which is
+     * earlier than any handler registered further down the file would exist.
+     * Measured: it exited 1 until the guards moved up. */
+    const fs = require('fs');
+    const os = require('os');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'creel-nomod-'));
+    fs.mkdirSync(path.join(tmp, 'tools'));
+    const copy = path.join(tmp, 'tools', 'creel-collect-metrics.js');
+    fs.copyFileSync(TOOL, copy);
+    const r = await new Promise((resolve) => {
+      execFile(process.execPath, [copy], { env: process.env },
+        (err, stdout, stderr) => resolve({ code: err ? err.code : 0, stdout, stderr }));
+    });
+    eq(r.code, 3, 'a checkout missing the driver is 3 — NOT a bare crash at 1');
+    ok(/driver fault/.test(r.stderr), 'and it is named a driver fault');
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+
   /* --- the happy arm, which needs a real browser ------------------------- */
 
   if (!Browser.available()) {

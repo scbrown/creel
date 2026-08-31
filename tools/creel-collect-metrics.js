@@ -52,6 +52,22 @@
 
 const path = require('node:path');
 
+function die(msg) {
+  process.stderr.write(`creel-collect-metrics: ${msg}\n`);
+  process.exit(3);
+}
+
+/* THESE GUARDS ARE REGISTERED BEFORE THE DRIVER IS REQUIRED, AND THE ORDER IS
+ * LOAD-BEARING. A fault reaches this tool two ways that a try/catch cannot see:
+ * a Chromium spawn failure arrives as an 'error' EVENT on the child process,
+ * and a broken or partially-synced checkout fails the require below at MODULE
+ * LOAD. Both exit 1 unguarded — a code not in this tool's ladder at all, which
+ * would leave a scheduled caller unable to tell a broken collector from a quiet
+ * one. Measured both: a missing binary and a missing module each exited 1
+ * before this moved above the require. */
+process.on('uncaughtException', (err) => die(`driver fault: ${err && err.message ? err.message : err}`));
+process.on('unhandledRejection', (err) => die(`driver fault: ${err && err.message ? err.message : err}`));
+
 /* The CDP driver lives in tests/ because it was written to drive creel's UI
  * tests. It is creel's ONLY browser driver, it is deliberately dependency-free
  * (Node's WebSocket + a Chromium that is already on the machine), and copying
@@ -60,11 +76,6 @@ const path = require('node:path');
 const { Browser } = require(path.join(__dirname, '..', 'tests', 'browser.js'));
 
 const APP = path.join(__dirname, '..', 'app');
-
-function die(msg) {
-  process.stderr.write(`creel-collect-metrics: ${msg}\n`);
-  process.exit(3);
-}
 
 function parseArgs(argv) {
   const o = { page: '/thread.html', timeoutMs: 30000 };
@@ -87,18 +98,6 @@ function usage() {
   return 'usage: node tools/creel-collect-metrics.js [--page /thread.html] [--timeout-ms N]\n'
     + '  0 collected (exposition on stdout) · 2 nothing collected · 3 could not run\n';
 }
-
-/* A driver fault must land on the documented `3`, never on an unhandled crash.
- * Chromium is spawned by the borrowed driver, and a spawn failure — binary
- * removed, not executable, no memory to fork — arrives as an 'error' EVENT on
- * the child process rather than as a rejected promise. A try/catch around the
- * await therefore cannot see it, and node exits 1. Exit 1 is not in this tool's
- * ladder at all, so a scheduled caller would be unable to tell a broken
- * collector from anything else, which is the precise confusion this tool exists
- * to prevent. Measured before this guard existed: CHROME_PATH pointing at a
- * missing binary exited 1 on an unhandled 'error' event. */
-process.on('uncaughtException', (err) => die(`driver fault: ${err && err.message ? err.message : err}`));
-process.on('unhandledRejection', (err) => die(`driver fault: ${err && err.message ? err.message : err}`));
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
