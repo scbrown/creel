@@ -47,6 +47,7 @@ test: check
     node tests/test-setpoint.js
     node tests/test-admission-probe.js
     node tests/test-doctor.js
+    node tests/test-metrics.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
@@ -55,6 +56,7 @@ test: check
     node tests/test-fleet.js
     node tests/test-governor-browser.js
     node tests/test-doctor-browser.js
+    node tests/test-metrics-browser.js
     node tests/test-sw.js
     node tests/test-render.js
     node tests/test-compact.js
@@ -72,6 +74,7 @@ test-unit: check
     node tests/test-setpoint.js
     node tests/test-admission-probe.js
     node tests/test-doctor.js
+    node tests/test-metrics.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
@@ -86,6 +89,7 @@ test-ui: check
     node tests/test-fleet.js
     node tests/test-governor-browser.js
     node tests/test-doctor-browser.js
+    node tests/test-metrics-browser.js
     node tests/test-sw.js
     node tests/test-render.js
     node tests/test-compact.js

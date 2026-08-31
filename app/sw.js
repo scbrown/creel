@@ -79,6 +79,7 @@ const APP_SHELL = [
   './creel-governor.js',
   './creel-setpoint.js',
   './creel-doctor.js',
+  './creel-metrics.js',
   './creel-locator.js',
   './creel-ui-tools.js',
   './creel-world-model.js',
