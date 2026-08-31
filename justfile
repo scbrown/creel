@@ -52,6 +52,7 @@ test: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
+    node tests/test-handoff.js
     node tests/test-features.js
     node tests/test-state.js
     node tests/test-fleet.js
@@ -80,6 +81,7 @@ test-unit: check
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
+    node tests/test-handoff.js
 
 # The real page and the real extension, in real headless Chromium, driven only
 # through the tool surfaces an agent gets. Zero dependencies: Node's built-in
