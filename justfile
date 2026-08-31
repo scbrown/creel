@@ -48,6 +48,7 @@ test: check
     node tests/test-admission-probe.js
     node tests/test-doctor.js
     node tests/test-metrics.js
+    node tests/test-push-metrics.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
@@ -75,6 +76,7 @@ test-unit: check
     node tests/test-admission-probe.js
     node tests/test-doctor.js
     node tests/test-metrics.js
+    node tests/test-push-metrics.js
     node tests/test-ui-crosstab.js
     node tests/test-bridge.js
     node tests/test-leave-warning.js
