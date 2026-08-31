@@ -150,6 +150,23 @@ count rather than a value, and `ui_describe` says only whether a key exists.
 
 Details, and what's still missing, in [docs/hands.md](docs/hands.md).
 
+## Metrics
+
+A creel tab has no address a Prometheus job could target, and giving it one
+would delete `server-none`. So creel renders exposition in the page
+(`app/creel-metrics.js`), and a scheduled caller outside it opens an ephemeral
+tab, takes one reading, and pushes:
+
+```
+node tools/creel-collect-metrics.js | node tools/creel-push-metrics.js
+```
+
+The tab still exits, the schedule and the credential still live with the
+operator. What that costs the operator — two groups so a gap can be read, an
+exit ladder that never collapses "nothing to say" into "broken", and a checkout
+the schedule executes from that is neutral, auto-refreshed, and publishes its
+own drift — is in [docs/metrics.md](docs/metrics.md).
+
 ## Tests
 
 `just test` — 202 assertions, no dependencies and no `node_modules`. The fast
