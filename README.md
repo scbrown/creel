@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
-  <img src="https://img.shields.io/badge/status-vision-8C98A8.svg" alt="Status: vision"/>
+  <img src="https://img.shields.io/badge/status-alpha-C9A227.svg" alt="Status: alpha"/>
   <img src="https://img.shields.io/badge/server-none-3E9E9A.svg" alt="No server"/>
   <img src="https://img.shields.io/badge/sandbox-the%20browser's-E39A4E.svg" alt="Sandbox: the browser's"/>
   <img src="https://img.shields.io/badge/grounding-quipu%20·%20wasm-6C7A89.svg" alt="Grounded by quipu in WASM"/>
@@ -178,11 +178,22 @@ reach. `just test-unit` skips the browser; `just test-ui` runs only it.
 
 ## Status
 
-Vision stage — see [docs/VISION.md](docs/VISION.md) for the full architecture,
-constraints, and phasing (v0: one tab, many loops → v1: the multi-tab creel →
-v2: grounded cheap agents → v3: burst ergonomics).
+**Alpha, and running.** v0 shipped and the multi-tab fleet is working: Web Locks
+leasing (with a test that caught a real bug), per-tab state slices and graph
+attribution, state persistence to a private GitHub repo, a budget governor composing
+provider windows with a device cap, and a ten-check preflight doctor
+(`app/creel-doctor.js`) an installer can shell out to. [CHANGELOG.md](CHANGELOG.md)
+has what landed when.
 
-A first cut of v0 lives in [`app/`](app/README.md): a vendored fork of the
+Still ahead, and still phased in [docs/VISION.md](docs/VISION.md) (v0: one tab, many
+loops → v1: the multi-tab creel → v2: grounded cheap agents → v3: burst ergonomics):
+in-page quipu grounding is far enough along to be one of the doctor's checks, but the
+cheap-agent economics that motivate it are not proven yet.
+
+**Still deliberately not durable infrastructure.** The fleet dies with the browser,
+there is no cron, nothing runs unattended. That is a design constraint, not a gap.
+
+The v0 shell is a vendored fork of the
 MIT-licensed [OnePagent](https://github.com/sligter/OnePagent) single-file
 harness (`just serve`), extended with a quipu transport switch
 (`app/quipu-backend.js`) — knowledge tools reach the agent over MCP from
