@@ -64,6 +64,16 @@
   // ── in-page MCP server: 'fleet' ──────────────────────────────────
   const TOOLS = [
     {
+      name: 'fleet_handoff',
+      description: 'Send a crew-handoff-v1 envelope to the configured host durable inbox. Requires attested origin, explicit recipient and task pointer. Returns a host-verified inbox ID and envelope hash. Retry a lost response with the identical envelope; a receipt acknowledges delivery, not ownership or completion. Separate from burst-local fleet_send.',
+      inputSchema: { type: 'object', properties: { envelope: { type: 'object' } }, required: ['envelope'] },
+    },
+    {
+      name: 'fleet_handoff_status',
+      description: 'Retrieve the host receipt for a durable handoff. acknowledged means the recipient marked the inbox entry read; it does not mean the task completed or ownership transferred.',
+      inputSchema: { type: 'object', properties: { receipt_id: { type: 'string' } }, required: ['receipt_id'] },
+    },
+    {
       name: 'fleet_spawn',
       description: 'Spawn one or more autonomous agents, each in its own browser tab, working the given task. Tabs inherit the operator\'s model/key. If the popup blocker intervenes, tasks stay queued — the user launches them from the 🧺 fleet dashboard (or allows popups for this site).',
       inputSchema: {
@@ -226,6 +236,8 @@
   ];
 
   const impl = {
+    async fleet_handoff(args) { return window.CreelDurableInbox.send(args.envelope); },
+    async fleet_handoff_status(args) { return window.CreelDurableInbox.status(args.receipt_id); },
     async fleet_spawn(args) {
       const caps = await resolveCaps(args.maxConcurrent);
       const want = Math.max(1, Math.min(8, args.count || 1));

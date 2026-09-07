@@ -31,3 +31,37 @@ Never derive `agent`, `session`, `key_id`, `introducer`, or `binding` from a tab
 URL fragment, message body, or browser-channel sender. Those are routing/liveness
 signals, not authentication. Missing attestation must remain missing rather than being
 rendered as a successful owner claim.
+
+## Optional durable inbox transport
+
+`CreelDurableInbox` sends these envelopes to Shantytown's optional authenticated
+inbox bridge. A trusted launcher configures the current tab using
+`CreelDurableInbox.configure({endpoint, token})`, with an HTTPS bridge origin
+(HTTP is accepted only on loopback). Configuration is write-only, held in memory,
+and never included in fleet results. `configure(null)` clears it. Provision a new
+configuration for a new session; do not place bearer secrets in model prompts.
+
+The bridge operator binds that bearer to the complete attested Creel identity and
+an explicit recipient allowlist. A tab label or a self-asserted identity cannot
+create that authority. See Shantytown's `docs/inbox-bridge.md` for its configuration,
+`python -m shantytown.inbox_bridge` server and persistent spool requirements.
+
+The fleet tools provide two explicit operations:
+
+- `fleet_handoff({envelope})`: send the immutable shared envelope. Supply an
+  authorized Shantytown target agent and a short `task.pointer`. A successful
+  response contains `receipt_id`, the actual `inbox_id`, `envelope_sha256`, and
+  `delivery: "persisted"`. The client checks that hash against the submitted bytes.
+- `fleet_handoff_status({receipt_id})`: read the host's receipt again, including
+  after a tab or bridge restart. `acknowledged: true` means the recipient marked
+  the inbox entry **read**, not that ownership transferred or work completed.
+
+Save the receipt ID with the originating task outside the browser if it must be
+recoverable after browser loss. The host also retains the full envelope for its
+recipient. When a response is lost, retry the identical envelope and ID; changing
+an already-used ID's payload is rejected. Use a new ID for a later state snapshot.
+An unconfigured bridge, failed HTTP request or invalid receipt is an explicit
+failure, with no fallback to browser-local messaging.
+
+`fleet_send` remains burst-local. IndexedDB, BroadcastChannel and localStorage
+provide no evidence of durable infrastructure delivery or acknowledgement.
