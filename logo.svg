@@ -1,0 +1,30 @@
+<svg width="128" height="128" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5 3 H15 L19 7 V20 A1 1 0 0 1 18 21 H5 A1 1 0 0 1 4 20 V4 A1 1 0 0 1 5 3 Z"
+        fill="url(#op-pg)" stroke="url(#op-bd)" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M15 3 V7 H19" stroke="url(#op-bd)" stroke-width="1.1" fill="none" stroke-linejoin="round"/>
+  <circle cx="11.5" cy="13" r="2.6" fill="url(#op-core)"/>
+  <circle cx="7"  cy="10" r="0.9" fill="#ff6b35"/>
+  <circle cx="16" cy="11" r="0.9" fill="#00d4ff"/>
+  <circle cx="8"  cy="17" r="0.9" fill="#aa66ff"/>
+  <circle cx="15" cy="17" r="0.9" fill="#00ff88"/>
+  <path d="M7 10 L11.5 13 L16 11 M8 17 L11.5 13 L15 17"
+        stroke="url(#op-ln)" stroke-width="0.9" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <defs>
+    <linearGradient id="op-pg" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff6b35" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ff3399" stop-opacity="0.06"/>
+    </linearGradient>
+    <linearGradient id="op-bd" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff8040"/>
+      <stop offset="1" stop-color="#ff3399"/>
+    </linearGradient>
+    <linearGradient id="op-ln" x1="7" y1="10" x2="16" y2="17" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff8040" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#aa66ff" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="op-core" cx="40%" cy="35%">
+      <stop stop-color="#ffb070"/>
+      <stop offset="1" stop-color="#cc1f77"/>
+    </radialGradient>
+  </defs>
+</svg>
