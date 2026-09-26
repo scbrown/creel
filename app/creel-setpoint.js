@@ -128,13 +128,21 @@
       if (!(target > 0 && target <= 100)) {
         throw new SetpointError(`setpoint.windows.${w}.target must be a percentage in (0, 100] — the utilisation to reach BY RESET`);
       }
+      const paceRatio = num(spec.paceRatio, 1);
+      const windowLength = spec.windowLength == null ? WINDOW_LENGTH_S[w] : num(spec.windowLength, NaN);
+      if (!(paceRatio > 0) || (spec.paceRatio != null && !Number.isFinite(Number(spec.paceRatio)))) {
+        throw new SetpointError(`setpoint.windows.${w}.paceRatio must be positive and finite`);
+      }
+      if (!(Number.isInteger(windowLength) && windowLength > 0)) {
+        throw new SetpointError(`setpoint.windows.${w}.windowLength must be positive seconds`);
+      }
       const gain = (k, dflt) => {
         const n = num(spec[k], dflt);
         if (!(n >= 0)) throw new SetpointError(`setpoint.windows.${w}.${k} must be zero or more`);
         return n;
       };
       p.windows[w] = Object.freeze({
-        target,
+        target, paceRatio, windowLength,
         kp: gain('kp', 0.06),
         ki: gain('ki', 0.01),
         kd: gain('kd', 0.30),
@@ -189,14 +197,15 @@
    *  This is deliberately the same refusal `pace_ratio` makes in the st governor
    *  (aegis-7kwtu) — a wrong window length must produce NO answer, never a
    *  plausible one. */
-  function trajectory(window, resetAt, now, target) {
-    const len = WINDOW_LENGTH_S[window];
+  function trajectory(window, resetAt, now, target, paceRatio = 1, length = null) {
+    const len = length || WINDOW_LENGTH_S[window];
     if (!len || resetAt == null) return null;
     const remaining = resetAt - now;
     if (!(remaining > 0)) return null;          // reset is past; producer has not re-read
     if (remaining > len) return null;           // reset and length disagree — refuse
     const elapsedFraction = (len - remaining) / len;
-    return target * elapsedFraction;
+    // A faster declared pace reaches the target sooner, never beyond budget.
+    return Math.min(target, target * elapsedFraction * paceRatio);
   }
 
   // ── the controller ────────────────────────────────────────────────────
@@ -232,7 +241,8 @@
     for (const w of declared) {
       const spec = policy.windows[w];
       const reading = (v.provider && v.provider.windows && v.provider.windows[w]) || null;
-      const row = { target: spec.target, trajectory: null, actual: null, error: null, frozen: false, hold: null };
+      const row = { target: spec.target, paceRatio: spec.paceRatio || 1,
+        windowLength: spec.windowLength || WINDOW_LENGTH_S[w], trajectory: null, actual: null, error: null, frozen: false, hold: null };
 
       // ── the two freeze conditions, and they are NOT the same condition ──
       //
@@ -249,7 +259,7 @@
       if (lost) { row.frozen = true; row.hold = HOLD_SIGNAL_LOST; }
       else if (lowerBound) { row.frozen = true; row.hold = HOLD_LOWER_BOUND; }
 
-      const traj = reading ? trajectory(w, reading.resetAt, now, spec.target) : null;
+      const traj = reading ? trajectory(w, reading.resetAt, now, spec.target, spec.paceRatio, spec.windowLength) : null;
       if (traj == null && !row.frozen) { row.frozen = true; row.hold = HOLD_NO_RESET; }
 
       row.trajectory = traj;
@@ -411,6 +421,22 @@
       w, r && r.pct, r && r.at, r && r.resetAt, r && r.fresh, r && r.lowerBound,
     ]));
     let policy = o.policy || declaredPolicy(declaration, now);
+    if (o.paceTargets != null) {
+      if (typeof o.paceTargets !== 'object' || Array.isArray(o.paceTargets)) {
+        throw new SetpointError('paceTargets must be a per-window object');
+      }
+      // The host's declared pace supersedes the shipped utilization trajectory,
+      // not admission fences or drain. Keep gains/deadband from the declaration.
+      const configured = { ...policy.windows };
+      for (const [w, spec] of Object.entries(o.paceTargets)) {
+        if (!spec || !(Number(spec.ratio) > 0) || !Number.isFinite(Number(spec.ratio))) {
+          throw new SetpointError(`paceTargets.${w}.ratio must be positive and finite`);
+        }
+        configured[w] = { ...configured[w], target: 100,
+          paceRatio: spec.ratio, windowLength: spec.length ?? WINDOW_LENGTH_S[w] };
+      }
+      policy = parsePolicy({ ...policy, windows: configured });
+    }
     // resolveCaps is a read seam, not a clock tick. Dashboard repaints and
     // spawn preflights can inspect one provider sample many times; integrating
     // each inspection would make controller gain depend on render frequency.

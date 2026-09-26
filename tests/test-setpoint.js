@@ -79,6 +79,8 @@ async function main() {
     ['unknown window', { windows: { two_week: { target: 90 } } }],
     ['target 0', { windows: { seven_day: { target: 0 } } }],
     ['target > 100', { windows: { seven_day: { target: 101 } } }],
+    ['zero pace', { windows: { seven_day: { target: 100, paceRatio: 0 } } }],
+    ['bad length', { windows: { seven_day: { target: 100, windowLength: 'bad' } } }],
     ['negative gain', { windows: { seven_day: { target: 90, kp: -1 } } }],
     ['fractional maxDelta', { maxDelta: 1.5 }],
     ['negative deadband', { deadband: -1 }],
@@ -119,6 +121,10 @@ async function main() {
   assert.strictEqual(S.trajectory('seven_day', NOW + WEEK, NOW, 90), 0);
   assert.strictEqual(S.trajectory('seven_day', NOW + 1, NOW, 90).toFixed(2), '90.00');
   ok('trajectory runs 0 -> target across the window');
+  assert.strictEqual(S.trajectory('seven_day', NOW + half, NOW, 100, 1.5), 75);
+  assert.strictEqual(S.trajectory('seven_day', NOW + 1, NOW, 100, 1.5), 100);
+  assert.strictEqual(S.trajectory('seven_day', NOW + 100, NOW, 100, 1.5, 200), 75);
+  ok('pace-scaled trajectory honors window length and stops at budget');
 
   assert.strictEqual(S.trajectory('seven_day', null, NOW, 90), null,
     'no published reset must not become a guessed trajectory');
