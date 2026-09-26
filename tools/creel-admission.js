@@ -193,12 +193,16 @@ function main(argv) {
 
   // Same controller module and declaration as the browser.  The host-side
   // probe cannot read localStorage, so recommend() deliberately uses Creel's
-  // shipped DEFAULT_DECLARATION and does not persist integrator state.  It
+  // shipped DEFAULT_DECLARATION, overridden by explicit state.paceTargets,
+  // and does not persist integrator state. It
   // consumes the governor record; it does not form a second opinion.
-  const controller = S.recommend({
-    verdict: v, liveAgents: running, fenceMax: v.admission.maxTabs,
-    now, persist: false,
-  });
+  let controller;
+  try {
+    controller = S.recommend({
+      verdict: v, liveAgents: running, fenceMax: v.admission.maxTabs,
+      now, persist: false, paceTargets: state.paceTargets,
+    });
+  } catch (e) { die(`setpoint: ${e.message}`); }
   const record = {
     ...v,
     controller,

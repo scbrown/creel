@@ -167,6 +167,17 @@ exit ladder that never collapses "nothing to say" into "broken", and a checkout
 the schedule executes from that is neutral, auto-refreshed, and publishes its
 own drift — is in [docs/metrics.md](docs/metrics.md).
 
+## Governor pace
+
+The headless admission probe also accepts `paceTargets` in its state JSON, for
+example `{"paceTargets":{"seven_day":{"ratio":1.5,"length":604800}}}`.
+These explicit per-window targets override the setpoint trajectory from the
+shipped declaration; they do not alter admission policy, caps, or drains. A
+1.5 ratio reaches the 100% target sooner and stays capped there. The controller
+record reports the applied `paceRatio` and `windowLength`, allowing host callers
+to reject a probe version that ignored the requested policy. Omit `paceTargets`
+to retain the browser declaration behavior.
+
 ## Tests
 
 `just test` — 202 assertions, no dependencies and no `node_modules`. The fast

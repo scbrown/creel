@@ -198,6 +198,26 @@ async function main() {
   assert.match(loud.stderr, /✕ REFUSE/);
   ok('stdout is the JSON record alone; the human line goes to stderr');
 
+
+  // Same measured pace, two operator targets: the controller must follow it.
+  const paceState = (ratio, pct = 62) => write(`pace-${ratio}-${pct}.json`, {
+    readings: { seven_day: { pct, at: NOW, resetAt: NOW + 7 * 86400 / 2, source: 'live' } },
+    paceTargets: { seven_day: { ratio, length: 7 * 86400 } },
+  });
+  const paced = run('--state', paceState(1.5), '--cap', '9', '--running', '6', '--now', String(NOW), '--quiet');
+  assert.strictEqual(paced.code, 0, paced.stderr);
+  assert.ok(paced.json.controller.advisory >= 0, paced.json.controller_line);
+  assert.strictEqual(paced.json.controller.windows.seven_day.trajectory, 75);
+  const tighter = run('--state', paceState(1), '--cap', '9', '--running', '6', '--now', String(NOW), '--quiet');
+  assert.ok(tighter.json.controller.advisory < 0, tighter.json.controller_line);
+  const drainPace = run('--policy', POLICY, '--state', paceState(1.5, 96),
+    '--pct', 'five_hour=96', '--cap', '9', '--running', '6', '--now', String(NOW), '--quiet');
+  assert.strictEqual(drainPace.code, 1, 'pace target cannot relax admission drain');
+  assert.ok(drainPace.json.controller.advisory <= 0, drainPace.json.controller_line);
+  const invalidPace = run('--state', paceState(0), '--now', String(NOW), '--quiet');
+  assert.strictEqual(invalidPace.code, 3, 'invalid explicit pace is a probe error');
+  ok('configured pace drives advice; tighter control and drain still refuse growth');
+
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log(`admission probe: ${n} checks ok`);
 }
